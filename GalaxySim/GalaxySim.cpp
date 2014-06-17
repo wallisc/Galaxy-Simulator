@@ -11,6 +11,7 @@
 #include <commdlg.h>
 #include "resource.h"
 #include "WaitDlg.h"
+// Testing a commit
 
 #pragma warning( disable : 4100 )
 
