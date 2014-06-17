@@ -12,6 +12,7 @@
 #include "resource.h"
 #include "WaitDlg.h"
 // Testing a commit
+// Moo
 
 #pragma warning( disable : 4100 )
 
