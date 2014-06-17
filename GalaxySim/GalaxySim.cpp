@@ -2,6 +2,12 @@
 // File: GalaxySim.cpp
 //
 // Copyright (c) Microsoft Corporation. All rights reserved.
+// 
+// Dev Buddies:
+// Christopher Wallis
+//
+// Developers:
+// 
 //--------------------------------------------------------------------------------------
 #include "DXUT.h"
 #include "DXUTgui.h"
@@ -11,8 +17,6 @@
 #include <commdlg.h>
 #include "resource.h"
 #include "WaitDlg.h"
-// Testing a commit
-// Moo
 
 #pragma warning( disable : 4100 )
 
