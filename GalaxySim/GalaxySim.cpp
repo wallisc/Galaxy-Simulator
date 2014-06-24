@@ -7,7 +7,7 @@
 // Christopher Wallis
 //
 // Developers:
-// 
+// Ana-Maria Constantin
 //--------------------------------------------------------------------------------------
 #include "DXUT.h"
 #include "DXUTgui.h"
