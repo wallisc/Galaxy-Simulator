@@ -7,6 +7,7 @@
 // Christopher Wallis
 //
 // Developers:
+// Melanie Loppnow
 // 
 //--------------------------------------------------------------------------------------
 #include "DXUT.h"
@@ -60,7 +61,7 @@ struct PARTICLE_VERTEX
 };
 
 #define MAX_PARTICLES      10000            // the max number of particles in the n-body simulation
-#define NUM_PARTICLES      2            // the number of particles in the n-body simulation
+#define NUM_PARTICLES      100            // the number of particles in the n-body simulation
 #define MAX_FPS            60.0f            // throttle the frame rate
 #define SECONDS_PER_FRAME  1.0f / MAX_FPS
 
@@ -83,7 +84,13 @@ struct PARTICLE
     XMFLOAT4 velo;
 };
 
+struct OTHER_PARTICLE_STUFF
+{
+	XMFLOAT4 mass;
+	inertia;
+};
 PARTICLE*                           g_pParticleArray = NULL;
+OTHER_PARTICLE_STUFF*                           g_pParticleArray = NULL;
 
 //--------------------------------------------------------------------------------------
 // UI control IDs
@@ -161,10 +168,10 @@ void InitApp()
     g_SampleUI.Init( &g_DialogResourceManager );
 
     g_HUD.SetCallback( OnGUIEvent ); int iY = 10;
-    g_HUD.AddButton( IDC_TOGGLEFULLSCREEN, L"Toggle full screen", 0, iY, 170, 23 );
+    g_HUD.AddButton( IDC_TOGGLEFULLSCREEN, L"Full screen (F6)", 0, iY, 170, 23, VK_F6 );
     g_HUD.AddButton( IDC_TOGGLEREF, L"Toggle REF (F3)", 0, iY += 26, 170, 23, VK_F3 );
     g_HUD.AddButton( IDC_CHANGEDEVICE, L"Change device (F2)", 0, iY += 26, 170, 23, VK_F2 );
-    g_HUD.AddButton( IDC_RESETPARTICLES, L"Reset particles", 0, iY += 26, 170, 22, VK_F2 );
+    g_HUD.AddButton( IDC_RESETPARTICLES, L"Reset particles (F4)", 0, iY += 26, 170, 22, VK_F4 );
     g_SampleUI.SetCallback( OnGUIEvent ); 
 }
 
