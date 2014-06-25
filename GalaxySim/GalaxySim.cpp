@@ -8,6 +8,7 @@
 //
 // Developers:
 // Ana-Maria Constantin
+// Kanika Verma
 //--------------------------------------------------------------------------------------
 #include "DXUT.h"
 #include "DXUTgui.h"
