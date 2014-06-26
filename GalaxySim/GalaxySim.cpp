@@ -89,7 +89,6 @@ struct PARTICLE
 struct OTHER_PARTICLE_STUFF
 {
 	XMFLOAT4 mass;
-	inertia;
 };
 PARTICLE*                           g_pParticleArray = NULL;
 OTHER_PARTICLE_STUFF*                           g_pParticleArray = NULL;
