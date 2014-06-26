@@ -91,7 +91,7 @@ struct OTHER_PARTICLE_STUFF
 	XMFLOAT4 mass;
 };
 PARTICLE*                           g_pParticleArray = NULL;
-OTHER_PARTICLE_STUFF*                           g_pParticleArray = NULL;
+OTHER_PARTICLE_STUFF*                           g_pOtherParticleArray = NULL;
 
 //--------------------------------------------------------------------------------------
 // UI control IDs
