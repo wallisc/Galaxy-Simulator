@@ -7,6 +7,8 @@
 // Christopher Wallis
 //
 // Developers:
+// Ana-Maria Constantin
+// Kanika Verma
 // Melanie Loppnow
 // 
 //--------------------------------------------------------------------------------------
@@ -61,7 +63,7 @@ struct PARTICLE_VERTEX
 };
 
 #define MAX_PARTICLES      10000            // the max number of particles in the n-body simulation
-#define NUM_PARTICLES      100            // the number of particles in the n-body simulation
+#define NUM_PARTICLES      2            // the number of particles in the n-body simulation
 #define MAX_FPS            60.0f            // throttle the frame rate
 #define SECONDS_PER_FRAME  1.0f / MAX_FPS
 
