@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<universe numObjects= Insert total int number of objects here simName="Insert name of this scenario">
+	<!--object id starts at 0 and increments by one for each object-->
+	<object id=0>
+		<name>Insert name here</name>
+		<mass>Insert mass here as an integer</mass>
+		<diameter>Insert diameter here as an integer</diameter>
+		<brightness>Insert brightness here on a scale of 1 dim to 10 bright</brightness>
+		<xcoord>Insert x coordinate here as an integer</xcoord>
+		<ycoord>Insert y coordinate here as an integer</ycoord>
+		<zcoord>Insert z coordinate here as an integer</zcoord>
+	</object>
+	<object id=1>
+		<name>Insert name here</name>
+		<mass>Insert mass here as an integer</mass>
+		<diameter>Insert diameter here as an integer</diameter>
+		<brightness>Insert brightness here on a scale of 1 dim to 10 bright</brightness>
+		<xcoord>Insert x coordinate here as an integer</xcoord>
+		<ycoord>Insert y coordinate here as an integer</ycoord>
+		<zcoord>Insert z coordinate here as an integer</zcoord>
+	</object>
+</universe>
