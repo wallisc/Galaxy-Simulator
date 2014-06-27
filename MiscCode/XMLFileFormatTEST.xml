@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<MaxParticles>2</MaxParticles>
+<universe xmlns:dt="urn:schemas-microsoft-com:datatypes">
+  <!--object id starts at 0 and increments by one for each object-->
+  <object id="0">
+    <name>Earth</name>
+    <mass>25000</mass>
+    <diameter>6400</diameter>
+    <brightness>6</brightness>
+    <xcoord>20</xcoord>
+    <ycoord>20</ycoord>
+    <zcoord>20</zcoord>
+  </object>
+  <object id="1">
+    <name>Sun</name>
+    <mass>50000</mass>
+    <diameter>15000</diameter>
+    <brightness>10</brightness>
+    <xcoord>50</xcoord>
+    <ycoord>50</ycoord>
+    <zcoord>50</zcoord>
+  </object>
+</universe>
