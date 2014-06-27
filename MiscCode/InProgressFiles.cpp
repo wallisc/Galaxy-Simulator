@@ -12,9 +12,9 @@ string name[];
 float mass[];
 float diameter[];
 int brightness[];
-int xcoord[];
-int ycoord[];
-int zcoord[];
+float xcoord[];
+float ycoord[];
+float zcoord[];
 
 
 
@@ -46,8 +46,8 @@ struct PARTICLE_DETAILS
 PARTICLE_DETAILS* g_pParticleArrayTWO = NULL;
 
 //Loads all details about each object except positon and velocity
-void fillParticleDetails(PARTICLE_DETAILS particles2[], int length, string nameIn[], float massIn[], float diameterIn[], int brightnessIn[]){
-	for (int i = 0; i < length; i++){
+void fillParticleDetails(PARTICLE_DETAILS particles2[], int maxParticles, string nameIn[], float massIn[], float diameterIn[], int brightnessIn[]){
+	for (int i = 0; i < maxParticles; i++){
 		particles2[i].name = nameIn[i];
 		particles2[i].mass = massIn[i];
 		particles2[i].diameter = diameterIn[i];
@@ -55,10 +55,19 @@ void fillParticleDetails(PARTICLE_DETAILS particles2[], int length, string nameI
 	}
 }
 
-void fillParticles(){
+void fillParticles(PARTICLE particles[], int maxParticles, float x[], float y[], float z[], XMFLOAT4 Velocity){
 	//method that loads g_pParticleArray with position as a vector and velocity (that is being updated constantly?)
-	//getPosition(origin x, origin y, origin z, particle x, particle y, particle z) and getVelocity methods 
+	//create and then call here a getVelocity methods 
+
+	for (int i = 0; i < maxParticles; i++){
+		particles[i].pos = createPositionFloat(x[i], y[i], z[i]);
+		pParticles[i].velo = Velocity;
+	}
 }
+
+
+
+fillParticles(g_pParticleArray, 5, xcoord, ycoord, zcoord, XMFLOAT4(0, 0, 0, 1));
 
 
 
@@ -85,7 +94,7 @@ int getBrightness(int index){
 }
 
 //gets position of object using its index number
-positionType getPosition(int index){				//change positionType to what the actual type is
+XMFLOAT4 getPosition(int index){				//change positionType to what the actual type is
 	return g_pParticleArray[index].pos;
 }
 
@@ -93,6 +102,16 @@ positionType getPosition(int index){				//change positionType to what the actual
 velocityType getVelocity(int index){				//change velocityType to what the actual type is
 	return g_pParticleArray[index].velo;
 }
+
+/////////////////////////////////////////////////////
+
+//method for establishing the position of a celestial body
+//definition for XMFLOAT4 is in the sample, line 570
+XMFLOAT4 createPositionFloat(float xParticle, float yParticle, float zParticle){
+	return XMFLOAT4(xParticle, yParticle, zParticle, 10000.0f * 10000.0f);
+}
+
+
 
 /////////////////////////////////////////////////////
 
@@ -104,3 +123,4 @@ int _tmain(int argc, _TCHAR* argv[])
 	fillParticleDetails(g_pParticleArrayTWO, MAX_PARTICLES, name, mass, diameter, brightness);
 	return 0;
 }
+
