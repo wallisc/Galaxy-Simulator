@@ -7,11 +7,18 @@
 
 using namespace std;
 
-int MAX_PARTICLES;
+//--------------------------------------------------------------------------------------
+// UI control IDs
+//--------------------------------------------------------------------------------------
+#define GET_OBJECT_INFO 8
+
+
+
+int NUM_PARTICLES;
 string name[];
 float mass[];
 float diameter[];
-int brightness[];
+float brightness[];
 float xcoord[];
 float ycoord[];
 float zcoord[];
@@ -40,13 +47,13 @@ struct PARTICLE_DETAILS
 	string name;
 	float mass;
 	float diameter;
-	int brightness;
+	float brightness;
 };
 
 PARTICLE_DETAILS* g_pParticleArrayTWO = NULL;
 
 //Loads all details about each object except positon and velocity
-void fillParticleDetails(PARTICLE_DETAILS particles2[], int maxParticles, string nameIn[], float massIn[], float diameterIn[], int brightnessIn[]){
+void fillParticleDetails(PARTICLE_DETAILS particles2[], int num Particles, string nameIn[], float massIn[], float diameterIn[], float brightnessIn[]){
 	for (int i = 0; i < maxParticles; i++){
 		particles2[i].name = nameIn[i];
 		particles2[i].mass = massIn[i];
@@ -89,7 +96,7 @@ float getDiameter(int index){
 }
 
 //gets the mass of an object using its index number
-int getBrightness(int index){
+float getBrightness(int index){
 	return g_pParticleArrayTWO[index].brightness;
 }
 
@@ -112,6 +119,27 @@ XMFLOAT4 createPositionFloat(float xParticle, float yParticle, float zParticle){
 }
 
 
+
+/////////////////////////////////////////////////////
+
+//BUTTONS
+
+//method for creating buttons for each object
+void createObjectButtons(int NUM_PARTICLES){
+	for (int i = 0; i < NUM_PARTICLES; i++){
+		LPCWSTR name = getName(i);
+		g_HUD.AddButton(GET_OBJECT_INFO, Lname, getPosition(i).x, getPosition(i).y, 10, 10)
+	}
+} 
+
+//action for CALLBACK when button is clicked
+case GET_OBJECT_INFO:
+	displayObjInfo(); break;
+
+//method to display object info
+	void displayObjInfo(int index){
+
+	}
 
 /////////////////////////////////////////////////////
 
