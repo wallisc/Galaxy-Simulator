@@ -238,7 +238,8 @@ int ParseFile(){
 	}
 
 	//Open read-only input stream 
-	LPCWSTR fileName = L"C:\\Users\\t-kaver\\Source\\Repos\\Galaxy-Simulator\\GalaxySim\\XMLFileFormatTEST.xml";
+//	LPCWSTR fileName = L"C:\\Users\\t-anaco\\Source\\Repos\\Galaxy-Simulator\\GalaxySim\\XMLFileFormatTEST.xml";
+	LPCWSTR fileName = L"..\\GalaxySim\\XMLFileFormatTEST.xml";
 	if (FAILED(hr = SHCreateStreamOnFile(fileName, STGM_READ, &pFileStream)))
 	{
 		wprintf(L"Error creating file reader, error is %08.8lx", hr);
@@ -266,7 +267,6 @@ int ParseFile(){
 	//read until there are no more nodes 
 	//Pretty sure this is where we would change the printf's outside the if's so they go to an array? probably? 
 	int first = 0;
-	int var = 0;
 	int count = 0;
 
 	const WCHAR * elementName = NULL;
@@ -300,6 +300,17 @@ int ParseFile(){
 			else {
 
 				elementName = pwszLocalName;
+
+				if (elementName != NULL && wcscmp(elementName, L"object") == 0){
+					if (first == 0)
+					{
+						first = 1;
+					}
+					else
+					{
+						count++;
+					}
+				}
 
 #if 0
 				//wprintf(L"Element: %s\n", pwszLocalName);
@@ -364,15 +375,7 @@ int ParseFile(){
 			else
 			{
 				//wprintf(L"End Element: %s\n", pwszLocalName);
-				if (first == 0)
-				{
-					first = 1;
-				}
-				else
-				{
-					count++;
-					var = 0;
-				}
+				
 			}
 			break;
 
@@ -397,10 +400,37 @@ int ParseFile(){
 				zcoord = new float[NUM_PARTICLES];
 			}
 
-			if (elementName != NULL && wcscmp(elementName, L"object") == 0){
+			
 
+			if (elementName != NULL && wcscmp(elementName, L"name") == 0){
+				char buffer[maxnamesize];
+				wcstombs_s(NULL, buffer, sizeof(char) * maxnamesize, pwszValue, maxnamesize);
+				name[count] = buffer;
 			}
 
+			else if (elementName != NULL && wcscmp(elementName, L"mass") == 0){
+				mass[count] = wcstof(pwszValue, NULL);
+			}
+
+			else if (elementName != NULL && wcscmp(elementName, L"diameter") == 0){
+				diameter[count] = wcstof(pwszValue, NULL);
+			}
+
+			else if (elementName != NULL && wcscmp(elementName, L"brightness") == 0){
+				brightness[count] = int(pwszValue);
+			}
+
+			else if (elementName != NULL && wcscmp(elementName, L"xcoord") == 0){
+				xcoord[count] = wcstof(pwszValue, NULL);
+			}
+
+			else if (elementName != NULL && wcscmp(elementName, L"ycoord") == 0){
+				ycoord[count] = wcstof(pwszValue, NULL);
+			}
+
+			else if (elementName != NULL && wcscmp(elementName, L"zcoord") == 0){
+				zcoord[count] = wcstof(pwszValue, NULL);
+			}
 
 			break;
 
@@ -446,14 +476,24 @@ int ParseFile(){
 			wprintf(L"DOCTYPE is not printed\n");
 			break;
 		}
-		//printf("%d\n", g_maxparticles);
+
+		
 	}
+
+	for (int i = 0; i <= count; i++){
+		char buffer[256];
+		sprintf(buffer, "Name Array: %s\n", name[i].c_str());
+		::OutputDebugStringA(buffer);
+	}
+
 
 CleanUp:
 	SAFE_RELEASE(pFileStream);
 	SAFE_RELEASE(pReader);
 	return hr;
 }
+
+
 
 HRESULT WriteAttributes(IXmlReader* pReader)
 {
@@ -643,6 +683,15 @@ HRESULT CreateParticlePosVeloBuffers( ID3D11Device* pd3dDevice )
     if (!g_pParticleArray)
         return E_OUTOFMEMORY;    
 
+	// Initialize the data in the buffers, 2nd array
+	if (!g_pParticleArrayTWO)
+	{
+		g_pParticleArrayTWO = new PARTICLE_DETAILS[MAX_PARTICLES];
+	}
+
+	if (!g_pParticleArrayTWO)
+		return E_OUTOFMEMORY;
+
     srand( (unsigned int)GetTickCount64() );   
 
     // Disk Galaxy Formation
@@ -651,9 +700,9 @@ HRESULT CreateParticlePosVeloBuffers( ID3D11Device* pd3dDevice )
         XMFLOAT3( fCenterSpread, 0, 0 ), XMFLOAT4( 0, 0, 0, 1 ),
         g_fSpread, NUM_PARTICLES );*/
 
-	float xcoord[] = { -200, -100, 0, 100, 200 };
-	float ycoord[] = { 100, 200, 300, 400, 500 };
-	float zcoord[] = { 100, 200, 300, 400, 500 };
+	//float xcoord[] = { -200, -100, 0, 100, 200 };
+	//float ycoord[] = { 100, 200, 300, 400, 500 };
+	//float zcoord[] = { 100, 200, 300, 400, 500 };
 
 	fillParticles2(g_pParticleArray, g_pParticleArrayTWO, xcoord, ycoord, zcoord, XMFLOAT4(0, 0, 0, 1), name, mass, diameter, brightness);
 
