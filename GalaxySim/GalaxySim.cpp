@@ -585,6 +585,8 @@ XMFLOAT4 createPositionFloat(float xParticle, float yParticle, float zParticle){
 // Functions used to load particles (overarching one is fillParticles2) other ones support it
 //--------------------------------------------------------------------------------------
 
+//TEST CHANGE
+
 void fillPosVel(PARTICLE particles[], float x[], float y[], float z[], XMFLOAT4 Velocity){
 	//method that loads g_pParticleArray with position as a vector and velocity (that is being updated constantly?)
 	//create and then call here a getVelocity methods 
