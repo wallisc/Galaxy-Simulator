@@ -129,10 +129,10 @@ float* ycoord;
 float* zcoord;
 const int maxnamesize = 200;
 
-float red[MAX_PARTICLES];
-float green[MAX_PARTICLES];
-float blue[MAX_PARTICLES];
-bool isFirst = true;
+float g_red[MAX_PARTICLES];
+float g_green[MAX_PARTICLES];
+float g_blue[MAX_PARTICLES];
+bool g_isFirst = true;
 
 
 //--------------------------------------------------------------------------------------
@@ -536,19 +536,19 @@ HRESULT CreateParticleBuffer( ID3D11Device* pd3dDevice )
 	//random number generator for color values
 	srand(static_cast <unsigned> (time(NULL)));
 
-	if (isFirst) {
+	if (g_isFirst) {
 		for (UINT i = 0; i < MAX_PARTICLES; i++) {
-			red[i] = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
-			green[i] = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
-			blue[i] = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+			g_red[i] = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+			g_green[i] = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+			g_blue[i] = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
 
-			pVertices[i].Color = XMFLOAT4(red[i], green[i], blue[i], 1.000000);
+			pVertices[i].Color = XMFLOAT4(g_red[i], g_green[i], g_blue[i], 1.000000);
 		}
-		isFirst = false;
+		g_isFirst = false;
 	}
 	else {
 		for (UINT i = 0; i < MAX_PARTICLES; i++) {
-			pVertices[i].Color = XMFLOAT4(red[i], green[i], blue[i], 1.000000);
+			pVertices[i].Color = XMFLOAT4(g_red[i], g_green[i], g_blue[i], 1.000000);
 		}
 	}
 	
