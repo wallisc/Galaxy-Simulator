@@ -231,12 +231,6 @@ int ParseFile(){
 	const WCHAR* pwszValue;
 	UINT cwchPrefix;
 
-	if (2 != 2) //??? Currently this is where the program is breaking. Never gets past this. argc value is 1? 
-	{
-		wprintf(L"Usage: XmlLiteReader.exe name-of-input-file\n");
-		return 0;
-	}
-
 	//Open read-only input stream 
 	LPCWSTR fileName = L"ObjectData.xml";
 	if (FAILED(hr = SHCreateStreamOnFile(fileName, STGM_READ, &pFileStream)))
@@ -310,43 +304,6 @@ int ParseFile(){
 						count++;
 					}
 				}
-
-#if 0
-				//wprintf(L"Element: %s\n", pwszLocalName);
-				if (first == 0)
-				{
-					NUM_PARTICLES = (int)pwszLocalName;
-					name = new string[NUM_PARTICLES];
-					mass = new float[NUM_PARTICLES];
-					diameter = new float[NUM_PARTICLES];
-					brightness = new int[NUM_PARTICLES];
-					xcoord = new float[NUM_PARTICLES];
-					ycoord = new float[NUM_PARTICLES];
-					zcoord = new float[NUM_PARTICLES];
-				}
-				else
-				{
-					if (var == 0)
-					{
-						char buffer[maxnamesize];
-						wcstombs_s(NULL, buffer, sizeof(char) * maxnamesize, pwszLocalName, maxnamesize);
-						name[count] = buffer;
-					}
-					else if (var == 1)
-						mass[count] = wcstof(pwszLocalName, NULL);
-					else if (var == 2)
-						diameter[count] = wcstof(pwszLocalName, NULL);
-					else if (var == 3)
-						brightness[count] = int(pwszLocalName);
-					else if (var == 4)
-						xcoord[count] = wcstof(pwszLocalName, NULL);
-					else if (count == 5)
-						ycoord[count] = wcstof(pwszLocalName, NULL);
-					else if (var == 6)
-						zcoord[count] = wcstof(pwszLocalName, NULL);
-					var++;
-				}
-#endif
 
 			}
 			if (FAILED(hr = WriteAttributes(pReader)))
@@ -475,15 +432,15 @@ int ParseFile(){
 			wprintf(L"DOCTYPE is not printed\n");
 			break;
 		}
-
-		
 	}
 
+#if 0 // Keep this code around as example of using OutputDebugString
 	for (int i = 0; i <= count; i++){
 		char buffer[256];
 		sprintf(buffer, "Name Array: %s\n", name[i].c_str());
 		::OutputDebugStringA(buffer);
 	}
+#endif
 
 
 CleanUp:
