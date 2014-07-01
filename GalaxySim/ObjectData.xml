@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<Universe>
+
+<MaxParticles>2</MaxParticles>
+
+<object>
+  <name>Sun</name>
+  <mass>25000</mass>
+  <diameter>6400</diameter>
+  <brightness>6</brightness>
+  <xcoord>0</xcoord>
+  <ycoord>0</ycoord>
+  <zcoord>0</zcoord>
+</object>
+
+<object>
+  <name>Earth</name>
+  <mass>200</mass>
+  <diameter>64</diameter>
+  <brightness>4</brightness>
+  <xcoord>20</xcoord>
+  <ycoord>20</ycoord>
+  <zcoord>20</zcoord>
+</object>
+
+</Universe>
+
