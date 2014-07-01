@@ -28,6 +28,8 @@
 #include <iostream>
 #include <stdlib.h>
 #include <wchar.h>
+#include <cstdlib>
+#include <ctime>
 
 #include "atlbase.h"
 #include "atlstr.h"
@@ -127,6 +129,10 @@ float* ycoord;
 float* zcoord;
 const int maxnamesize = 200;
 
+float red[MAX_PARTICLES];
+float green[MAX_PARTICLES];
+float blue[MAX_PARTICLES];
+bool isFirst = true;
 
 
 //--------------------------------------------------------------------------------------
@@ -527,10 +533,25 @@ HRESULT CreateParticleBuffer( ID3D11Device* pd3dDevice )
     if( !pVertices )
         return E_OUTOFMEMORY;
 
-    for( UINT i = 0; i < MAX_PARTICLES; i++ )
-    {
-        pVertices[i].Color = XMFLOAT4( 0.2f, 0.2f, 0.8f, 1 );
-    }
+	//random number generator for color values
+	srand(static_cast <unsigned> (time(NULL)));
+
+	if (isFirst) {
+		for (UINT i = 0; i < MAX_PARTICLES; i++) {
+			red[i] = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+			green[i] = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+			blue[i] = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+
+			pVertices[i].Color = XMFLOAT4(red[i], green[i], blue[i], 1.000000);
+		}
+		isFirst = false;
+	}
+	else {
+		for (UINT i = 0; i < MAX_PARTICLES; i++) {
+			pVertices[i].Color = XMFLOAT4(red[i], green[i], blue[i], 1.000000);
+		}
+	}
+	
 
     vbInitData.pSysMem = pVertices;
     V_RETURN( pd3dDevice->CreateBuffer( &vbdesc, &vbInitData, &g_pParticleBuffer ) );
@@ -1075,13 +1096,13 @@ void CALLBACK OnD3D11DestroyDevice( void* pUserContext )
     SAFE_DELETE_ARRAY( g_pParticleArray );
 	SAFE_DELETE_ARRAY(g_pParticleArrayTWO);
 
-	SAFE_DELETE_ARRAY(name);
-	SAFE_DELETE_ARRAY(mass);
-	SAFE_DELETE_ARRAY(diameter);
-	SAFE_DELETE_ARRAY(brightness);
-	SAFE_DELETE_ARRAY(xcoord);
-	SAFE_DELETE_ARRAY(ycoord);
-	SAFE_DELETE_ARRAY(zcoord);
+	//SAFE_DELETE_ARRAY(name);
+	//SAFE_DELETE_ARRAY(mass);
+	//SAFE_DELETE_ARRAY(diameter);
+	//SAFE_DELETE_ARRAY(brightness);
+	//SAFE_DELETE_ARRAY(xcoord);
+	//SAFE_DELETE_ARRAY(ycoord);
+	//SAFE_DELETE_ARRAY(zcoord);
 
     SAFE_RELEASE( g_pParticleBuffer ); 
     SAFE_RELEASE( g_pParticleVertexLayout );
