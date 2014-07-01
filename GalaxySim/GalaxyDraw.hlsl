@@ -88,8 +88,7 @@ VSGalaxyDrawOut VSGalaxyDraw(VSParticleIn input)
     output.pos = g_bufPosVelo[input.id].pos;
     
     float mag = g_bufPosVelo[input.id].velo.w/9;
-	output.color = input.color;
-    //output.color = lerp( float4(1,0.1,0.1,1), input.color, mag );
+    output.color = lerp( float4(1,0.1,0.1,1), input.color, mag );
     
     return output;
 }
