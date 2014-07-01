@@ -527,10 +527,19 @@ HRESULT CreateParticleBuffer( ID3D11Device* pd3dDevice )
     if( !pVertices )
         return E_OUTOFMEMORY;
 
-    for( UINT i = 0; i < MAX_PARTICLES; i++ )
-    {
-        pVertices[i].Color = XMFLOAT4( 0.2f, 0.2f, 0.8f, 1 );
-    }
+	//random number generator for colors
+	srand(static_cast <unsigned> (time(NULL)));
+	float red;
+	float green;
+	float blue;
+	//testing asdfslkjg
+	for (UINT i = 0; i < MAX_PARTICLES; i++) {
+		red = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+		green = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+		blue = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+
+		pVertices[i].Color = XMFLOAT4(red, green, blue, 1.000000);
+	}
 
     vbInitData.pSysMem = pVertices;
     V_RETURN( pd3dDevice->CreateBuffer( &vbdesc, &vbInitData, &g_pParticleBuffer ) );
