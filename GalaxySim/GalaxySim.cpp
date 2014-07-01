@@ -651,13 +651,7 @@ void fillDetails(PARTICLE_DETAILS particles2[], string nameIn[], float massIn[],
 void fillParticles2(PARTICLE particles[], PARTICLE_DETAILS particles2[], float x[], float y[], float z[], XMFLOAT4 Velocity, string nameIn[], float massIn[], float diameterIn[], int brightnessIn[]){
 	fillPosVel(particles, x, y, z, Velocity);
 	fillDetails(particles2, nameIn, massIn, diameterIn, brightnessIn);
-	SAFE_DELETE_ARRAY(name);
-	SAFE_DELETE_ARRAY(mass);
-	SAFE_DELETE_ARRAY(diameter);
-	SAFE_DELETE_ARRAY(brightness);
-	SAFE_DELETE_ARRAY(xcoord);
-	SAFE_DELETE_ARRAY(ycoord);
-	SAFE_DELETE_ARRAY(zcoord);
+
 }
 
 //--------------------------------------------------------------------------------------
@@ -700,11 +694,8 @@ HRESULT CreateParticlePosVeloBuffers( ID3D11Device* pd3dDevice )
         XMFLOAT3( fCenterSpread, 0, 0 ), XMFLOAT4( 0, 0, 0, 1 ),
         g_fSpread, NUM_PARTICLES );*/
 
-	//float xcoord[] = { -200, -100, 0, 100, 200 };
-	//float ycoord[] = { 100, 200, 300, 400, 500 };
-	//float zcoord[] = { 100, 200, 300, 400, 500 };
-
 	fillParticles2(g_pParticleArray, g_pParticleArrayTWO, xcoord, ycoord, zcoord, XMFLOAT4(0, 0, 0, 1), name, mass, diameter, brightness);
+
 
     D3D11_SUBRESOURCE_DATA InitData;
     InitData.pSysMem = g_pParticleArray;
@@ -1127,6 +1118,14 @@ void CALLBACK OnD3D11DestroyDevice( void* pUserContext )
     SAFE_DELETE( g_pTxtHelper );
     SAFE_DELETE_ARRAY( g_pParticleArray );
 	SAFE_DELETE_ARRAY(g_pParticleArrayTWO);
+
+	SAFE_DELETE_ARRAY(name);
+	SAFE_DELETE_ARRAY(mass);
+	SAFE_DELETE_ARRAY(diameter);
+	SAFE_DELETE_ARRAY(brightness);
+	SAFE_DELETE_ARRAY(xcoord);
+	SAFE_DELETE_ARRAY(ycoord);
+	SAFE_DELETE_ARRAY(zcoord);
 
     SAFE_RELEASE( g_pParticleBuffer ); 
     SAFE_RELEASE( g_pParticleVertexLayout );
