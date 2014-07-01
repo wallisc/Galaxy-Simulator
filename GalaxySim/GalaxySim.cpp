@@ -238,8 +238,7 @@ int ParseFile(){
 	}
 
 	//Open read-only input stream 
-//	LPCWSTR fileName = L"C:\\Users\\t-anaco\\Source\\Repos\\Galaxy-Simulator\\GalaxySim\\XMLFileFormatTEST.xml";
-	LPCWSTR fileName = L"..\\GalaxySim\\ObjectData.xml";
+	LPCWSTR fileName = L"ObjectData.xml";
 	if (FAILED(hr = SHCreateStreamOnFile(fileName, STGM_READ, &pFileStream)))
 	{
 		wprintf(L"Error creating file reader, error is %08.8lx", hr);
