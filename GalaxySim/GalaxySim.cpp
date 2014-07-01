@@ -28,6 +28,8 @@
 #include <iostream>
 #include <stdlib.h>
 #include <wchar.h>
+#include <cstdlib>
+#include <ctime>
 
 #include "atlbase.h"
 #include "atlstr.h"
@@ -532,7 +534,7 @@ HRESULT CreateParticleBuffer( ID3D11Device* pd3dDevice )
 	float red;
 	float green;
 	float blue;
-	//testing asdfslkjg
+
 	for (UINT i = 0; i < MAX_PARTICLES; i++) {
 		red = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
 		green = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
