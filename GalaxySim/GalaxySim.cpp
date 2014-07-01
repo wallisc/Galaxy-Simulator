@@ -551,6 +551,7 @@ HRESULT CreateParticleBuffer( ID3D11Device* pd3dDevice )
 		for (UINT i = 0; i < MAX_PARTICLES; i++) {
 			pVertices[i].Color = XMFLOAT4(red[i], green[i], blue[i], 1.000000);
 		}
+	}
 	
     vbInitData.pSysMem = pVertices;
     V_RETURN( pd3dDevice->CreateBuffer( &vbdesc, &vbInitData, &g_pParticleBuffer ) );
@@ -1101,13 +1102,13 @@ void CALLBACK OnD3D11DestroyDevice( void* pUserContext )
     SAFE_DELETE_ARRAY( g_pParticleArray );
 	SAFE_DELETE_ARRAY(g_pParticleArrayTWO);
 
-	SAFE_DELETE_ARRAY(name);
-	SAFE_DELETE_ARRAY(mass);
-	SAFE_DELETE_ARRAY(diameter);
-	SAFE_DELETE_ARRAY(brightness);
-	SAFE_DELETE_ARRAY(xcoord);
-	SAFE_DELETE_ARRAY(ycoord);
-	SAFE_DELETE_ARRAY(zcoord);
+	//SAFE_DELETE_ARRAY(name);
+	//SAFE_DELETE_ARRAY(mass);
+	//SAFE_DELETE_ARRAY(diameter);
+	//SAFE_DELETE_ARRAY(brightness);
+	//SAFE_DELETE_ARRAY(xcoord);
+	//SAFE_DELETE_ARRAY(ycoord);
+	//SAFE_DELETE_ARRAY(zcoord);
 
     SAFE_RELEASE( g_pParticleBuffer ); 
     SAFE_RELEASE( g_pParticleVertexLayout );
