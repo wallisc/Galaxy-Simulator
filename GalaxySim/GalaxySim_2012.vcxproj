@@ -138,7 +138,7 @@
     </ClCompile>
     <Link>
       <AdditionalOptions> %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalDependencies>d3dcompiler.lib;dxguid.lib;winmm.lib;comctl32.lib;usp10.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>xmllite.lib;shlwapi.lib;d3dcompiler.lib;dxguid.lib;winmm.lib;comctl32.lib;usp10.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <LargeAddressAware>true</LargeAddressAware>
