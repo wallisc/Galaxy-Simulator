@@ -126,6 +126,7 @@ float* xcoord;
 float* ycoord;
 float* zcoord;
 const int maxnamesize = 200;
+const float g_constant = 6.67 * 10;
 
 
 
@@ -702,6 +703,12 @@ void CALLBACK OnFrameMove( double fTime, float fElapsedTime, void* pUserContext 
 
     for (int i = 0; i < NUM_PARTICLES; i++)
     {
+
+
+
+		// define acceleration here
+		// then update velocity
+		// then update position
         // Insert gravity calculations here
         //g_pParticleArray[i].pos.x -= 2.0f;
 		//move each object's button
