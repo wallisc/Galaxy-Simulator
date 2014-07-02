@@ -645,7 +645,24 @@ void fillParticles2(PARTICLE particles[], PARTICLE_DETAILS particles2[], std::ve
 //-
 
 void displayObjectInfo(){
+	for (auto object : g_objects)
+	{
+		wchar_t buffer[256];
+		swprintf(buffer, sizeof(buffer), L"Name: %s\n", object.m_name.c_str());
+		::OutputDebugString(buffer);
 
+		swprintf(buffer, sizeof(buffer), L"Mass: %f\n", object.m_mass);
+		::OutputDebugString(buffer);
+
+		swprintf(buffer, sizeof(buffer), L"Diameter: %f\n", object.m_diameter);
+		::OutputDebugString(buffer);
+
+		swprintf(buffer, sizeof(buffer), L"Brightness: %i\n", object.m_brightness);
+		::OutputDebugString(buffer);
+
+		swprintf(buffer, sizeof(buffer), L"Position: x: %f y: %f z: %f\n\n", object.m_xcoord, object.m_ycoord, object.m_zcoord);
+		::OutputDebugString(buffer);
+	}
 }
 
 //--------------------------------------------------------------------------------------
