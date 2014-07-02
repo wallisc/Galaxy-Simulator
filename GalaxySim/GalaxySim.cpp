@@ -143,6 +143,7 @@ bool isFirst = true;
 #define IDC_TOGGLEREF           3
 #define IDC_CHANGEDEVICE        4
 #define IDC_RESETPARTICLES      5
+#define IDC_DISPLAYINFO			6
 
 //--------------------------------------------------------------------------------------
 // Forward declarations 
@@ -169,6 +170,7 @@ void RenderText();
 //declare WriteAttributes function here, content is below ParseFile()
 HRESULT WriteAttributes(IXmlReader* pReader);
 int ParseFile();
+void displayObjectInfo();
 
 //--------------------------------------------------------------------------------------
 // Entry point to the program. Initializes everything and goes into a message processing 
@@ -221,6 +223,7 @@ void InitApp()
     g_HUD.AddButton( IDC_TOGGLEREF, L"Toggle REF (F3)", 0, iY += 26, 170, 23, VK_F3 );
     g_HUD.AddButton( IDC_CHANGEDEVICE, L"Change device (F2)", 0, iY += 26, 170, 23, VK_F2 );
     g_HUD.AddButton( IDC_RESETPARTICLES, L"Reset particles (F4)", 0, iY += 26, 170, 22, VK_F4 );
+	g_HUD.AddButton(IDC_DISPLAYINFO, L"Display Object Info (F1)", -30, iY += 26, 200, 23, VK_F1);
     g_SampleUI.SetCallback( OnGUIEvent ); 
 }
 
@@ -632,6 +635,15 @@ void fillParticles2(PARTICLE particles[], PARTICLE_DETAILS particles2[], float x
 }
 
 //--------------------------------------------------------------------------------------
+// Function that displays object information. Gets called when user presses Display Object Info button
+// Currently displays to output window, later will display to pane on the right
+//-
+
+void displayObjectInfo(){
+
+}
+
+//--------------------------------------------------------------------------------------
 HRESULT CreateParticlePosVeloBuffers( ID3D11Device* pd3dDevice )
 {
     HRESULT hr = S_OK;
@@ -805,6 +817,8 @@ void CALLBACK OnGUIEvent( UINT nEvent, int nControlID, CDXUTControl* pControl, v
             CreateParticlePosVeloBuffers(DXUTGetD3D11Device());
             break;
         }
+	case IDC_DISPLAYINFO:
+		displayObjectInfo(); break;
     }
 }
 
