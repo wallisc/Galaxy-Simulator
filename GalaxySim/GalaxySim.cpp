@@ -28,6 +28,8 @@
 #include <iostream>
 #include <stdlib.h>
 #include <wchar.h>
+#include <cstdlib>
+#include <ctime>
 #include <math.h>
 
 #include "atlbase.h"
@@ -85,7 +87,6 @@ int NUM_PARTICLES;
 
 #define CHKHR(stmt)             do { hr = (stmt); if (FAILED(hr)) goto CleanUp; } while(0) 
 #define HR(stmt)                do { hr = (stmt); goto CleanUp; } while(0) 
-#define SAFE_RELEASE(I)         do { if (I){ I->Release(); } I = NULL; } while(0) 
 
 struct CB_GS
 {
@@ -107,7 +108,7 @@ struct PARTICLE
 
 struct PARTICLE_DETAILS
 {
-	string name;
+	wstring name;
 	float mass;
 	float diameter;
 	int brightness;
@@ -119,16 +120,37 @@ PARTICLE_DETAILS*					g_pParticleArrayTWO = NULL;
 
 
 //will point to arrays that hold info from file until it is put into above two arrays
-string* name;
-float* mass;
-float* diameter;
-int* brightness;
-float* xcoord;
-float* ycoord;
-float* zcoord;
-const int maxnamesize = 200;
-const float g_constant = -10;
+class ObjectData
+{
+public:
 
+    ObjectData() :
+        m_name(L"unknown"), m_mass(0.0f), m_diameter(0.0f), m_brightness(0), m_xcoord(0.0f), m_ycoord(0.0f), m_zcoord(0.0f)
+    {}
+
+    ObjectData(const wstring & name, float mass, float diameter, int brightness, float x, float y, float z) :
+        m_name(name), m_mass(mass), m_diameter(diameter), m_brightness(brightness), m_xcoord(x), m_ycoord(y), m_zcoord(z)
+    {
+        // Could assert on the various properties to ensure they are within range
+    }
+
+    wstring   m_name;
+    float     m_mass;
+    float     m_diameter;
+    int       m_brightness;
+    float     m_xcoord;
+    float     m_ycoord;
+    float     m_zcoord;
+};
+
+std::vector<ObjectData> g_objects;
+
+const float g_constant = 6.67 * 10;
+
+float red[MAX_PARTICLES];
+float green[MAX_PARTICLES];
+float blue[MAX_PARTICLES];
+bool isFirst = true;
 
 
 //--------------------------------------------------------------------------------------
@@ -138,6 +160,7 @@ const float g_constant = -10;
 #define IDC_TOGGLEREF           3
 #define IDC_CHANGEDEVICE        4
 #define IDC_RESETPARTICLES      5
+#define IDC_DISPLAYINFO			6
 
 //--------------------------------------------------------------------------------------
 // Forward declarations 
@@ -164,6 +187,7 @@ void RenderText();
 //declare WriteAttributes function here, content is below ParseFile()
 HRESULT WriteAttributes(IXmlReader* pReader);
 int ParseFile();
+void displayObjectInfo();
 
 //--------------------------------------------------------------------------------------
 // Entry point to the program. Initializes everything and goes into a message processing 
@@ -198,6 +222,8 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
     DXUTCreateDevice( D3D_FEATURE_LEVEL_10_0, true, 800, 600 );
     DXUTMainLoop();                      // Enter into the DXUT render loop
 
+    g_objects.clear();
+
     return DXUTGetExitCode();
 }
 
@@ -216,6 +242,7 @@ void InitApp()
     g_HUD.AddButton( IDC_TOGGLEREF, L"Toggle REF (F3)", 0, iY += 26, 170, 23, VK_F3 );
     g_HUD.AddButton( IDC_CHANGEDEVICE, L"Change device (F2)", 0, iY += 26, 170, 23, VK_F2 );
     g_HUD.AddButton( IDC_RESETPARTICLES, L"Reset particles (F4)", 0, iY += 26, 170, 22, VK_F4 );
+	g_HUD.AddButton(IDC_DISPLAYINFO, L"Display Object Info (F1)", -30, iY += 26, 200, 23, VK_F1);
     g_SampleUI.SetCallback( OnGUIEvent ); 
 }
 
@@ -232,6 +259,8 @@ int ParseFile(){
 	const WCHAR* pwszLocalName;
 	const WCHAR* pwszValue;
 	UINT cwchPrefix;
+
+    ObjectData objectData;
 
 	//Open read-only input stream 
 	LPCWSTR fileName = L"ObjectData.xml";
@@ -261,8 +290,6 @@ int ParseFile(){
 
 	//read until there are no more nodes 
 	//Pretty sure this is where we would change the printf's outside the if's so they go to an array? probably? 
-	int first = 0;
-	int count = 0;
 
 	const WCHAR * elementName = NULL;
 
@@ -296,18 +323,7 @@ int ParseFile(){
 
 				elementName = pwszLocalName;
 
-				if (elementName != NULL && wcscmp(elementName, L"object") == 0){
-					if (first == 0)
-					{
-						first = 1;
 					}
-					else
-					{
-						count++;
-					}
-				}
-
-			}
 			if (FAILED(hr = WriteAttributes(pReader)))
 			{
 				wprintf(L"Error writing attributes, error is %08.8lx", hr);
@@ -335,6 +351,11 @@ int ParseFile(){
 				//wprintf(L"End Element: %s\n", pwszLocalName);
 				
 			}
+
+            if (pwszLocalName != NULL && wcscmp(pwszLocalName, L"object") == 0){
+                g_objects.push_back(objectData);
+            }
+
 			break;
 
 		case XmlNodeType_Text:
@@ -345,49 +366,32 @@ int ParseFile(){
 			}
 			wprintf(L"Text: %s\n", pwszValue);
 
-			if (elementName != NULL && wcscmp(elementName, L"MaxParticles") == 0)
-			{
-				NUM_PARTICLES = _wtoi(pwszValue);
-
-				name = new string[NUM_PARTICLES];
-				mass = new float[NUM_PARTICLES];
-				diameter = new float[NUM_PARTICLES];
-				brightness = new int[NUM_PARTICLES];
-				xcoord = new float[NUM_PARTICLES];
-				ycoord = new float[NUM_PARTICLES];
-				zcoord = new float[NUM_PARTICLES];
-			}
-
-			
-
 			if (elementName != NULL && wcscmp(elementName, L"name") == 0){
-				char buffer[maxnamesize];
-				wcstombs_s(NULL, buffer, sizeof(char) * maxnamesize, pwszValue, maxnamesize);
-				name[count] = buffer;
+                objectData.m_name = pwszValue;
 			}
 
 			else if (elementName != NULL && wcscmp(elementName, L"mass") == 0){
-				mass[count] = wcstof(pwszValue, NULL);
+                objectData.m_mass = wcstof(pwszValue, NULL);
 			}
 
 			else if (elementName != NULL && wcscmp(elementName, L"diameter") == 0){
-				diameter[count] = wcstof(pwszValue, NULL);
+                objectData.m_diameter = wcstof(pwszValue, NULL);
 			}
 
 			else if (elementName != NULL && wcscmp(elementName, L"brightness") == 0){
-				brightness[count] = int(pwszValue);
+                objectData.m_brightness = int(pwszValue);
 			}
 
 			else if (elementName != NULL && wcscmp(elementName, L"xcoord") == 0){
-				xcoord[count] = wcstof(pwszValue, NULL);
+                objectData.m_xcoord = wcstof(pwszValue, NULL);
 			}
 
 			else if (elementName != NULL && wcscmp(elementName, L"ycoord") == 0){
-				ycoord[count] = wcstof(pwszValue, NULL);
+                objectData.m_ycoord = wcstof(pwszValue, NULL);
 			}
 
 			else if (elementName != NULL && wcscmp(elementName, L"zcoord") == 0){
-				zcoord[count] = wcstof(pwszValue, NULL);
+                objectData.m_zcoord = wcstof(pwszValue, NULL);
 			}
 
 			break;
@@ -437,9 +441,10 @@ int ParseFile(){
 	}
 
 #if 0 // Keep this code around as example of using OutputDebugString
-	for (int i = 0; i <= count; i++){
+    for (auto object : g_objects)
+    {
 		char buffer[256];
-		sprintf(buffer, "Name Array: %s\n", name[i].c_str());
+        sprintf_s(buffer, sizeof(buffer), "Name Array: %s\n", object.m_name.c_str());
 		::OutputDebugStringA(buffer);
 	}
 #endif
@@ -529,9 +534,23 @@ HRESULT CreateParticleBuffer( ID3D11Device* pd3dDevice )
     if( !pVertices )
         return E_OUTOFMEMORY;
 
-    for( UINT i = 0; i < MAX_PARTICLES; i++ )
-    {
-        pVertices[i].Color = XMFLOAT4( 0.2f, 0.2f, 0.8f, 1 );
+	//random number generator for color values
+	srand(static_cast <unsigned> (time(NULL)));
+
+	if (isFirst) {
+		for (UINT i = 0; i < MAX_PARTICLES; i++) {
+			red[i] = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+			green[i] = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+			blue[i] = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+
+			pVertices[i].Color = XMFLOAT4(red[i], green[i], blue[i], 1.000000);
+		}
+		isFirst = false;
+	}
+	else {
+		for (UINT i = 0; i < MAX_PARTICLES; i++) {
+			pVertices[i].Color = XMFLOAT4(red[i], green[i], blue[i], 1.000000);
+		}
     }
 
     vbInitData.pSysMem = pVertices;
@@ -629,29 +648,64 @@ XMFLOAT4 ConstantVectorMultiplication(float constant, XMFLOAT4 vector)
 // Functions used to load particles (overarching one is fillParticles2) other ones support it
 //--------------------------------------------------------------------------------------
 
-void fillPosVel(PARTICLE particles[], float x[], float y[], float z[], XMFLOAT4 Velocity){
+void fillPosVel(PARTICLE particles[], std::vector<ObjectData> & objects, XMFLOAT4 Velocity){
 	//method that loads g_pParticleArray with position as a vector and velocity (that is being updated constantly?)
 	//create and then call here a getVelocity methods 
 
-	for (int i = 0; i < NUM_PARTICLES; i++){
-		particles[i].pos = createPositionFloat(x[i], y[i], z[i]);
+    int i = 0;
+    for (auto object : objects)
+    {
+        particles[i].pos = createPositionFloat(object.m_xcoord, object.m_ycoord, object.m_zcoord);
 		particles[i].velo = Velocity;
+        i++;
 	}
+
+    NUM_PARTICLES = i;
 }
 
-void fillDetails(PARTICLE_DETAILS particles2[], string nameIn[], float massIn[], float diameterIn[], int brightnessIn[]){
-	for (int i = 0; i < NUM_PARTICLES; i++){
-		particles2[i].name = nameIn[i];
-		particles2[i].mass = massIn[i];
-		particles2[i].diameter = diameterIn[i];
-		particles2[i].brightness = brightnessIn[i];
+void fillDetails(PARTICLE_DETAILS particles2[], std::vector<ObjectData> & objects){
+
+    int i = 0;
+    for (auto object : objects) {
+		particles2[i].name = object.m_name;
+        particles2[i].mass = object.m_mass;
+        particles2[i].diameter = object.m_diameter;
+        particles2[i].brightness = object.m_brightness;
+        i++;
 	}
+    assert(i == NUM_PARTICLES);
+	}
+
+void fillParticles2(PARTICLE particles[], PARTICLE_DETAILS particles2[], std::vector<ObjectData> & objects, XMFLOAT4 Velocity){
+	fillPosVel(particles, objects, Velocity);
+	fillDetails(particles2, objects);
+
 }
 
-void fillParticles2(PARTICLE particles[], PARTICLE_DETAILS particles2[], float x[], float y[], float z[], XMFLOAT4 Velocity, string nameIn[], float massIn[], float diameterIn[], int brightnessIn[]){
-	fillPosVel(particles, x, y, z, Velocity);
-	fillDetails(particles2, nameIn, massIn, diameterIn, brightnessIn);
+//--------------------------------------------------------------------------------------
+// Function that displays object information. Gets called when user presses Display Object Info button
+// Currently displays to output window, later will display to pane on the right
+//-
 
+void displayObjectInfo(){
+	for (auto object : g_objects)
+	{
+		wchar_t buffer[256];
+		swprintf(buffer, sizeof(buffer), L"Name: %s\n", object.m_name.c_str());
+		::OutputDebugString(buffer);
+
+		swprintf(buffer, sizeof(buffer), L"Mass: %f\n", object.m_mass);
+		::OutputDebugString(buffer);
+
+		swprintf(buffer, sizeof(buffer), L"Diameter: %f\n", object.m_diameter);
+		::OutputDebugString(buffer);
+
+		swprintf(buffer, sizeof(buffer), L"Brightness: %i\n", object.m_brightness);
+		::OutputDebugString(buffer);
+
+		swprintf(buffer, sizeof(buffer), L"Position: x: %f y: %f z: %f\n\n", object.m_xcoord, object.m_ycoord, object.m_zcoord);
+		::OutputDebugString(buffer);
+	}
 }
 
 //--------------------------------------------------------------------------------------
@@ -694,7 +748,7 @@ HRESULT CreateParticlePosVeloBuffers( ID3D11Device* pd3dDevice )
         XMFLOAT3( fCenterSpread, 0, 0 ), XMFLOAT4( 0, 0, 0, 1 ),
         g_fSpread, NUM_PARTICLES );*/
 
-	fillParticles2(g_pParticleArray, g_pParticleArrayTWO, xcoord, ycoord, zcoord, XMFLOAT4(0, 0, 0, 1), name, mass, diameter, brightness);
+	fillParticles2(g_pParticleArray, g_pParticleArrayTWO, g_objects, XMFLOAT4(0, 0, 0, 1));
 
 
     D3D11_SUBRESOURCE_DATA InitData;
@@ -844,6 +898,8 @@ void CALLBACK OnGUIEvent( UINT nEvent, int nControlID, CDXUTControl* pControl, v
             CreateParticlePosVeloBuffers(DXUTGetD3D11Device());
             break;
         }
+	case IDC_DISPLAYINFO:
+		displayObjectInfo(); break;
     }
 }
 
@@ -1140,14 +1196,6 @@ void CALLBACK OnD3D11DestroyDevice( void* pUserContext )
     SAFE_DELETE( g_pTxtHelper );
     SAFE_DELETE_ARRAY( g_pParticleArray );
 	SAFE_DELETE_ARRAY(g_pParticleArrayTWO);
-
-	SAFE_DELETE_ARRAY(name);
-	SAFE_DELETE_ARRAY(mass);
-	SAFE_DELETE_ARRAY(diameter);
-	SAFE_DELETE_ARRAY(brightness);
-	SAFE_DELETE_ARRAY(xcoord);
-	SAFE_DELETE_ARRAY(ycoord);
-	SAFE_DELETE_ARRAY(zcoord);
 
     SAFE_RELEASE( g_pParticleBuffer ); 
     SAFE_RELEASE( g_pParticleVertexLayout );
