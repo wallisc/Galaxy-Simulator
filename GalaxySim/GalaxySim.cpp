@@ -30,6 +30,7 @@
 #include <wchar.h>
 #include <cstdlib>
 #include <ctime>
+#include <math.h>
 
 #include "atlbase.h"
 #include "atlstr.h"
@@ -261,7 +262,7 @@ int ParseFile(){
 
     ObjectData objectData;
 
-    //Open read-only input stream 
+	//Open read-only input stream 
 	LPCWSTR fileName = L"ObjectData.xml";
 	if (FAILED(hr = SHCreateStreamOnFile(fileName, STGM_READ, &pFileStream)))
 	{
@@ -322,7 +323,7 @@ int ParseFile(){
 
 				elementName = pwszLocalName;
 
-			}
+					}
 			if (FAILED(hr = WriteAttributes(pReader)))
 			{
 				wprintf(L"Error writing attributes, error is %08.8lx", hr);
@@ -364,7 +365,7 @@ int ParseFile(){
 				HR(hr);
 			}
 			wprintf(L"Text: %s\n", pwszValue);
-		
+
 			if (elementName != NULL && wcscmp(elementName, L"name") == 0){
                 objectData.m_name = pwszValue;
 			}
@@ -550,8 +551,8 @@ HRESULT CreateParticleBuffer( ID3D11Device* pd3dDevice )
 		for (UINT i = 0; i < MAX_PARTICLES; i++) {
 			pVertices[i].Color = XMFLOAT4(red[i], green[i], blue[i], 1.000000);
 		}
-	}
-	
+    }
+
     vbInitData.pSysMem = pVertices;
     V_RETURN( pd3dDevice->CreateBuffer( &vbdesc, &vbInitData, &g_pParticleBuffer ) );
     DXUT_SetDebugName( g_pParticleBuffer, "Particles" );
@@ -601,6 +602,48 @@ XMFLOAT4 createPositionFloat(float xParticle, float yParticle, float zParticle){
 	return XMFLOAT4(xParticle, yParticle, zParticle, 10000.0f * 10000.0f);
 }
 
+//method for performing vector subtraction when dealing with XMFLOAT4
+//definition for XMFLOAT4 is in the sample, line 570
+XMFLOAT4 VectorSubtraction(XMFLOAT4 vector1, XMFLOAT4 vector2)
+{
+	float xcoord = vector1.x - vector2.x;
+	float ycoord = vector1.y - vector2.y;
+	float zcoord = vector1.z - vector2.z;
+	float wcoord = vector1.w - vector2.w;
+	return XMFLOAT4(xcoord, ycoord, zcoord, wcoord);
+}
+
+//method for calculating vector addition, in XMFLOAT4 format
+//will be necessary when adding invidividual accelerations
+XMFLOAT4 VectorAddition(XMFLOAT4 vector1, XMFLOAT4 vector2)
+{
+	float xcoord = vector1.x + vector2.x;
+	float ycoord = vector1.y + vector2.y;
+	float zcoord = vector1.z + vector2.z;
+	float wcoord = vector1.w + vector2.w;
+	return XMFLOAT4(xcoord, ycoord, zcoord, wcoord);
+}
+
+//method for calculating the magnitude of an XMFLOAT4 vector
+//we will only take into account the x, y, z coordinates necessary for calculating the position!!
+float VectorMagnitude(XMFLOAT4 vector)
+{
+	float magnitude = sqrt(pow(vector.x, 2) + pow(vector.y, 2) + pow(vector.z, 2));
+	return magnitude;
+}
+
+//method for multiplying an XMFLOAT4 vector with a constant
+//will use this for calculating acceleration and making things move when implementing physical laws
+XMFLOAT4 ConstantVectorMultiplication(float constant, XMFLOAT4 vector)
+{
+	float xcoord = constant * vector.x;
+	float ycoord = constant * vector.y;
+	float zcoord = constant * vector.z;
+	float wcoord = constant * vector.w;
+	return XMFLOAT4(xcoord, ycoord, zcoord, wcoord);
+}
+
+
 //--------------------------------------------------------------------------------------
 // Functions used to load particles (overarching one is fillParticles2) other ones support it
 //--------------------------------------------------------------------------------------
@@ -631,7 +674,7 @@ void fillDetails(PARTICLE_DETAILS particles2[], std::vector<ObjectData> & object
         i++;
 	}
     assert(i == NUM_PARTICLES);
-}
+	}
 
 void fillParticles2(PARTICLE particles[], PARTICLE_DETAILS particles2[], std::vector<ObjectData> & objects, XMFLOAT4 Velocity){
 	fillPosVel(particles, objects, Velocity);
@@ -758,12 +801,28 @@ void CALLBACK OnFrameMove( double fTime, float fElapsedTime, void* pUserContext 
     for (int i = 0; i < NUM_PARTICLES; i++)
     {
 
+		// here I calculate acceleration for each object in particular
+		//ind_acc = new XMFLOAT4[NUM_PARTICLES];
+		XMFLOAT4 acceleration = XMFLOAT4(0, 0, 0, 0);
 
+		for (int j = 0; j < NUM_PARTICLES; j++)
+		{
+			if (i != j)
+			{
+				XMFLOAT4 ijdist = VectorSubtraction(g_pParticleArray[i].pos, g_pParticleArray[j].pos);
+				float ijdist_magnitude = VectorMagnitude(ijdist);
 
-		// define acceleration here
-		// then update velocity
-		// then update position
-        // Insert gravity calculations here
+				float g_accConstant = g_constant * g_pParticleArrayTWO[j].mass / pow(ijdist_magnitude, 3);
+				XMFLOAT4 g_acc = ConstantVectorMultiplication(g_accConstant, ijdist);
+				acceleration = VectorAddition(acceleration, g_acc);
+
+				//ind_acc[j] = g_acc;
+			}
+		}
+
+		//update velocity and position using acceleration
+		g_pParticleArray[i].velo = VectorAddition(g_pParticleArray[i].velo, ConstantVectorMultiplication(0.1, acceleration));
+		g_pParticleArray[i].pos = VectorAddition(g_pParticleArray[i].pos, ConstantVectorMultiplication(0.1, g_pParticleArray[i].velo));
         //g_pParticleArray[i].pos.x -= 2.0f;
 		//move each object's button
 		
@@ -1138,7 +1197,7 @@ void CALLBACK OnD3D11DestroyDevice( void* pUserContext )
     SAFE_DELETE_ARRAY( g_pParticleArray );
 	SAFE_DELETE_ARRAY(g_pParticleArrayTWO);
 
-    SAFE_RELEASE( g_pParticleBuffer );
+    SAFE_RELEASE( g_pParticleBuffer ); 
     SAFE_RELEASE( g_pParticleVertexLayout );
 
     SAFE_RELEASE( g_pParticlePosVelo0 );
