@@ -28,6 +28,7 @@
 #include <iostream>
 #include <stdlib.h>
 #include <wchar.h>
+#include <math.h>
 
 #include "atlbase.h"
 #include "atlstr.h"
@@ -126,7 +127,7 @@ float* xcoord;
 float* ycoord;
 float* zcoord;
 const int maxnamesize = 200;
-const float g_constant = 6.67 * 10;
+const float g_constant = -10;
 
 
 
@@ -582,6 +583,48 @@ XMFLOAT4 createPositionFloat(float xParticle, float yParticle, float zParticle){
 	return XMFLOAT4(xParticle, yParticle, zParticle, 10000.0f * 10000.0f);
 }
 
+//method for performing vector subtraction when dealing with XMFLOAT4
+//definition for XMFLOAT4 is in the sample, line 570
+XMFLOAT4 VectorSubtraction(XMFLOAT4 vector1, XMFLOAT4 vector2)
+{
+	float xcoord = vector1.x - vector2.x;
+	float ycoord = vector1.y - vector2.y;
+	float zcoord = vector1.z - vector2.z;
+	float wcoord = vector1.w - vector2.w;
+	return XMFLOAT4(xcoord, ycoord, zcoord, wcoord);
+}
+
+//method for calculating vector addition, in XMFLOAT4 format
+//will be necessary when adding invidividual accelerations
+XMFLOAT4 VectorAddition(XMFLOAT4 vector1, XMFLOAT4 vector2)
+{
+	float xcoord = vector1.x + vector2.x;
+	float ycoord = vector1.y + vector2.y;
+	float zcoord = vector1.z + vector2.z;
+	float wcoord = vector1.w + vector2.w;
+	return XMFLOAT4(xcoord, ycoord, zcoord, wcoord);
+}
+
+//method for calculating the magnitude of an XMFLOAT4 vector
+//we will only take into account the x, y, z coordinates necessary for calculating the position!!
+float VectorMagnitude(XMFLOAT4 vector)
+{
+	float magnitude = sqrt(pow(vector.x, 2) + pow(vector.y, 2) + pow(vector.z, 2));
+	return magnitude;
+}
+
+//method for multiplying an XMFLOAT4 vector with a constant
+//will use this for calculating acceleration and making things move when implementing physical laws
+XMFLOAT4 ConstantVectorMultiplication(float constant, XMFLOAT4 vector)
+{
+	float xcoord = constant * vector.x;
+	float ycoord = constant * vector.y;
+	float zcoord = constant * vector.z;
+	float wcoord = constant * vector.w;
+	return XMFLOAT4(xcoord, ycoord, zcoord, wcoord);
+}
+
+
 //--------------------------------------------------------------------------------------
 // Functions used to load particles (overarching one is fillParticles2) other ones support it
 //--------------------------------------------------------------------------------------
@@ -704,12 +747,28 @@ void CALLBACK OnFrameMove( double fTime, float fElapsedTime, void* pUserContext 
     for (int i = 0; i < NUM_PARTICLES; i++)
     {
 
+		// here I calculate acceleration for each object in particular
+		//ind_acc = new XMFLOAT4[NUM_PARTICLES];
+		XMFLOAT4 acceleration = XMFLOAT4(0, 0, 0, 0);
 
+		for (int j = 0; j < NUM_PARTICLES; j++)
+		{
+			if (i != j)
+			{
+				XMFLOAT4 ijdist = VectorSubtraction(g_pParticleArray[i].pos, g_pParticleArray[j].pos);
+				float ijdist_magnitude = VectorMagnitude(ijdist);
 
-		// define acceleration here
-		// then update velocity
-		// then update position
-        // Insert gravity calculations here
+				float g_accConstant = g_constant * g_pParticleArrayTWO[j].mass / pow(ijdist_magnitude, 3);
+				XMFLOAT4 g_acc = ConstantVectorMultiplication(g_accConstant, ijdist);
+				acceleration = VectorAddition(acceleration, g_acc);
+
+				//ind_acc[j] = g_acc;
+			}
+		}
+
+		//update velocity and position using acceleration
+		g_pParticleArray[i].velo = VectorAddition(g_pParticleArray[i].velo, ConstantVectorMultiplication(0.1, acceleration));
+		g_pParticleArray[i].pos = VectorAddition(g_pParticleArray[i].pos, ConstantVectorMultiplication(0.1, g_pParticleArray[i].velo));
         //g_pParticleArray[i].pos.x -= 2.0f;
 		//move each object's button
 		
