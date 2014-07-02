@@ -134,6 +134,7 @@ float red[MAX_PARTICLES];
 float green[MAX_PARTICLES];
 float blue[MAX_PARTICLES];
 bool isFirst = true;
+bool g_isPaused = false;
 
 
 //--------------------------------------------------------------------------------------
@@ -143,6 +144,7 @@ bool isFirst = true;
 #define IDC_TOGGLEREF           3
 #define IDC_CHANGEDEVICE        4
 #define IDC_RESETPARTICLES      5
+#define IDC_PAUSE               6
 
 //--------------------------------------------------------------------------------------
 // Forward declarations 
@@ -221,6 +223,7 @@ void InitApp()
     g_HUD.AddButton( IDC_TOGGLEREF, L"Toggle REF (F3)", 0, iY += 26, 170, 23, VK_F3 );
     g_HUD.AddButton( IDC_CHANGEDEVICE, L"Change device (F2)", 0, iY += 26, 170, 23, VK_F2 );
     g_HUD.AddButton( IDC_RESETPARTICLES, L"Reset particles (F4)", 0, iY += 26, 170, 22, VK_F4 );
+	g_HUD.AddButton(IDC_PAUSE, L"Pause", 0, iY += 26, 170, 22);
     g_SampleUI.SetCallback( OnGUIEvent ); 
 }
 
@@ -805,6 +808,18 @@ void CALLBACK OnGUIEvent( UINT nEvent, int nControlID, CDXUTControl* pControl, v
             CreateParticlePosVeloBuffers(DXUTGetD3D11Device());
             break;
         }
+	case IDC_PAUSE:
+		{
+		if (!g_isPaused) {
+			DXUTPause(true, false);
+			g_isPaused = true;
+		}
+		else {
+			DXUTPause(false, false);
+			g_isPaused = false;
+		}
+
+		}
     }
 }
 
