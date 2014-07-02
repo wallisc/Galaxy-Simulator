@@ -378,7 +378,7 @@ int ParseFile(){
 			}
 
 			else if (elementName != NULL && wcscmp(elementName, L"brightness") == 0){
-                objectData.m_brightness = int(pwszValue);
+                objectData.m_brightness = (int)wcstof(pwszValue, NULL);
 			}
 
 			else if (elementName != NULL && wcscmp(elementName, L"xcoord") == 0){
@@ -657,7 +657,7 @@ void displayObjectInfo(){
 		swprintf(buffer, sizeof(buffer), L"Diameter: %f\n", object.m_diameter);
 		::OutputDebugString(buffer);
 
-		swprintf(buffer, sizeof(buffer), L"Brightness: %i\n", object.m_brightness);
+		swprintf(buffer, sizeof(buffer), L"Brightness: %d\n", object.m_brightness);
 		::OutputDebugString(buffer);
 
 		swprintf(buffer, sizeof(buffer), L"Position: x: %f y: %f z: %f\n\n", object.m_xcoord, object.m_ycoord, object.m_zcoord);
