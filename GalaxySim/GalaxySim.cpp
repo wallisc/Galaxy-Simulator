@@ -167,8 +167,8 @@ float timeValue=0.01; //can change this to change speed of simulation
 #define IDC_RESETPARTICLES      5
 #define IDC_DISPLAYINFO			6
 #define IDC_PAUSE               7
-#define IDC_DOUBLESPEED			7
-#define IDC_HALFSPEED			8
+#define IDC_DOUBLESPEED			8
+#define IDC_HALFSPEED			9
 
 //--------------------------------------------------------------------------------------
 // Forward declarations 
