@@ -889,8 +889,12 @@ void CALLBACK OnGUIEvent( UINT nEvent, int nControlID, CDXUTControl* pControl, v
     {
     case IDC_TOGGLEFULLSCREEN:
         DXUTToggleFullScreen(); break;
-    case IDC_TOGGLEREF:
-        DXUTToggleREF(); break;
+	case IDC_TOGGLEREF:
+	{
+		DXUTPause(false, false);
+		g_isPaused = false;
+		DXUTToggleREF(); break;
+	}
     case IDC_CHANGEDEVICE:
         g_D3DSettingsDlg.SetActive( !g_D3DSettingsDlg.IsActive() ); break;
 
@@ -906,7 +910,7 @@ void CALLBACK OnGUIEvent( UINT nEvent, int nControlID, CDXUTControl* pControl, v
 	case IDC_PAUSE:
 		{
 		if (!g_isPaused) {
-			DXUTPause(true, false);
+			DXUTPause(true, true);
 			g_isPaused = true;
 		}
 		else {
