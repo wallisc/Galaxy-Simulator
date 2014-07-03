@@ -153,6 +153,7 @@ float red[MAX_PARTICLES];
 float green[MAX_PARTICLES];
 float blue[MAX_PARTICLES];
 bool isFirst = true;
+bool g_isPaused = false;
 
 float timeValue=0.01; //can change this to change speed of simulation
 
@@ -165,6 +166,7 @@ float timeValue=0.01; //can change this to change speed of simulation
 #define IDC_CHANGEDEVICE        4
 #define IDC_RESETPARTICLES      5
 #define IDC_DISPLAYINFO			6
+#define IDC_PAUSE               7
 #define IDC_DOUBLESPEED			7
 #define IDC_HALFSPEED			8
 
@@ -253,6 +255,7 @@ void InitApp()
     g_HUD.AddButton( IDC_CHANGEDEVICE, L"Change device (F2)", 0, iY += 26, 170, 23, VK_F2 );
     g_HUD.AddButton( IDC_RESETPARTICLES, L"Reset particles (F4)", 0, iY += 26, 170, 22, VK_F4 );
 	g_HUD.AddButton(IDC_DISPLAYINFO, L"Display Object Info (F1)", -30, iY += 26, 200, 23, VK_F1);
+	g_HUD.AddButton(IDC_PAUSE, L"Pause", 0, iY += 26, 170, 22);
 	g_HUD.AddButton(IDC_DOUBLESPEED, L"Speed 2x", 0, iY += 26, 170, 23);
 	g_HUD.AddButton(IDC_HALFSPEED, L"Speed 0.5x", 0, iY += 26, 170, 23);
     g_SampleUI.SetCallback( OnGUIEvent ); 
@@ -914,7 +917,11 @@ void CALLBACK OnGUIEvent( UINT nEvent, int nControlID, CDXUTControl* pControl, v
     case IDC_TOGGLEFULLSCREEN:
         DXUTToggleFullScreen(); break;
     case IDC_TOGGLEREF:
+	{
+		DXUTPause(false, false);
+		g_isPaused = false;
         DXUTToggleREF(); break;
+	}
     case IDC_CHANGEDEVICE:
         g_D3DSettingsDlg.SetActive( !g_D3DSettingsDlg.IsActive() ); break;
 
@@ -927,6 +934,18 @@ void CALLBACK OnGUIEvent( UINT nEvent, int nControlID, CDXUTControl* pControl, v
             CreateParticlePosVeloBuffers(DXUTGetD3D11Device());
             break;
         }
+	case IDC_PAUSE:
+		{
+		if (!g_isPaused) {
+			DXUTPause(true, true);
+			g_isPaused = true;
+		}
+		else {
+			DXUTPause(false, false);
+			g_isPaused = false;
+		}
+
+		}
 	case IDC_DISPLAYINFO:
 		displayObjectInfo(); break;
 	case IDC_DOUBLESPEED:
