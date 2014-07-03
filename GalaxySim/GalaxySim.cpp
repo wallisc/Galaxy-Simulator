@@ -147,7 +147,7 @@ public:
 
 std::vector<ObjectData> g_objects;
 
-const float g_constant = 6.67 * 10;
+const float g_constant = -6.67 * 10;
 
 float red[MAX_PARTICLES];
 float green[MAX_PARTICLES];
