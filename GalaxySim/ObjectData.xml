@@ -5,7 +5,7 @@
 
 <object>
   <name>Sun</name>
-  <mass>25000</mass>
+  <mass>5000</mass>
   <diameter>6400</diameter>
   <brightness>6</brightness>
   <xcoord>0</xcoord>
@@ -15,8 +15,8 @@
 
 <object>
   <name>Earth</name>
-  <mass>200</mass>
-  <diameter>64</diameter>
+  <mass>20</mass>
+  <diameter>6400</diameter>
   <brightness>4</brightness>
   <xcoord>20</xcoord>
   <ycoord>20</ycoord>
