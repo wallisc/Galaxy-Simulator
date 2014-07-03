@@ -154,6 +154,8 @@ float green[MAX_PARTICLES];
 float blue[MAX_PARTICLES];
 bool isFirst = true;
 
+float timeValue=0.01; //can change this to change speed of simulation
+
 
 //--------------------------------------------------------------------------------------
 // UI control IDs
@@ -163,6 +165,8 @@ bool isFirst = true;
 #define IDC_CHANGEDEVICE        4
 #define IDC_RESETPARTICLES      5
 #define IDC_DISPLAYINFO			6
+#define IDC_DOUBLESPEED			7
+#define IDC_HALFSPEED			8
 
 //--------------------------------------------------------------------------------------
 // Forward declarations 
@@ -189,7 +193,11 @@ void RenderText();
 //declare WriteAttributes function here, content is below ParseFile()
 HRESULT WriteAttributes(IXmlReader* pReader);
 int ParseFile();
+//functions associated with various buttons
 void displayObjectInfo();
+void doubleSpeed();
+void halfSpeed();
+
 
 //--------------------------------------------------------------------------------------
 // Entry point to the program. Initializes everything and goes into a message processing 
@@ -245,6 +253,8 @@ void InitApp()
     g_HUD.AddButton( IDC_CHANGEDEVICE, L"Change device (F2)", 0, iY += 26, 170, 23, VK_F2 );
     g_HUD.AddButton( IDC_RESETPARTICLES, L"Reset particles (F4)", 0, iY += 26, 170, 22, VK_F4 );
 	g_HUD.AddButton(IDC_DISPLAYINFO, L"Display Object Info (F1)", -30, iY += 26, 200, 23, VK_F1);
+	g_HUD.AddButton(IDC_DOUBLESPEED, L"Speed 2x", 0, iY += 26, 170, 23);
+	g_HUD.AddButton(IDC_HALFSPEED, L"Speed 0.5x", 0, iY += 26, 170, 23);
     g_SampleUI.SetCallback( OnGUIEvent ); 
 }
 
@@ -711,6 +721,23 @@ void displayObjectInfo(){
 }
 
 //--------------------------------------------------------------------------------------
+// Functions that allow user to change the speed of the simulation
+//--------------------------------------------------------------------------------------
+
+//doubles the value of timeValue so the simul speed goes 2x; called when user presses 2x button
+void doubleSpeed(){
+	timeValue = timeValue * 2;
+}
+
+//divides in half the value of timeValue so that simul speed slows down by half
+//called when user presses 0.5x button
+void halfSpeed(){
+	timeValue = timeValue / 2;
+}
+
+
+
+//--------------------------------------------------------------------------------------
 HRESULT CreateParticlePosVeloBuffers( ID3D11Device* pd3dDevice )
 {
     HRESULT hr = S_OK;
@@ -823,8 +850,8 @@ void CALLBACK OnFrameMove( double fTime, float fElapsedTime, void* pUserContext 
 		}
 
 		//update velocity and position using acceleration
-		g_pParticleArray[i].velo = VectorAddition(g_pParticleArray[i].velo, ConstantVectorMultiplication(0.1, acceleration));
-		g_pParticleArray[i].pos = VectorAddition(g_pParticleArray[i].pos, ConstantVectorMultiplication(0.1, g_pParticleArray[i].velo));
+		g_pParticleArray[i].velo = VectorAddition(g_pParticleArray[i].velo, ConstantVectorMultiplication(timeValue, acceleration));
+		g_pParticleArray[i].pos = VectorAddition(g_pParticleArray[i].pos, ConstantVectorMultiplication(timeValue, g_pParticleArray[i].velo));
         //g_pParticleArray[i].pos.x -= 2.0f;
 		//move each object's button
 		
@@ -902,6 +929,10 @@ void CALLBACK OnGUIEvent( UINT nEvent, int nControlID, CDXUTControl* pControl, v
         }
 	case IDC_DISPLAYINFO:
 		displayObjectInfo(); break;
+	case IDC_DOUBLESPEED:
+		doubleSpeed(); break;
+	case IDC_HALFSPEED:
+		halfSpeed(); break;
     }
 }
 
