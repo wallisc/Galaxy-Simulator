@@ -220,7 +220,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
     DXUTInit( true, true );                 // Use this line instead to try to create a hardware device
 
     DXUTSetCursorSettings( true, true ); // Show the cursor and clip it when in full screen
-    DXUTCreateWindow( L"GalaxySim" );
+    DXUTCreateWindow( L"SkyX" );
     DXUTCreateDevice( D3D_FEATURE_LEVEL_10_0, true, 800, 600 );
     DXUTMainLoop();                      // Enter into the DXUT render loop
 
