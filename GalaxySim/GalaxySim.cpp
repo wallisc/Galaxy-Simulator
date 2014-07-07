@@ -155,7 +155,7 @@ float blue[MAX_PARTICLES];
 bool isFirst = true;
 bool g_isPaused = false;
 
-float timeValue=0.01; //can change this to change speed of simulation
+float timeValue=0.01; //can change this to change speed of simulation, used later to do 2x and 0.5x
 
 
 //--------------------------------------------------------------------------------------
