@@ -147,7 +147,7 @@ public:
 
 std::vector<ObjectData> g_objects;
 
-const float g_constant = -6.67 * 10;
+const float g_constant = -6.67 * pow(10,-11);
 
 float red[MAX_PARTICLES];
 float green[MAX_PARTICLES];
@@ -170,7 +170,7 @@ float timeValue=0.01; //can change this to change speed of simulation
 #define IDC_DOUBLESPEED			8
 #define IDC_HALFSPEED			9
 
-//--------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------Papusa
 // Forward declarations 
 //--------------------------------------------------------------------------------------
 bool CALLBACK ModifyDeviceSettings( DXUTDeviceSettings* pDeviceSettings, void* pUserContext );
