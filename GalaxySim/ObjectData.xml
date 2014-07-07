@@ -1,11 +1,11 @@
 <?xml version="1.0"?>
 <Universe>
 
-<MaxParticles>2</MaxParticles>
+<MaxParticles>3</MaxParticles>
 
 <object>
   <name>Sun</name>
-  <mass>5000</mass>
+  <mass>500</mass>
   <diameter>6400</diameter>
   <brightness>6</brightness>
   <xcoord>0</xcoord>
@@ -21,6 +21,16 @@
   <xcoord>20</xcoord>
   <ycoord>20</ycoord>
   <zcoord>20</zcoord>
+</object>
+
+<object>
+  <name>EarthMoon</name>
+  <mass>100</mass>
+  <diameter>6400</diameter>
+  <brightness>4</brightness>
+  <xcoord>50</xcoord>
+  <ycoord>50</ycoord>
+  <zcoord>50</zcoord>
 </object>
 
 </Universe>
