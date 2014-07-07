@@ -155,6 +155,8 @@ float blue[MAX_PARTICLES];
 bool isFirst = true;
 bool g_isPaused = false;
 
+float timeValue=0.01; //can change this to change speed of simulation
+
 
 //--------------------------------------------------------------------------------------
 // UI control IDs
@@ -165,6 +167,8 @@ bool g_isPaused = false;
 #define IDC_RESETPARTICLES      5
 #define IDC_DISPLAYINFO			6
 #define IDC_PAUSE               7
+#define IDC_DOUBLESPEED			8
+#define IDC_HALFSPEED			9
 
 //--------------------------------------------------------------------------------------
 // Forward declarations 
@@ -191,7 +195,11 @@ void RenderText();
 //declare WriteAttributes function here, content is below ParseFile()
 HRESULT WriteAttributes(IXmlReader* pReader);
 int ParseFile();
+//functions associated with various buttons
 void displayObjectInfo();
+void doubleSpeed();
+void halfSpeed();
+
 
 //--------------------------------------------------------------------------------------
 // Entry point to the program. Initializes everything and goes into a message processing 
@@ -222,7 +230,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
     DXUTInit( true, true );                 // Use this line instead to try to create a hardware device
 
     DXUTSetCursorSettings( true, true ); // Show the cursor and clip it when in full screen
-    DXUTCreateWindow( L"GalaxySim" );
+    DXUTCreateWindow( L"SkyX" );
     DXUTCreateDevice( D3D_FEATURE_LEVEL_10_0, true, 800, 600 );
     DXUTMainLoop();                      // Enter into the DXUT render loop
 
@@ -248,6 +256,8 @@ void InitApp()
     g_HUD.AddButton( IDC_RESETPARTICLES, L"Reset particles (F4)", 0, iY += 26, 170, 22, VK_F4 );
 	g_HUD.AddButton(IDC_DISPLAYINFO, L"Display Object Info (F1)", -30, iY += 26, 200, 23, VK_F1);
 	g_HUD.AddButton(IDC_PAUSE, L"Pause", 0, iY += 26, 170, 22);
+	g_HUD.AddButton(IDC_DOUBLESPEED, L"Speed 2x", 0, iY += 26, 170, 23);
+	g_HUD.AddButton(IDC_HALFSPEED, L"Speed 0.5x", 0, iY += 26, 170, 23);
     g_SampleUI.SetCallback( OnGUIEvent ); 
 }
 
@@ -714,6 +724,23 @@ void displayObjectInfo(){
 }
 
 //--------------------------------------------------------------------------------------
+// Functions that allow user to change the speed of the simulation
+//--------------------------------------------------------------------------------------
+
+//doubles the value of timeValue so the simul speed goes 2x; called when user presses 2x button
+void doubleSpeed(){
+	timeValue = timeValue * 2;
+}
+
+//divides in half the value of timeValue so that simul speed slows down by half
+//called when user presses 0.5x button
+void halfSpeed(){
+	timeValue = timeValue / 2;
+}
+
+
+
+//--------------------------------------------------------------------------------------
 HRESULT CreateParticlePosVeloBuffers( ID3D11Device* pd3dDevice )
 {
     HRESULT hr = S_OK;
@@ -804,45 +831,45 @@ void CALLBACK OnFrameMove( double fTime, float fElapsedTime, void* pUserContext 
     pd3dImmediateContext->Map(g_pParticlePosVelo0, 0, D3D11_MAP_WRITE_DISCARD, 0, &ms);
 	if (!g_isPaused) {
 
-		for (int i = 0; i < NUM_PARTICLES; i++)
+    for (int i = 0; i < NUM_PARTICLES; i++)
+    {
+
+		// here I calculate acceleration for each object in particular
+		//ind_acc = new XMFLOAT4[NUM_PARTICLES];
+		XMFLOAT4 acceleration = XMFLOAT4(0, 0, 0, 0);
+
+		for (int j = 0; j < NUM_PARTICLES; j++)
 		{
-
-			// here I calculate acceleration for each object in particular
-			//ind_acc = new XMFLOAT4[NUM_PARTICLES];
-			XMFLOAT4 acceleration = XMFLOAT4(0, 0, 0, 0);
-
-			for (int j = 0; j < NUM_PARTICLES; j++)
+			if (i != j)
 			{
-				if (i != j)
-				{
-					XMFLOAT4 ijdist = VectorSubtraction(g_pParticleArray[i].pos, g_pParticleArray[j].pos);
-					float ijdist_magnitude = VectorMagnitude(ijdist);
+				XMFLOAT4 ijdist = VectorSubtraction(g_pParticleArray[i].pos, g_pParticleArray[j].pos);
+				float ijdist_magnitude = VectorMagnitude(ijdist);
 
-					float g_accConstant = g_constant * g_pParticleArrayTWO[j].mass / pow(ijdist_magnitude, 3);
-					XMFLOAT4 g_acc = ConstantVectorMultiplication(g_accConstant, ijdist);
-					acceleration = VectorAddition(acceleration, g_acc);
+				float g_accConstant = g_constant * g_pParticleArrayTWO[j].mass / pow(ijdist_magnitude, 3);
+				XMFLOAT4 g_acc = ConstantVectorMultiplication(g_accConstant, ijdist);
+				acceleration = VectorAddition(acceleration, g_acc);
 
-					//ind_acc[j] = g_acc;
-				}
+				//ind_acc[j] = g_acc;
 			}
-
-			//update velocity and position using acceleration
-			g_pParticleArray[i].velo = VectorAddition(g_pParticleArray[i].velo, ConstantVectorMultiplication(0.1, acceleration));
-			g_pParticleArray[i].pos = VectorAddition(g_pParticleArray[i].pos, ConstantVectorMultiplication(0.1, g_pParticleArray[i].velo));
-			//g_pParticleArray[i].pos.x -= 2.0f;
-			//move each object's button
-
 		}
+
+		//update velocity and position using acceleration
+		g_pParticleArray[i].velo = VectorAddition(g_pParticleArray[i].velo, ConstantVectorMultiplication(timeValue, acceleration));
+		g_pParticleArray[i].pos = VectorAddition(g_pParticleArray[i].pos, ConstantVectorMultiplication(timeValue, g_pParticleArray[i].velo));
+        //g_pParticleArray[i].pos.x -= 2.0f;
+		//move each object's button
+		
+    }
 	}
 
-		memcpy(ms.pData, g_pParticleArray, sizeof(PARTICLE) * NUM_PARTICLES);
+    memcpy(ms.pData, g_pParticleArray, sizeof(PARTICLE) * NUM_PARTICLES);
+       
+    pd3dImmediateContext->Unmap(g_pParticlePosVelo0, NULL);
 
-		pd3dImmediateContext->Unmap(g_pParticlePosVelo0, NULL);
+    std::swap( g_pParticlePosVelo0, g_pParticlePosVelo1 );
+    std::swap( g_pParticlePosVeloRV0, g_pParticlePosVeloRV1 );
 
-		std::swap(g_pParticlePosVelo0, g_pParticlePosVelo1);
-		std::swap(g_pParticlePosVeloRV0, g_pParticlePosVeloRV1);
-
-		// Update the camera's position based on user input 
+    // Update the camera's position based on user input 
 		g_Camera.FrameMove(fElapsedTime);
 	
 }
@@ -924,6 +951,10 @@ void CALLBACK OnGUIEvent( UINT nEvent, int nControlID, CDXUTControl* pControl, v
 		}
 	case IDC_DISPLAYINFO:
 		displayObjectInfo(); break;
+	case IDC_DOUBLESPEED:
+		doubleSpeed(); break;
+	case IDC_HALFSPEED:
+		halfSpeed(); break;
     }
 }
 
