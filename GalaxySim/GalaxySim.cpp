@@ -255,7 +255,7 @@ void InitApp()
     g_HUD.AddButton( IDC_CHANGEDEVICE, L"Change device (F2)", 0, iY += 26, 170, 23, VK_F2 );
     g_HUD.AddButton( IDC_RESETPARTICLES, L"Reset particles (F4)", 0, iY += 26, 170, 22, VK_F4 );
 	g_HUD.AddButton(IDC_DISPLAYINFO, L"Display Object Info (F1)", -30, iY += 26, 200, 23, VK_F1);
-	g_HUD.AddButton(IDC_PAUSE, L"Pause", 0, iY += 26, 170, 22);
+	g_HUD.AddButton(IDC_PAUSE, L"Pause / Unpause", 0, iY += 26, 170, 22);
 	g_HUD.AddButton(IDC_DOUBLESPEED, L"Speed 2x", 0, iY += 26, 170, 23);
 	g_HUD.AddButton(IDC_HALFSPEED, L"Speed 0.5x", 0, iY += 26, 170, 23);
     g_SampleUI.SetCallback( OnGUIEvent ); 
@@ -818,56 +818,61 @@ bool CALLBACK ModifyDeviceSettings( DXUTDeviceSettings* pDeviceSettings, void* p
 // intended to contain actual rendering calls, which should instead be placed in the 
 // OnFrameRender callback.  
 //--------------------------------------------------------------------------------------
-void CALLBACK OnFrameMove( double fTime, float fElapsedTime, void* pUserContext )
+void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 {
-    if(fElapsedTime < SECONDS_PER_FRAME)
-    {
-       Sleep(static_cast<DWORD>((SECONDS_PER_FRAME - fElapsedTime) * 1000.0f));
-    }
-
-    auto pd3dImmediateContext = DXUTGetD3D11DeviceContext();
-    
-    D3D11_MAPPED_SUBRESOURCE ms;
-    pd3dImmediateContext->Map(g_pParticlePosVelo0, 0, D3D11_MAP_WRITE_DISCARD, 0, &ms);
-	if (!g_isPaused) {
-
-    for (int i = 0; i < NUM_PARTICLES; i++)
-    {
-
-		// here I calculate acceleration for each object in particular
-		//ind_acc = new XMFLOAT4[NUM_PARTICLES];
-		XMFLOAT4 acceleration = XMFLOAT4(0, 0, 0, 0);
-
-		for (int j = 0; j < NUM_PARTICLES; j++)
-		{
-			if (i != j)
-			{
-				XMFLOAT4 ijdist = VectorSubtraction(g_pParticleArray[i].pos, g_pParticleArray[j].pos);
-				float ijdist_magnitude = VectorMagnitude(ijdist);
-
-				float g_accConstant = g_constant * g_pParticleArrayTWO[j].mass / pow(ijdist_magnitude, 3);
-				XMFLOAT4 g_acc = ConstantVectorMultiplication(g_accConstant, ijdist);
-				acceleration = VectorAddition(acceleration, g_acc);
-
-				//ind_acc[j] = g_acc;
-			}
-		}
-
-		//update velocity and position using acceleration
-		g_pParticleArray[i].velo = VectorAddition(g_pParticleArray[i].velo, ConstantVectorMultiplication(timeValue, acceleration));
-		g_pParticleArray[i].pos = VectorAddition(g_pParticleArray[i].pos, ConstantVectorMultiplication(timeValue, g_pParticleArray[i].velo));
-        //g_pParticleArray[i].pos.x -= 2.0f;
-		//move each object's button
-		
-    }
+	
+	if (fElapsedTime < SECONDS_PER_FRAME)
+	{
+		Sleep(static_cast<DWORD>((SECONDS_PER_FRAME - fElapsedTime) * 1000.0f));
 	}
 
-    memcpy(ms.pData, g_pParticleArray, sizeof(PARTICLE) * NUM_PARTICLES);
-       
-    pd3dImmediateContext->Unmap(g_pParticlePosVelo0, NULL);
+	if (!g_isPaused)
+	{
+		auto pd3dImmediateContext = DXUTGetD3D11DeviceContext();
 
-    std::swap( g_pParticlePosVelo0, g_pParticlePosVelo1 );
-    std::swap( g_pParticlePosVeloRV0, g_pParticlePosVeloRV1 );
+		D3D11_MAPPED_SUBRESOURCE ms;
+		pd3dImmediateContext->Map(g_pParticlePosVelo0, 0, D3D11_MAP_WRITE_DISCARD, 0, &ms);
+
+
+		for (int i = 0; i < NUM_PARTICLES; i++)
+		{
+
+			// here I calculate acceleration for each object in particular
+			//ind_acc = new XMFLOAT4[NUM_PARTICLES];
+			XMFLOAT4 acceleration = XMFLOAT4(0, 0, 0, 0);
+
+			for (int j = 0; j < NUM_PARTICLES; j++)
+			{
+				if (i != j)
+				{
+					XMFLOAT4 ijdist = VectorSubtraction(g_pParticleArray[i].pos, g_pParticleArray[j].pos);
+					float ijdist_magnitude = VectorMagnitude(ijdist);
+
+					float g_accConstant = g_constant * g_pParticleArrayTWO[j].mass / pow(ijdist_magnitude, 3);
+					XMFLOAT4 g_acc = ConstantVectorMultiplication(g_accConstant, ijdist);
+					acceleration = VectorAddition(acceleration, g_acc);
+
+					//ind_acc[j] = g_acc;
+				}
+			}
+
+			//update velocity and position using acceleration
+			g_pParticleArray[i].velo = VectorAddition(g_pParticleArray[i].velo, ConstantVectorMultiplication(timeValue, acceleration));
+			g_pParticleArray[i].pos = VectorAddition(g_pParticleArray[i].pos, ConstantVectorMultiplication(timeValue, g_pParticleArray[i].velo));
+			//g_pParticleArray[i].pos.x -= 2.0f;
+			//move each object's button
+
+		}
+
+
+
+		memcpy(ms.pData, g_pParticleArray, sizeof(PARTICLE) * NUM_PARTICLES);
+
+		pd3dImmediateContext->Unmap(g_pParticlePosVelo0, NULL);
+
+		std::swap(g_pParticlePosVelo0, g_pParticlePosVelo1);
+		std::swap(g_pParticlePosVeloRV0, g_pParticlePosVeloRV1);
+	}
 
     // Update the camera's position based on user input 
 		g_Camera.FrameMove(fElapsedTime);
