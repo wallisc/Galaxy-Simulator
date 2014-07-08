@@ -147,13 +147,16 @@ public:
 
 std::vector<ObjectData> g_objects;
 
-const float g_constant = 6.67 * 10;
+const float g_constant = -6.67 * 10;
 
 float red[MAX_PARTICLES];
 float green[MAX_PARTICLES];
 float blue[MAX_PARTICLES];
 bool isFirst = true;
 bool g_isPaused = false;
+bool g_hasDisplay = false;
+CDXUTEditBox *g_pTextBox;
+bool g_firstTextBox = true; 
 
 float timeValue=0.01; //can change this to change speed of simulation
 
@@ -169,6 +172,7 @@ float timeValue=0.01; //can change this to change speed of simulation
 #define IDC_PAUSE               7
 #define IDC_DOUBLESPEED			8
 #define IDC_HALFSPEED			9
+#define IDC_TEXTBOXTEST         10
 
 //--------------------------------------------------------------------------------------
 // Forward declarations 
@@ -240,6 +244,9 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 }
 
 
+
+
+
 //--------------------------------------------------------------------------------------
 // Initialize the app 
 //--------------------------------------------------------------------------------------
@@ -258,6 +265,13 @@ void InitApp()
 	g_HUD.AddButton(IDC_PAUSE, L"Pause / Unpause", 0, iY += 26, 170, 22);
 	g_HUD.AddButton(IDC_DOUBLESPEED, L"Speed 2x", 0, iY += 26, 170, 23);
 	g_HUD.AddButton(IDC_HALFSPEED, L"Speed 0.5x", 0, iY += 26, 170, 23);
+	g_HUD.AddButton(IDC_TEXTBOXTEST, L"Textbox!", 0, iY += 26, 170, 23);
+	/*textBox.SetID(11);
+	textBox.SetLocation(0, iY += 26);
+	textBox.SetSize(100, 100);
+	pTextBox->m_bIsDefault(false);*/
+
+
     g_SampleUI.SetCallback( OnGUIEvent ); 
 }
 
@@ -944,12 +958,18 @@ void CALLBACK OnGUIEvent( UINT nEvent, int nControlID, CDXUTControl* pControl, v
         }
 	case IDC_PAUSE:
 		{
+		if (g_hasDisplay) {
+			//remove edit box somehow
+			g_pTextBox = g_HUD.GetEditBox(11);
+			g_pTextBox->SetVisible(false);
+			g_hasDisplay = false;
+		}
 		if (!g_isPaused) {
-			DXUTPause(true, false);
+			DXUTPause(false, false);
 			g_isPaused = true;
 		}
 		else {
-			DXUTPause(false, false);
+			DXUTPause(true, false);
 			g_isPaused = false;
 		}
 
@@ -960,6 +980,19 @@ void CALLBACK OnGUIEvent( UINT nEvent, int nControlID, CDXUTControl* pControl, v
 		doubleSpeed(); break;
 	case IDC_HALFSPEED:
 		halfSpeed(); break;
+	case IDC_TEXTBOXTEST:
+		if (g_isPaused && !g_hasDisplay && g_firstTextBox) {
+			g_HUD.AddEditBox(11, L"Testing \nTesting \nTesting", 0, 260, 160, 300); 
+			g_hasDisplay = true;
+			g_firstTextBox = false;
+		}
+		else if(g_isPaused && !g_hasDisplay)
+		{
+			g_pTextBox = g_HUD.GetEditBox(11);
+			g_pTextBox->SetVisible(true);
+			g_hasDisplay = true;
+		}
+		break;
     }
 }
 
