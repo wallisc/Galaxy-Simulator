@@ -33,6 +33,8 @@
 #include <cstdlib>
 #include <ctime>
 #include <math.h>
+#include <sstream>
+#include <string>
 
 #include "atlbase.h"
 #include "atlstr.h"
@@ -959,8 +961,6 @@ void CALLBACK OnGUIEvent( UINT nEvent, int nControlID, CDXUTControl* pControl, v
 	case IDC_PAUSE:
 		{
 		if (g_hasDisplay) {
-			//remove edit box somehow
-			g_pTextBox = g_HUD.GetEditBox(11);
 			g_pTextBox->SetVisible(false);
 			g_hasDisplay = false;
 		}
@@ -975,24 +975,38 @@ void CALLBACK OnGUIEvent( UINT nEvent, int nControlID, CDXUTControl* pControl, v
 
 		}
 	case IDC_DISPLAYINFO:
-		displayObjectInfo(); break;
+	{
+		if (g_pTextBox != nullptr) {
+			g_pTextBox->ClearText();
+			g_pTextBox->SetText(L"Grr! How do I get variables??");
+		}
+
+		displayObjectInfo(); 
+		break;
+	}
 	case IDC_DOUBLESPEED:
 		doubleSpeed(); break;
 	case IDC_HALFSPEED:
 		halfSpeed(); break;
 	case IDC_TEXTBOXTEST:
-		if (g_isPaused && !g_hasDisplay && g_firstTextBox) {
+	{
+		if (g_isPaused && !g_hasDisplay && g_firstTextBox) { //always the first case; button pointer gets assignment here
 			g_HUD.AddEditBox(11, L"Testing \nTesting \nTesting", 0, 260, 160, 300); 
+			g_pTextBox = g_HUD.GetEditBox(11);
 			g_hasDisplay = true;
 			g_firstTextBox = false;
 		}
-		else if(g_isPaused && !g_hasDisplay)
+		else if(g_isPaused && !g_hasDisplay) 
 		{
-			g_pTextBox = g_HUD.GetEditBox(11);
 			g_pTextBox->SetVisible(true);
 			g_hasDisplay = true;
 		}
+		else if (g_hasDisplay) {
+			g_pTextBox->SetVisible(false);
+			g_hasDisplay = false;
+		}
 		break;
+	}
     }
 }
 
