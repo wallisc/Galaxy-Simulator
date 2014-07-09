@@ -827,6 +827,23 @@ bool CALLBACK ModifyDeviceSettings( DXUTDeviceSettings* pDeviceSettings, void* p
     return true;
 }
 
+float distance(XMVECTOR center, XMVECTOR side) {
+	float distance;
+	/*float centerX = XMVectorGetX(center);
+	float sideX = XMVectorGetX(side);
+	float centerY = XMVectorGetY(center);
+	float sideY = XMVectorGetY(side);
+	float centerZ = XMVectorGetZ(center);
+	float sideZ = XMVectorGetZ(side);
+
+	float xSquared = powf((sideX - centerX), 2);
+	float ySquared = powf((sideY - centerY), 2);
+	float zSquared = powf((sideZ - centerZ), 2);
+
+	distance = sqrtf(xSquared + ySquared + zSquared);*/
+
+	return distance; 
+}
 
 //--------------------------------------------------------------------------------------
 // This callback function will be called once at the beginning of every frame. This is the
@@ -888,6 +905,33 @@ void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 
 		std::swap(g_pParticlePosVelo0, g_pParticlePosVelo1);
 		std::swap(g_pParticlePosVeloRV0, g_pParticlePosVeloRV1);
+	}
+	else {
+		//ability to click on objects to see data goes here!
+		XMMATRIX mProj = g_Camera.GetProjMatrix();
+		XMMATRIX mView = g_Camera.GetViewMatrix();
+
+		//world view projection
+		XMFLOAT4X4 worldViewProj;
+		XMFLOAT4X4 * pWorldViewProj = &worldViewProj;
+		XMStoreFloat4x4(pWorldViewProj, XMMatrixMultiply(mView, mProj));
+		
+		//TODO: Loop through all objects to compare to mouse position
+		//screen position = object position in world X world projection view
+		XMVECTOR worldObject = { g_pParticleArray[0].pos.x, g_pParticleArray[0].pos.y, g_pParticleArray[0].pos.z, 1.0f };
+		XMVECTOR screenObject;
+		screenObject = XMVector4Transform(worldObject, XMLoadFloat4x4(pWorldViewProj));
+
+		//screen space radius
+		float radius = 10.0f; //TODO: Get this value from diameter; implement diameter visuals
+		XMVECTOR offset = { radius, 0.0f, 0.0f, 0.0f };
+		XMVECTOR worldSphere = worldObject + offset;
+		XMVECTOR screenSphere = XMVector4Transform(worldSphere, XMLoadFloat4x4(pWorldViewProj));
+		float screenRadius = distance(screenObject, screenSphere);
+
+	
+		
+
 	}
 
     // Update the camera's position based on user input 
