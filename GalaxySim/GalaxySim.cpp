@@ -267,7 +267,7 @@ void InitApp()
 	g_HUD.AddButton(IDC_PAUSE, L"Pause / Unpause", 0, iY += 26, 170, 22);
 	g_HUD.AddButton(IDC_DOUBLESPEED, L"Speed 2x", 0, iY += 26, 170, 23);
 	g_HUD.AddButton(IDC_HALFSPEED, L"Speed 0.5x", 0, iY += 26, 170, 23);
-	g_HUD.AddButton(IDC_TEXTBOXTEST, L"Textbox!", 0, iY += 26, 170, 23);
+	g_HUD.AddButton(IDC_TEXTBOXTEST, L"Textbox (Pause 1st)", -30, iY += 26, 200, 23);
 	/*textBox.SetID(11);
 	textBox.SetLocation(0, iY += 26);
 	textBox.SetSize(100, 100);
@@ -976,12 +976,18 @@ void CALLBACK OnGUIEvent( UINT nEvent, int nControlID, CDXUTControl* pControl, v
 		}
 	case IDC_DISPLAYINFO:
 	{
-		if (g_pTextBox != nullptr) {
-			g_pTextBox->ClearText();
-			g_pTextBox->SetText(L"Grr! How do I get variables??");
-		}
+		//TODO: text wrapping
+		if (g_pTextBox != nullptr && g_hasDisplay) { //currently the index is hard coded; this should be retrieved from user click
+			wstring objectInfo(L"Name: " + g_objects[1].m_name + L"\nMass: " + to_wstring(g_objects[1].m_mass) + L"\nDiameter: " +
+				to_wstring(g_objects[1].m_diameter) + L"\nBrightness: " + to_wstring(g_objects[1].m_brightness) +
+				L"\nPosition:\nx: " + to_wstring(g_pParticleArray[1].pos.x) + L"\ny: " + to_wstring(g_pParticleArray[1].pos.y) +
+				L"\nz: " + to_wstring(g_pParticleArray[1].pos.z));
 
-		displayObjectInfo(); 
+			g_pTextBox->ClearText();
+			g_pTextBox->SetText(objectInfo.c_str());
+		}
+		
+		//displayObjectInfo(); 
 		break;
 	}
 	case IDC_DOUBLESPEED:
@@ -990,14 +996,16 @@ void CALLBACK OnGUIEvent( UINT nEvent, int nControlID, CDXUTControl* pControl, v
 		halfSpeed(); break;
 	case IDC_TEXTBOXTEST:
 	{
-		if (g_isPaused && !g_hasDisplay && g_firstTextBox) { //always the first case; button pointer gets assignment here
-			g_HUD.AddEditBox(11, L"Testing \nTesting \nTesting", 0, 260, 160, 300); 
+		LPCWSTR welcomeMessage = L"Select an object\nto see information\ndisplayed\n(but actually press\nthe button)";
+		if (g_isPaused && !g_hasDisplay && g_firstTextBox) { //always the first case; text box pointer gets assignment here
+			g_HUD.AddEditBox(11, welcomeMessage, 0, 260, 160, 300); 
 			g_pTextBox = g_HUD.GetEditBox(11);
 			g_hasDisplay = true;
 			g_firstTextBox = false;
 		}
 		else if(g_isPaused && !g_hasDisplay) 
 		{
+			g_pTextBox->SetText(welcomeMessage);
 			g_pTextBox->SetVisible(true);
 			g_hasDisplay = true;
 		}
@@ -1279,7 +1287,7 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
     g_SampleUI.OnRender( fElapsedTime );
     RenderText();
     DXUT_EndPerfEvent();
-
+	
     // The following could be used to output fps stats into debug output window,
     // which is useful because you can then turn off all UI rendering as they cloud performance
     /*static DWORD dwTimefirst = GetTickCount();
