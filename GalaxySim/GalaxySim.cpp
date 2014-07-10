@@ -160,8 +160,8 @@ float g_blue[MAX_PARTICLES];
 bool g_isFirst = true;
 bool g_isPaused = false;
 
-float g_timeValue=0.01; //can change this to change speed of simulation, used later to do 2x and 0.5x
-float g_systemTime = 0; //sets the inital system time to 0
+double g_timeValue=0.01; //can change this to change speed of simulation, used later to do 2x and 0.5x
+double g_systemTime = 0; //sets the inital system time to 0
 LPWSTR g_timeString; //used later for the Jump Time In button user uses to input time to jump to.
 
 
