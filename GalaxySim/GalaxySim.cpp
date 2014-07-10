@@ -33,6 +33,8 @@
 #include <cstdlib>
 #include <ctime>
 #include <math.h>
+#include <tchar.h>
+#include <strsafe.h>
 
 #include "atlbase.h"
 #include "atlstr.h"
@@ -75,6 +77,8 @@ ID3D11Buffer*                       g_pcbGS = nullptr;
 ID3D11ShaderResourceView*           g_pParticleTexRV = nullptr;
 
 const float                         g_fSpread = 400.0f;
+
+CDXUTEditBox						*g_JumpTimeInput = nullptr;
 
 struct PARTICLE_VERTEX
 {
@@ -156,6 +160,8 @@ bool isFirst = true;
 bool g_isPaused = false;
 
 float timeValue=0.01; //can change this to change speed of simulation, used later to do 2x and 0.5x
+float systemTime = 0; //sets the inital system time to 0
+LPWSTR timeString; //used later for the Jump Time In button user uses to input time to jump to.
 
 
 //--------------------------------------------------------------------------------------
@@ -169,7 +175,10 @@ float timeValue=0.01; //can change this to change speed of simulation, used late
 #define IDC_PAUSE               7
 #define IDC_DOUBLESPEED			8
 #define IDC_HALFSPEED			9
+#define IDC_JUMPTIMEIN			10
+#define IDC_SUBMITTIMEIN		11
 
+HWND enterJumpTime;
 //--------------------------------------------------------------------------------------
 // Forward declarations 
 //--------------------------------------------------------------------------------------
@@ -199,6 +208,8 @@ int ParseFile();
 void displayObjectInfo();
 void doubleSpeed();
 void halfSpeed();
+LPWSTR GetSimTime();
+void jumpTime(float newTime);
 
 
 //--------------------------------------------------------------------------------------
@@ -258,6 +269,8 @@ void InitApp()
 	g_HUD.AddButton(IDC_PAUSE, L"Pause / Unpause", 0, iY += 26, 170, 22);
 	g_HUD.AddButton(IDC_DOUBLESPEED, L"Speed 2x", 0, iY += 26, 170, 23);
 	g_HUD.AddButton(IDC_HALFSPEED, L"Speed 0.5x", 0, iY += 26, 170, 23);
+	g_HUD.AddEditBox(IDC_JUMPTIMEIN, L"", 0, iY += 26, 170, 40, false, &g_JumpTimeInput);
+	g_HUD.AddButton(IDC_SUBMITTIMEIN, L"Jump!", 0, iY += 40, 170, 40);
     g_SampleUI.SetCallback( OnGUIEvent ); 
 }
 
@@ -698,10 +711,12 @@ void fillParticles2(PARTICLE particles[], PARTICLE_DETAILS particles2[], std::ve
 }
 
 //--------------------------------------------------------------------------------------
-// Function that displays object information. Gets called when user presses Display Object Info button
-// Currently displays to output window, later will display to pane on the right
+// Functions that help display information to the user
 //-
 
+
+//Function that displays object information.Gets called when user presses Display Object Info button
+// Currently displays to output window, later will display to pane on the right
 void displayObjectInfo(){
 	for (auto object : g_objects)
 	{
@@ -723,6 +738,14 @@ void displayObjectInfo(){
 	}
 }
 
+//function that gets the current simulation time and returns it as a 
+void GetSimTime(WCHAR *currentTime){
+	
+	HRESULT hr=StringCbPrintfW(currentTime,20*sizeof(WCHAR) , L"%f", systemTime);
+	//wstring currentTime = to_wstring(systemTime);
+	//LPWSTR currentTimeLP = wstring::c_str(systemTime);
+}
+
 //--------------------------------------------------------------------------------------
 // Functions that allow user to change the speed of the simulation
 //--------------------------------------------------------------------------------------
@@ -736,6 +759,59 @@ void doubleSpeed(){
 //called when user presses 0.5x button
 void halfSpeed(){
 	timeValue = timeValue / 2;
+}
+
+//--------------------------------------------------------------------------------------
+// Functions that allow user to jump in time in the simulation
+//--------------------------------------------------------------------------------------
+
+
+//this method calculates and updates new position and velocity for jumping in time
+void jumpTime(float newTime){
+
+	//initial velocity for all particles
+	XMFLOAT4 initialVelo = XMFLOAT4(0, 0, 0, 1);
+
+	for (int i = 0; i < NUM_PARTICLES; i++)
+	{
+		//initial position of object i
+		XMFLOAT4 initialPositioni = createPositionFloat(g_objects[i].m_xcoord, g_objects[i].m_ycoord, g_objects[i].m_zcoord);		
+
+		// here I calculate acceleration for each object in particular
+		//ind_acc = new XMFLOAT4[NUM_PARTICLES];
+		XMFLOAT4 acceleration = XMFLOAT4(0, 0, 0, 0);
+
+		for (int j = 0; j < NUM_PARTICLES; j++)
+		{
+			if (i != j)
+			{
+				XMFLOAT4 ijdist = VectorSubtraction(initialPositioni, createPositionFloat(g_objects[j].m_xcoord, g_objects[j].m_ycoord, g_objects[j].m_zcoord));
+				float ijdist_magnitude = VectorMagnitude(ijdist);
+
+				float g_accConstant = g_constant * g_pParticleArrayTWO[j].mass / pow(ijdist_magnitude, 3);
+				XMFLOAT4 g_acc = ConstantVectorMultiplication(g_accConstant, ijdist);
+				acceleration = VectorAddition(acceleration, g_acc);
+
+				//ind_acc[j] = g_acc;
+			}
+		}
+
+		//update velocity and position using acceleration
+
+		//calculates displacement between starting point and jumped time point
+		XMFLOAT4 displacement;
+		//breaks x=vt+1/2at^2 into two parts
+		XMFLOAT4 vt = ConstantVectorMultiplication(newTime, initialVelo);
+		XMFLOAT4 atsquared = ConstantVectorMultiplication(0.5, ConstantVectorMultiplication(pow(newTime, 2), acceleration));
+		displacement = VectorAddition(vt, atsquared);
+		
+		//update the velocity and position of the particle
+		g_pParticleArray[i].velo = VectorAddition(initialVelo, ConstantVectorMultiplication(newTime, acceleration));
+		g_pParticleArray[i].pos = VectorAddition(initialPositioni, displacement);
+
+	}
+
+	systemTime = newTime;
 }
 
 
@@ -833,7 +909,7 @@ void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 		D3D11_MAPPED_SUBRESOURCE ms;
 		pd3dImmediateContext->Map(g_pParticlePosVelo0, 0, D3D11_MAP_WRITE_DISCARD, 0, &ms);
 
-
+		systemTime=systemTime + timeValue;
 		for (int i = 0; i < NUM_PARTICLES; i++)
 		{
 
@@ -960,7 +1036,16 @@ void CALLBACK OnGUIEvent( UINT nEvent, int nControlID, CDXUTControl* pControl, v
 		doubleSpeed(); break;
 	case IDC_HALFSPEED:
 		halfSpeed(); break;
-    }
+	case IDC_SUBMITTIMEIN:
+		{
+		LPCWSTR timeString;
+		float timeFloat;
+		timeString=g_JumpTimeInput->GetText();
+		timeFloat = wcstof(timeString, NULL);
+		//wscanf_s(timeString, L"%f", &timeFloat);
+		jumpTime(timeFloat); break;
+		}
+    }	
 }
 
 
@@ -1142,6 +1227,10 @@ void RenderText()
     g_pTxtHelper->SetForegroundColor( Colors::Yellow );
     g_pTxtHelper->DrawTextLine( DXUTGetFrameStats( DXUTIsVsyncEnabled() ) );
     g_pTxtHelper->DrawTextLine( DXUTGetDeviceStats() );
+	g_pTxtHelper->DrawTextLine(L"Time:");
+	WCHAR currentTime[20];
+	GetSimTime(currentTime);
+	g_pTxtHelper->DrawTextLine(currentTime);
     g_pTxtHelper->End();
 }
 
