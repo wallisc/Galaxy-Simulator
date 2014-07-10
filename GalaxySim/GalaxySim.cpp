@@ -151,7 +151,7 @@ public:
 
 std::vector<ObjectData> g_objects;
 
-const float g_constant = -6.67 * 10;
+const float g_constant = -6.67 * pow(10,-11);
 const int g_cTimeStringLength = 20;
 
 float red[MAX_PARTICLES];
@@ -179,7 +179,6 @@ LPWSTR timeString; //used later for the Jump Time In button user uses to input t
 #define IDC_JUMPTIMEIN			10
 #define IDC_SUBMITTIMEIN		11
 
-HWND enterJumpTime;
 //--------------------------------------------------------------------------------------
 // Forward declarations 
 //--------------------------------------------------------------------------------------
@@ -1051,7 +1050,7 @@ void CALLBACK OnGUIEvent( UINT nEvent, int nControlID, CDXUTControl* pControl, v
 		//wscanf_s(timeString, L"%f", &timeFloat);
 		jumpTime(timeFloat); break;
 		}
-    }	
+    }
 }
 
 
