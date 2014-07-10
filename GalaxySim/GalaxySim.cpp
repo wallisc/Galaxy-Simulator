@@ -154,15 +154,15 @@ std::vector<ObjectData> g_objects;
 const float g_constant = -6.67 * pow(10,-11);
 const int g_cTimeStringLength = 20;
 
-float red[MAX_PARTICLES];
-float green[MAX_PARTICLES];
-float blue[MAX_PARTICLES];
-bool isFirst = true;
+float g_red[MAX_PARTICLES];
+float g_green[MAX_PARTICLES];
+float g_blue[MAX_PARTICLES];
+bool g_isFirst = true;
 bool g_isPaused = false;
 
-float timeValue=0.01; //can change this to change speed of simulation, used later to do 2x and 0.5x
-float systemTime = 0; //sets the inital system time to 0
-LPWSTR timeString; //used later for the Jump Time In button user uses to input time to jump to.
+float g_timeValue=0.01; //can change this to change speed of simulation, used later to do 2x and 0.5x
+float g_systemTime = 0; //sets the inital system time to 0
+LPWSTR g_timeString; //used later for the Jump Time In button user uses to input time to jump to.
 
 
 //--------------------------------------------------------------------------------------
@@ -565,19 +565,19 @@ HRESULT CreateParticleBuffer( ID3D11Device* pd3dDevice )
 	//random number generator for color values
 	srand(static_cast <unsigned> (time(NULL)));
 
-	if (isFirst) {
+	if (g_isFirst) {
 		for (UINT i = 0; i < MAX_PARTICLES; i++) {
-			red[i] = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
-			green[i] = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
-			blue[i] = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+			g_red[i] = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+			g_green[i] = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+			g_blue[i] = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
 
-			pVertices[i].Color = XMFLOAT4(red[i], green[i], blue[i], 1.000000);
+			pVertices[i].Color = XMFLOAT4(g_red[i], g_green[i], g_blue[i], 1.000000);
 		}
-		isFirst = false;
+		g_isFirst = false;
 	}
 	else {
 		for (UINT i = 0; i < MAX_PARTICLES; i++) {
-			pVertices[i].Color = XMFLOAT4(red[i], green[i], blue[i], 1.000000);
+			pVertices[i].Color = XMFLOAT4(g_red[i], g_green[i], g_blue[i], 1.000000);
 		}
 	}
 	
@@ -741,26 +741,26 @@ void displayObjectInfo(){
 //function that gets the current simulation time as a float and assigns it as a string to the string inputted as a parameter
 void GetSimTime(WCHAR *currentTime){
 
-	if (currentTime == NULL||systemTime==NULL){
+	if (currentTime == NULL || g_systemTime == NULL){
 		return;
 	}
 	
-	HRESULT hr = StringCbPrintfW(currentTime, g_cTimeStringLength*sizeof(WCHAR), L"%f", systemTime);
+	HRESULT hr = StringCbPrintfW(currentTime, g_cTimeStringLength*sizeof(WCHAR), L"%f", g_systemTime);
 }
 
 //--------------------------------------------------------------------------------------
 // Functions that allow user to change the speed of the simulation
 //--------------------------------------------------------------------------------------
 
-//doubles the value of timeValue so the simul speed goes 2x; called when user presses 2x button
+//doubles the value of g_timeValue so the simul speed goes 2x; called when user presses 2x button
 void doubleSpeed(){
-	timeValue = timeValue * 2;
+	g_timeValue = g_timeValue * 2;
 }
 
-//divides in half the value of timeValue so that simul speed slows down by half
+//divides in half the value of g_timeValue so that simul speed slows down by half
 //called when user presses 0.5x button
 void halfSpeed(){
-	timeValue = timeValue / 2;
+	g_timeValue = g_timeValue / 2;
 }
 
 //--------------------------------------------------------------------------------------
@@ -813,7 +813,7 @@ void jumpTime(float newTime){
 
 	}
 
-	systemTime = newTime;
+	g_systemTime = newTime;
 }
 
 
@@ -911,7 +911,7 @@ void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 		D3D11_MAPPED_SUBRESOURCE ms;
 		pd3dImmediateContext->Map(g_pParticlePosVelo0, 0, D3D11_MAP_WRITE_DISCARD, 0, &ms);
 
-		systemTime=systemTime + timeValue;
+		g_systemTime = g_systemTime + g_timeValue;
 		for (int i = 0; i < NUM_PARTICLES; i++)
 		{
 
@@ -935,8 +935,8 @@ void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 			}
 
 			//update velocity and position using acceleration
-			g_pParticleArray[i].velo = VectorAddition(g_pParticleArray[i].velo, ConstantVectorMultiplication(timeValue, acceleration));
-			g_pParticleArray[i].pos = VectorAddition(g_pParticleArray[i].pos, ConstantVectorMultiplication(timeValue, g_pParticleArray[i].velo));
+			g_pParticleArray[i].velo = VectorAddition(g_pParticleArray[i].velo, ConstantVectorMultiplication(g_timeValue, acceleration));
+			g_pParticleArray[i].pos = VectorAddition(g_pParticleArray[i].pos, ConstantVectorMultiplication(g_timeValue, g_pParticleArray[i].velo));
 			//g_pParticleArray[i].pos.x -= 2.0f;
 			//move each object's button
 
@@ -1040,14 +1040,13 @@ void CALLBACK OnGUIEvent( UINT nEvent, int nControlID, CDXUTControl* pControl, v
 		halfSpeed(); break;
 	case IDC_SUBMITTIMEIN:
 		{
-		LPCWSTR timeString;
+		LPCWSTR timeStr;
 		float timeFloat;
-		timeString=g_JumpTimeInput->GetText();
-		if (timeString == NULL){
+		timeStr=g_JumpTimeInput->GetText();
+		if (timeStr == NULL){
 			break;
 		}
-		timeFloat = wcstof(timeString, NULL);
-		//wscanf_s(timeString, L"%f", &timeFloat);
+		timeFloat = wcstof(timeStr, NULL);
 		jumpTime(timeFloat); break;
 		}
     }
