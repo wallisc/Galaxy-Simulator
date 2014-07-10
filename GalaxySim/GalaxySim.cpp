@@ -739,12 +739,14 @@ void displayObjectInfo(){
 	}
 }
 
-//function that gets the current simulation time and returns it as a 
+//function that gets the current simulation time as a float and assigns it as a string to the string inputted as a parameter
 void GetSimTime(WCHAR *currentTime){
+
+	if (currentTime == NULL||systemTime==NULL){
+		return;
+	}
 	
 	HRESULT hr = StringCbPrintfW(currentTime, g_cTimeStringLength*sizeof(WCHAR), L"%f", systemTime);
-	//wstring currentTime = to_wstring(systemTime);
-	//LPWSTR currentTimeLP = wstring::c_str(systemTime);
 }
 
 //--------------------------------------------------------------------------------------
@@ -1042,6 +1044,9 @@ void CALLBACK OnGUIEvent( UINT nEvent, int nControlID, CDXUTControl* pControl, v
 		LPCWSTR timeString;
 		float timeFloat;
 		timeString=g_JumpTimeInput->GetText();
+		if (timeString == NULL){
+			break;
+		}
 		timeFloat = wcstof(timeString, NULL);
 		//wscanf_s(timeString, L"%f", &timeFloat);
 		jumpTime(timeFloat); break;
