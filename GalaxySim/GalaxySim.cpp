@@ -152,6 +152,7 @@ public:
 std::vector<ObjectData> g_objects;
 
 const float g_constant = -6.67 * 10;
+const int g_cTimeStringLength = 20;
 
 float red[MAX_PARTICLES];
 float green[MAX_PARTICLES];
@@ -741,7 +742,7 @@ void displayObjectInfo(){
 //function that gets the current simulation time and returns it as a 
 void GetSimTime(WCHAR *currentTime){
 	
-	HRESULT hr=StringCbPrintfW(currentTime,20*sizeof(WCHAR) , L"%f", systemTime);
+	HRESULT hr = StringCbPrintfW(currentTime, g_cTimeStringLength*sizeof(WCHAR), L"%f", systemTime);
 	//wstring currentTime = to_wstring(systemTime);
 	//LPWSTR currentTimeLP = wstring::c_str(systemTime);
 }
@@ -1228,7 +1229,7 @@ void RenderText()
     g_pTxtHelper->DrawTextLine( DXUTGetFrameStats( DXUTIsVsyncEnabled() ) );
     g_pTxtHelper->DrawTextLine( DXUTGetDeviceStats() );
 	g_pTxtHelper->DrawTextLine(L"Time:");
-	WCHAR currentTime[20];
+	WCHAR currentTime[g_cTimeStringLength];
 	GetSimTime(currentTime);
 	g_pTxtHelper->DrawTextLine(currentTime);
     g_pTxtHelper->End();
