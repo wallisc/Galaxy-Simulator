@@ -145,6 +145,9 @@ public:
     float     m_xcoord;
     float     m_ycoord;
     float     m_zcoord;
+	float     m_updateX;
+	float     m_updateY;
+	float     m_updateZ;
 };
 
 std::vector<ObjectData> g_objects;
@@ -159,6 +162,14 @@ bool g_isPaused = false;
 bool g_hasDisplay = false;
 CDXUTEditBox *g_pTextBox;
 bool g_firstTextBox = true; 
+XMMATRIX g_mProj;
+XMMATRIX g_mView;
+
+bool g_relevantMouse = false;
+float g_xMouse;
+float g_yMouse;
+int g_height = 600;
+int g_width = 800;
 
 float timeValue=0.01; //can change this to change speed of simulation
 
@@ -195,6 +206,9 @@ void CALLBACK OnD3D11ReleasingSwapChain( void* pUserContext );
 void CALLBACK OnD3D11DestroyDevice( void* pUserContext );
 void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImmediateContext, double fTime,
                                  float fElapsedTime, void* pUserContext );
+void CALLBACK OnMouseEvent(_In_ bool bLeftButtonDown, _In_ bool bRightButtonDown, _In_ bool bMiddleButtonDown,
+	_In_ bool bSideButton1Down, _In_ bool bSideButton2Down, _In_ int nMouseWheelDelta,
+	_In_ int xPos, _In_ int yPos, _In_opt_ void* pUserContext);
 
 void InitApp();
 void RenderText();
@@ -228,6 +242,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
     DXUTSetCallbackD3D11FrameRender( OnD3D11FrameRender );
     DXUTSetCallbackD3D11SwapChainReleasing( OnD3D11ReleasingSwapChain );
     DXUTSetCallbackD3D11DeviceDestroyed( OnD3D11DestroyDevice );
+	DXUTSetCallbackMouse(OnMouseEvent);
 
 	ParseFile();
 
@@ -237,7 +252,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 
     DXUTSetCursorSettings( true, true ); // Show the cursor and clip it when in full screen
     DXUTCreateWindow( L"SkyX" );
-    DXUTCreateDevice( D3D_FEATURE_LEVEL_10_0, true, 800, 600 );
+    DXUTCreateDevice( D3D_FEATURE_LEVEL_10_0, true, g_width, g_height );
     DXUTMainLoop();                      // Enter into the DXUT render loop
 
     g_objects.clear();
@@ -267,7 +282,7 @@ void InitApp()
 	g_HUD.AddButton(IDC_PAUSE, L"Pause / Unpause", 0, iY += 26, 170, 22);
 	g_HUD.AddButton(IDC_DOUBLESPEED, L"Speed 2x", 0, iY += 26, 170, 23);
 	g_HUD.AddButton(IDC_HALFSPEED, L"Speed 0.5x", 0, iY += 26, 170, 23);
-	g_HUD.AddButton(IDC_TEXTBOXTEST, L"Textbox (Pause 1st)", -30, iY += 26, 200, 23);
+	//g_HUD.AddButton(IDC_TEXTBOXTEST, L"Textbox (Pause 1st)", -30, iY += 26, 200, 23);
 	/*textBox.SetID(11);
 	textBox.SetLocation(0, iY += 26);
 	textBox.SetSize(100, 100);
@@ -827,9 +842,9 @@ bool CALLBACK ModifyDeviceSettings( DXUTDeviceSettings* pDeviceSettings, void* p
     return true;
 }
 
-float distance(XMVECTOR center, XMVECTOR side) {
-	float distance;
-	/*float centerX = XMVectorGetX(center);
+float distanceCalc(XMVECTOR center, XMVECTOR side) {
+	float distance = 0;
+	float centerX = XMVectorGetX(center);
 	float sideX = XMVectorGetX(side);
 	float centerY = XMVectorGetY(center);
 	float sideY = XMVectorGetY(side);
@@ -840,9 +855,33 @@ float distance(XMVECTOR center, XMVECTOR side) {
 	float ySquared = powf((sideY - centerY), 2);
 	float zSquared = powf((sideZ - centerZ), 2);
 
-	distance = sqrtf(xSquared + ySquared + zSquared);*/
+	distance = sqrtf(xSquared + ySquared + zSquared);
 
 	return distance; 
+}
+
+
+//--------------------------------------------------------------------------------------
+// This callback function handles mouse related user input. 
+//--------------------------------------------------------------------------------------
+void CALLBACK OnMouseEvent(bool bLeftButtonDown, bool bRightButtonDown, bool bMiddleButtonDown,
+	 bool bSideButton1Down, bool bSideButton2Down, int nMouseWheelDelta,
+	 int xPos, int yPos, void* pUserContext) 
+{
+	if (g_isPaused && g_hasDisplay && bLeftButtonDown) {
+		g_xMouse = (float)xPos;
+		g_yMouse = (float)yPos;
+		g_relevantMouse = true;
+	}
+}
+
+wstring concatenateObjInfo(ObjectData currentObject) {
+	wstring objectInfo(L"Name: " + currentObject.m_name + L"\nMass: " + to_wstring(currentObject.m_mass) + L"\nDiameter: " +
+		to_wstring(currentObject.m_diameter) + L"\nBrightness: " + to_wstring(currentObject.m_brightness) +
+		L"\nPosition:\nx: " + to_wstring(currentObject.m_updateX) + L"\ny: " + to_wstring(currentObject.m_updateY) +
+		L"\nz: " + to_wstring(currentObject.m_updateZ));
+
+	return objectInfo;
 }
 
 //--------------------------------------------------------------------------------------
@@ -895,6 +934,13 @@ void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 			//g_pParticleArray[i].pos.x -= 2.0f;
 			//move each object's button
 
+			g_objects[i].m_updateX = g_pParticleArray[i].pos.x;
+			g_objects[i].m_updateY = g_pParticleArray[i].pos.y;
+			g_objects[i].m_updateZ = g_pParticleArray[i].pos.z;
+
+
+
+
 		}
 
 
@@ -906,34 +952,119 @@ void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 		std::swap(g_pParticlePosVelo0, g_pParticlePosVelo1);
 		std::swap(g_pParticlePosVeloRV0, g_pParticlePosVeloRV1);
 	}
-	else {
-		//ability to click on objects to see data goes here!
-		XMMATRIX mProj = g_Camera.GetProjMatrix();
-		XMMATRIX mView = g_Camera.GetViewMatrix();
+	else if(g_isPaused && g_hasDisplay && g_relevantMouse) {
 
+		float xScreenMouse;
+		float yScreenMouse;
+		float leftEdge;
+		float rightEdge;
+		float bottomEdge;
+		float topEdge;
+		XMVECTOR screenSphere;
+		XMVECTOR screenObject;
+		XMVECTOR worldSphere;
+		float radius;
+		float screenRadius;
+		std::vector<ObjectData> hitObjects;
+		int numHitObjects = 0;
+		ObjectData objectMaxZ;
+		
+		
+
+		//TODO: get the real value of width and height with a method call
+		xScreenMouse = ((2 * g_xMouse) / (float)g_width) - 1;
+		yScreenMouse = 1 - ((2 * g_yMouse) / (float)g_height);
+		
 		//world view projection
+
 		XMFLOAT4X4 worldViewProj;
 		XMFLOAT4X4 * pWorldViewProj = &worldViewProj;
-		XMStoreFloat4x4(pWorldViewProj, XMMatrixMultiply(mView, mProj));
+		XMStoreFloat4x4(pWorldViewProj, XMMatrixMultiply(g_mView, g_mProj));
 		
 		//TODO: Loop through all objects to compare to mouse position
-		//screen position = object position in world X world projection view
-		XMVECTOR worldObject = { g_pParticleArray[0].pos.x, g_pParticleArray[0].pos.y, g_pParticleArray[0].pos.z, 1.0f };
-		XMVECTOR screenObject;
-		screenObject = XMVector4Transform(worldObject, XMLoadFloat4x4(pWorldViewProj));
 
-		//screen space radius
-		float radius = 10.0f; //TODO: Get this value from diameter; implement diameter visuals
-		XMVECTOR offset = { radius, 0.0f, 0.0f, 0.0f };
-		XMVECTOR worldSphere = worldObject + offset;
-		XMVECTOR screenSphere = XMVector4Transform(worldSphere, XMLoadFloat4x4(pWorldViewProj));
-		float screenRadius = distance(screenObject, screenSphere);
 
-	
-		
+		for (ObjectData object : g_objects) {
+			XMVECTOR worldObject = { object.m_updateX, object.m_updateY, object.m_updateZ, 1.0f };
+
+			screenObject = XMVector3TransformCoord(worldObject, XMLoadFloat4x4(pWorldViewProj));
+			XMFLOAT4 screenCoord; 
+			XMStoreFloat4(&screenCoord, screenObject);
+
+			//screen space radius
+			radius = 10.0f; //TODO: Get this value from diameter; implement diameter visuals
+			XMVECTOR offset = { radius, 0.0f, 0.0f, 0.0f };
+			worldSphere = worldObject + offset;
+			screenSphere = XMVector3TransformCoord(worldSphere, XMLoadFloat4x4(pWorldViewProj));
+			screenRadius = distanceCalc(screenObject, screenSphere);
+
+			leftEdge = XMVectorGetX(screenObject) - screenRadius;
+			rightEdge = XMVectorGetX(screenObject) + screenRadius;
+			bottomEdge = XMVectorGetY(screenObject) - screenRadius;
+			topEdge = XMVectorGetY(screenObject) + screenRadius;
+
+			wchar_t buffer[256];
+			swprintf(buffer, sizeof(buffer), L"Box: left: %f right: %f bottom: %f top: %f\n centerX: %f centerY %f \n mouseX: %f mouseY: %f\n\n", leftEdge, rightEdge, bottomEdge, topEdge, XMVectorGetX(screenObject), XMVectorGetY(screenObject), xScreenMouse, yScreenMouse);
+			::OutputDebugString(buffer);
+			
+			if (xScreenMouse >= leftEdge && xScreenMouse <= rightEdge && yScreenMouse >= bottomEdge && yScreenMouse <= topEdge) {
+				hitObjects.push_back(object);
+				numHitObjects++;
+			}
+		}
+
+		if (numHitObjects == 0) {
+			//print condescending statement about incompetent clicking 
+			g_pTextBox->ClearText();
+			g_pTextBox->SetText(L"No object selected");
+		}
+		else {
+			if (numHitObjects > 1) {
+				for (int i = 0; i < numHitObjects; i++) {
+					if (i == 0) {
+						objectMaxZ = hitObjects[i];
+						wchar_t buffer[256];
+						swprintf(buffer, sizeof(buffer), L"Reached first z test case!\n");
+						::OutputDebugString(buffer);
+					}
+					else {
+						if (hitObjects[i].m_updateZ >= objectMaxZ.m_updateZ) {
+							objectMaxZ = hitObjects[i];
+							wchar_t buffer[256];
+							swprintf(buffer, sizeof(buffer), L"Reached second z test case!\n");
+							::OutputDebugString(buffer);
+						}
+					}
+				}
+			}
+			else {
+				objectMaxZ = hitObjects[0];
+				wchar_t buffer[256];
+				swprintf(buffer, sizeof(buffer), L"Reached final (i.e. 1 hit) z test case!\n");
+				::OutputDebugString(buffer);
+			}
+
+			
+
+			//TODO: text wrapping
+			if (g_pTextBox != nullptr && g_hasDisplay) { 
+				wstring objectInfo = concatenateObjInfo(objectMaxZ); 
+
+				g_pTextBox->ClearText();
+				g_pTextBox->SetText(objectInfo.c_str());
+			}
+		}
+
+		wchar_t buffer[256];
+		swprintf(buffer, sizeof(buffer), L"number of hits recorded: %i\n\n", numHitObjects);
+		::OutputDebugString(buffer);
+
+		hitObjects.clear();
 
 	}
 
+	
+	g_relevantMouse = false;
     // Update the camera's position based on user input 
 		g_Camera.FrameMove(fElapsedTime);
 	
@@ -1020,34 +1151,15 @@ void CALLBACK OnGUIEvent( UINT nEvent, int nControlID, CDXUTControl* pControl, v
 		}
 	case IDC_DISPLAYINFO:
 	{
-		//TODO: text wrapping
-		if (g_pTextBox != nullptr && g_hasDisplay) { //currently the index is hard coded; this should be retrieved from user click
-			wstring objectInfo(L"Name: " + g_objects[1].m_name + L"\nMass: " + to_wstring(g_objects[1].m_mass) + L"\nDiameter: " +
-				to_wstring(g_objects[1].m_diameter) + L"\nBrightness: " + to_wstring(g_objects[1].m_brightness) +
-				L"\nPosition:\nx: " + to_wstring(g_pParticleArray[1].pos.x) + L"\ny: " + to_wstring(g_pParticleArray[1].pos.y) +
-				L"\nz: " + to_wstring(g_pParticleArray[1].pos.z));
-
-			g_pTextBox->ClearText();
-			g_pTextBox->SetText(objectInfo.c_str());
-		}
-		
-		//displayObjectInfo(); 
-		break;
-	}
-	case IDC_DOUBLESPEED:
-		doubleSpeed(); break;
-	case IDC_HALFSPEED:
-		halfSpeed(); break;
-	case IDC_TEXTBOXTEST:
-	{
+		//opens text box 
 		LPCWSTR welcomeMessage = L"Select an object\nto see information\ndisplayed\n(but actually press\nthe button)";
 		if (g_isPaused && !g_hasDisplay && g_firstTextBox) { //always the first case; text box pointer gets assignment here
-			g_HUD.AddEditBox(11, welcomeMessage, 0, 260, 160, 300); 
+			g_HUD.AddEditBox(11, welcomeMessage, 0, 260, 160, 300);
 			g_pTextBox = g_HUD.GetEditBox(11);
 			g_hasDisplay = true;
 			g_firstTextBox = false;
 		}
-		else if(g_isPaused && !g_hasDisplay) 
+		else if (g_isPaused && !g_hasDisplay)
 		{
 			g_pTextBox->SetText(welcomeMessage);
 			g_pTextBox->SetVisible(true);
@@ -1059,6 +1171,15 @@ void CALLBACK OnGUIEvent( UINT nEvent, int nControlID, CDXUTControl* pControl, v
 		}
 		break;
 	}
+	case IDC_DOUBLESPEED:
+		doubleSpeed(); break;
+	case IDC_HALFSPEED:
+		halfSpeed(); break;
+	/*case IDC_TEXTBOXTEST:
+	{
+		
+		break;
+	}*/
     }
 }
 
@@ -1320,11 +1441,14 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
     pd3dImmediateContext->ClearDepthStencilView( pDSV, D3D11_CLEAR_DEPTH, 1.0, 0 );
 
     // Get the projection & view matrix from the camera class
-    XMMATRIX mProj = g_Camera.GetProjMatrix();
-    XMMATRIX mView = g_Camera.GetViewMatrix();
+    /*XMMATRIX mProj = g_Camera.GetProjMatrix();
+    XMMATRIX mView = g_Camera.GetViewMatrix();*/
+
+	 g_mProj = g_Camera.GetProjMatrix();
+	 g_mView = g_Camera.GetViewMatrix();
 
     // Render the particles
-    RenderParticles( pd3dImmediateContext, mView, mProj );
+    RenderParticles( pd3dImmediateContext, g_mView, g_mProj );
 
     DXUT_BeginPerfEvent( DXUT_PERFEVENTCOLOR, L"HUD / Stats" );
     g_HUD.OnRender( fElapsedTime );
