@@ -8,9 +8,9 @@
   <mass>5000</mass>
   <diameter>6400</diameter>
   <brightness>6</brightness>
-  <xcoord>0</xcoord>
-  <ycoord>0</ycoord>
-  <zcoord>0</zcoord>
+  <xcoord>-20</xcoord>
+  <ycoord>-20</ycoord>
+  <zcoord>-20</zcoord>
 </object>
 
 <object>
