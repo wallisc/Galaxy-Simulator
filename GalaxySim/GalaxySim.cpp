@@ -972,8 +972,8 @@ void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 		
 
 		//TODO: get the real value of width and height with a method call
-		xScreenMouse = ((2 * g_xMouse) / (float)g_width) - 1;
-		yScreenMouse = 1 - ((2 * g_yMouse) / (float)g_height);
+		xScreenMouse = ((2 * g_xMouse) / (float)DXUTGetWindowWidth()) - 1;
+		yScreenMouse = 1 - ((2 * g_yMouse) / (float)DXUTGetWindowHeight());
 		
 		//world view projection
 
@@ -1007,7 +1007,7 @@ void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 			swprintf(buffer, sizeof(buffer), L"Box: left: %f right: %f bottom: %f top: %f\n centerX: %f centerY %f \n mouseX: %f mouseY: %f\n\n", leftEdge, rightEdge, bottomEdge, topEdge, XMVectorGetX(screenObject), XMVectorGetY(screenObject), xScreenMouse, yScreenMouse);
 			::OutputDebugString(buffer);
 			
-			if (xScreenMouse >= leftEdge && xScreenMouse <= rightEdge && yScreenMouse >= bottomEdge && yScreenMouse <= topEdge) {
+			if ((xScreenMouse >= leftEdge && xScreenMouse <= rightEdge) && (yScreenMouse >= bottomEdge && yScreenMouse <= topEdge)) {
 				hitObjects.push_back(object);
 				numHitObjects++;
 			}
