@@ -32,4 +32,7 @@
   <ItemGroup>
     <ClCompile Include="GalaxySim.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <Xml Include="ObjectData.xml" />
+  </ItemGroup>
 </Project>

@@ -151,7 +151,7 @@ public:
 
 std::vector<ObjectData> g_objects;
 
-const float g_constant = -6.67 * 10;
+const float g_constant = -6.67 * pow(10, 1);
 const int g_cTimeStringLength = 20;
 
 float g_red[MAX_PARTICLES];
@@ -160,12 +160,12 @@ float g_blue[MAX_PARTICLES];
 bool g_isFirst = true;
 bool g_isPaused = false;
 
-float g_timeValue=0.01; //can change this to change speed of simulation, used later to do 2x and 0.5x
-float g_systemTime = 0; //sets the inital system time to 0
+double g_timeValue=0.01; //can change this to change speed of simulation, used later to do 2x and 0.5x
+double g_systemTime = 0; //sets the inital system time to 0
 LPWSTR g_timeString; //used later for the Jump Time In button user uses to input time to jump to.
 
 
-//--------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------
 // UI control IDs
 //--------------------------------------------------------------------------------------
 #define IDC_TOGGLEFULLSCREEN    1
@@ -179,7 +179,6 @@ LPWSTR g_timeString; //used later for the Jump Time In button user uses to input
 #define IDC_JUMPTIMEIN			10
 #define IDC_SUBMITTIMEIN		11
 
-HWND enterJumpTime;
 //--------------------------------------------------------------------------------------
 // Forward declarations 
 //--------------------------------------------------------------------------------------
@@ -1050,7 +1049,7 @@ void CALLBACK OnGUIEvent( UINT nEvent, int nControlID, CDXUTControl* pControl, v
 		timeFloat = wcstof(timeStr, NULL);
 		jumpTime(timeFloat); break;
 		}
-    }	
+    }
 }
 
 
