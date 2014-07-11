@@ -33,6 +33,8 @@
 #include <cstdlib>
 #include <ctime>
 #include <math.h>
+#include <tchar.h>
+#include <strsafe.h>
 #include <sstream>
 #include <string>
 
@@ -77,6 +79,8 @@ ID3D11Buffer*                       g_pcbGS = nullptr;
 ID3D11ShaderResourceView*           g_pParticleTexRV = nullptr;
 
 const float                         g_fSpread = 400.0f;
+
+CDXUTEditBox						*g_JumpTimeInput = nullptr;
 
 struct PARTICLE_VERTEX
 {
@@ -153,11 +157,12 @@ public:
 std::vector<ObjectData> g_objects;
 
 const float g_constant = -6.67 * 10;
+const int g_cTimeStringLength = 20;
 
-float red[MAX_PARTICLES];
-float green[MAX_PARTICLES];
-float blue[MAX_PARTICLES];
-bool isFirst = true;
+float g_red[MAX_PARTICLES];
+float g_green[MAX_PARTICLES];
+float g_blue[MAX_PARTICLES];
+bool g_isFirst = true;
 bool g_isPaused = false;
 bool g_hasDisplay = false;
 CDXUTEditBox *g_pTextBox;
@@ -171,7 +176,9 @@ float g_yMouse;
 int g_height = 600;
 int g_width = 800;
 
-float timeValue=0.01; //can change this to change speed of simulation
+float g_timeValue=0.01; //can change this to change speed of simulation, used later to do 2x and 0.5x
+float g_systemTime = 0; //sets the inital system time to 0
+LPWSTR g_timeString; //used later for the Jump Time In button user uses to input time to jump to.
 
 
 //--------------------------------------------------------------------------------------
@@ -185,8 +192,11 @@ float timeValue=0.01; //can change this to change speed of simulation
 #define IDC_PAUSE               7
 #define IDC_DOUBLESPEED			8
 #define IDC_HALFSPEED			9
+#define IDC_JUMPTIMEIN			10
+#define IDC_SUBMITTIMEIN		11
 #define IDC_TEXTBOXTEST         10
 
+HWND enterJumpTime;
 //--------------------------------------------------------------------------------------
 // Forward declarations 
 //--------------------------------------------------------------------------------------
@@ -219,6 +229,8 @@ int ParseFile();
 void displayObjectInfo();
 void doubleSpeed();
 void halfSpeed();
+LPWSTR GetSimTime();
+void jumpTime(float newTime);
 
 
 //--------------------------------------------------------------------------------------
@@ -282,6 +294,8 @@ void InitApp()
 	g_HUD.AddButton(IDC_PAUSE, L"Pause / Unpause", 0, iY += 26, 170, 22);
 	g_HUD.AddButton(IDC_DOUBLESPEED, L"Speed 2x", 0, iY += 26, 170, 23);
 	g_HUD.AddButton(IDC_HALFSPEED, L"Speed 0.5x", 0, iY += 26, 170, 23);
+	g_HUD.AddEditBox(IDC_JUMPTIMEIN, L"", 0, iY += 26, 170, 40, false, &g_JumpTimeInput);
+	g_HUD.AddButton(IDC_SUBMITTIMEIN, L"Jump!", 0, iY += 40, 170, 40);
 	//g_HUD.AddButton(IDC_TEXTBOXTEST, L"Textbox (Pause 1st)", -30, iY += 26, 200, 23);
 	/*textBox.SetID(11);
 	textBox.SetLocation(0, iY += 26);
@@ -583,19 +597,19 @@ HRESULT CreateParticleBuffer( ID3D11Device* pd3dDevice )
 	//random number generator for color values
 	srand(static_cast <unsigned> (time(NULL)));
 
-	if (isFirst) {
+	if (g_isFirst) {
 		for (UINT i = 0; i < MAX_PARTICLES; i++) {
-			red[i] = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
-			green[i] = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
-			blue[i] = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+			g_red[i] = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+			g_green[i] = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+			g_blue[i] = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
 
-			pVertices[i].Color = XMFLOAT4(red[i], green[i], blue[i], 1.000000);
+			pVertices[i].Color = XMFLOAT4(g_red[i], g_green[i], g_blue[i], 1.000000);
 		}
-		isFirst = false;
+		g_isFirst = false;
 	}
 	else {
 		for (UINT i = 0; i < MAX_PARTICLES; i++) {
-			pVertices[i].Color = XMFLOAT4(red[i], green[i], blue[i], 1.000000);
+			pVertices[i].Color = XMFLOAT4(g_red[i], g_green[i], g_blue[i], 1.000000);
 		}
 	}
 	
@@ -729,10 +743,12 @@ void fillParticles2(PARTICLE particles[], PARTICLE_DETAILS particles2[], std::ve
 }
 
 //--------------------------------------------------------------------------------------
-// Function that displays object information. Gets called when user presses Display Object Info button
-// Currently displays to output window, later will display to pane on the right
+// Functions that help display information to the user
 //-
 
+
+//Function that displays object information.Gets called when user presses Display Object Info button
+// Currently displays to output window, later will display to pane on the right
 void displayObjectInfo(){
 	for (auto object : g_objects)
 	{
@@ -754,19 +770,82 @@ void displayObjectInfo(){
 	}
 }
 
+//function that gets the current simulation time as a float and assigns it as a string to the string inputted as a parameter
+void GetSimTime(WCHAR *currentTime){
+
+	if (currentTime == NULL || g_systemTime == NULL){
+		return;
+	}
+	
+	HRESULT hr = StringCbPrintfW(currentTime, g_cTimeStringLength*sizeof(WCHAR), L"%f", g_systemTime);
+}
+
 //--------------------------------------------------------------------------------------
 // Functions that allow user to change the speed of the simulation
 //--------------------------------------------------------------------------------------
 
-//doubles the value of timeValue so the simul speed goes 2x; called when user presses 2x button
+//doubles the value of g_timeValue so the simul speed goes 2x; called when user presses 2x button
 void doubleSpeed(){
-	timeValue = timeValue * 2;
+	g_timeValue = g_timeValue * 2;
 }
 
-//divides in half the value of timeValue so that simul speed slows down by half
+//divides in half the value of g_timeValue so that simul speed slows down by half
 //called when user presses 0.5x button
 void halfSpeed(){
-	timeValue = timeValue / 2;
+	g_timeValue = g_timeValue / 2;
+}
+
+//--------------------------------------------------------------------------------------
+// Functions that allow user to jump in time in the simulation
+//--------------------------------------------------------------------------------------
+
+
+//this method calculates and updates new position and velocity for jumping in time
+void jumpTime(float newTime){
+
+	//initial velocity for all particles
+	XMFLOAT4 initialVelo = XMFLOAT4(0, 0, 0, 1);
+
+	for (int i = 0; i < NUM_PARTICLES; i++)
+	{
+		//initial position of object i
+		XMFLOAT4 initialPositioni = createPositionFloat(g_objects[i].m_xcoord, g_objects[i].m_ycoord, g_objects[i].m_zcoord);		
+
+		// here I calculate acceleration for each object in particular
+		//ind_acc = new XMFLOAT4[NUM_PARTICLES];
+		XMFLOAT4 acceleration = XMFLOAT4(0, 0, 0, 0);
+
+		for (int j = 0; j < NUM_PARTICLES; j++)
+		{
+			if (i != j)
+			{
+				XMFLOAT4 ijdist = VectorSubtraction(initialPositioni, createPositionFloat(g_objects[j].m_xcoord, g_objects[j].m_ycoord, g_objects[j].m_zcoord));
+				float ijdist_magnitude = VectorMagnitude(ijdist);
+
+				float g_accConstant = g_constant * g_pParticleArrayTWO[j].mass / pow(ijdist_magnitude, 3);
+				XMFLOAT4 g_acc = ConstantVectorMultiplication(g_accConstant, ijdist);
+				acceleration = VectorAddition(acceleration, g_acc);
+
+				//ind_acc[j] = g_acc;
+			}
+		}
+
+		//update velocity and position using acceleration
+
+		//calculates displacement between starting point and jumped time point
+		XMFLOAT4 displacement;
+		//breaks x=vt+1/2at^2 into two parts
+		XMFLOAT4 vt = ConstantVectorMultiplication(newTime, initialVelo);
+		XMFLOAT4 atsquared = ConstantVectorMultiplication(0.5, ConstantVectorMultiplication(pow(newTime, 2), acceleration));
+		displacement = VectorAddition(vt, atsquared);
+		
+		//update the velocity and position of the particle
+		g_pParticleArray[i].velo = VectorAddition(initialVelo, ConstantVectorMultiplication(newTime, acceleration));
+		g_pParticleArray[i].pos = VectorAddition(initialPositioni, displacement);
+
+	}
+
+	g_systemTime = newTime;
 }
 
 
@@ -905,7 +984,7 @@ void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 		D3D11_MAPPED_SUBRESOURCE ms;
 		pd3dImmediateContext->Map(g_pParticlePosVelo0, 0, D3D11_MAP_WRITE_DISCARD, 0, &ms);
 
-
+		g_systemTime = g_systemTime + g_timeValue;
 		for (int i = 0; i < NUM_PARTICLES; i++)
 		{
 
@@ -929,8 +1008,8 @@ void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 			}
 
 			//update velocity and position using acceleration
-			g_pParticleArray[i].velo = VectorAddition(g_pParticleArray[i].velo, ConstantVectorMultiplication(timeValue, acceleration));
-			g_pParticleArray[i].pos = VectorAddition(g_pParticleArray[i].pos, ConstantVectorMultiplication(timeValue, g_pParticleArray[i].velo));
+			g_pParticleArray[i].velo = VectorAddition(g_pParticleArray[i].velo, ConstantVectorMultiplication(g_timeValue, acceleration));
+			g_pParticleArray[i].pos = VectorAddition(g_pParticleArray[i].pos, ConstantVectorMultiplication(g_timeValue, g_pParticleArray[i].velo));
 			//g_pParticleArray[i].pos.x -= 2.0f;
 			//move each object's button
 
@@ -974,7 +1053,7 @@ void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 		//TODO: get the real value of width and height with a method call
 		xScreenMouse = ((2 * g_xMouse) / (float)DXUTGetWindowWidth()) - 1;
 		yScreenMouse = 1 - ((2 * g_yMouse) / (float)DXUTGetWindowHeight());
-		
+
 		//world view projection
 
 		XMFLOAT4X4 worldViewProj;
@@ -1175,6 +1254,17 @@ void CALLBACK OnGUIEvent( UINT nEvent, int nControlID, CDXUTControl* pControl, v
 		doubleSpeed(); break;
 	case IDC_HALFSPEED:
 		halfSpeed(); break;
+	case IDC_SUBMITTIMEIN:
+		{
+		LPCWSTR timeStr;
+		float timeFloat;
+		timeStr=g_JumpTimeInput->GetText();
+		if (timeStr == NULL){
+			break;
+		}
+		timeFloat = wcstof(timeStr, NULL);
+		jumpTime(timeFloat); break;
+		}
 	/*case IDC_TEXTBOXTEST:
 	{
 		
@@ -1362,6 +1452,10 @@ void RenderText()
     g_pTxtHelper->SetForegroundColor( Colors::Yellow );
     g_pTxtHelper->DrawTextLine( DXUTGetFrameStats( DXUTIsVsyncEnabled() ) );
     g_pTxtHelper->DrawTextLine( DXUTGetDeviceStats() );
+	g_pTxtHelper->DrawTextLine(L"Time:");
+	WCHAR currentTime[g_cTimeStringLength];
+	GetSimTime(currentTime);
+	g_pTxtHelper->DrawTextLine(currentTime);
     g_pTxtHelper->End();
 }
 
@@ -1455,7 +1549,7 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
     g_SampleUI.OnRender( fElapsedTime );
     RenderText();
     DXUT_EndPerfEvent();
-	
+
     // The following could be used to output fps stats into debug output window,
     // which is useful because you can then turn off all UI rendering as they cloud performance
     /*static DWORD dwTimefirst = GetTickCount();

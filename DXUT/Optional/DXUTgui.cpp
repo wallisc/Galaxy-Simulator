@@ -373,7 +373,7 @@ void EndText11( ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3d11DeviceConte
     destRegion.front = 0;
     destRegion.back = 1;
     D3D11_MAPPED_SUBRESOURCE MappedResource;
-    if ( S_OK == pd3d11DeviceContext->Map( g_pFontBuffer11, 0, D3D11_MAP_WRITE_DISCARD, 0, &MappedResource ) )
+	if (g_FontVertices.size()!=0 && S_OK == pd3d11DeviceContext->Map(g_pFontBuffer11, 0, D3D11_MAP_WRITE_DISCARD, 0, &MappedResource))
     { 
         memcpy( MappedResource.pData, (void*)&g_FontVertices[0], FontDataBytes );
         pd3d11DeviceContext->Unmap(g_pFontBuffer11, 0);
