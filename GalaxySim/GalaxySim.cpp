@@ -156,7 +156,7 @@ public:
 
 std::vector<ObjectData> g_objects;
 
-const float g_constant = -6.67 * 10;
+const float g_constant = -6.67 * pow(10, 1);
 const int g_cTimeStringLength = 20;
 
 float g_red[MAX_PARTICLES];
@@ -176,12 +176,12 @@ float g_yMouse;
 int g_height = 600;
 int g_width = 800;
 
-float g_timeValue=0.025; //can change this to change speed of simulation, used later to do 2x and 0.5x
-float g_systemTime = 0; //sets the inital system time to 0
+double g_timeValue=0.01; //can change this to change speed of simulation, used later to do 2x and 0.5x
+double g_systemTime = 0; //sets the inital system time to 0
 LPWSTR g_timeString; //used later for the Jump Time In button user uses to input time to jump to.
 
 
-//--------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------
 // UI control IDs
 //--------------------------------------------------------------------------------------
 #define IDC_TOGGLEFULLSCREEN    1
@@ -196,7 +196,6 @@ LPWSTR g_timeString; //used later for the Jump Time In button user uses to input
 #define IDC_SUBMITTIMEIN		11
 #define IDC_TEXTBOXTEST         10
 
-HWND enterJumpTime;
 //--------------------------------------------------------------------------------------
 // Forward declarations 
 //--------------------------------------------------------------------------------------
