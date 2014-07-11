@@ -176,7 +176,7 @@ float g_yMouse;
 int g_height = 600;
 int g_width = 800;
 
-float g_timeValue=0.01; //can change this to change speed of simulation, used later to do 2x and 0.5x
+float g_timeValue=0.025; //can change this to change speed of simulation, used later to do 2x and 0.5x
 float g_systemTime = 0; //sets the inital system time to 0
 LPWSTR g_timeString; //used later for the Jump Time In button user uses to input time to jump to.
 

@@ -56,7 +56,7 @@ cbuffer cb0
 
 cbuffer cb1
 {
-    static float g_fParticleRad = 10.0f;   
+    static float g_fParticleRad = 20.0f;   
 };
 
 cbuffer cbImmutable
