@@ -44,12 +44,12 @@
  </object>
 
  <object>
-   <name>Planet 2</name>
+   <name>Planet 3</name>
    <mass>200</mass>
    <diameter>6400</diameter>
    <brightness>4</brightness>
    <xcoord>100</xcoord>
-   <ycoord>200</ycoord>
+   <ycoord>300</ycoord>
    <zcoord>-300</zcoord>
  </object>
 
