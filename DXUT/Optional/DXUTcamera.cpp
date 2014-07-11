@@ -17,10 +17,10 @@
 
 using namespace DirectX;
 
-bool g_uparrowpressed = false;
-bool g_downarrowpressed = false;
-bool g_leftarrowpressed = false;
-bool g_rightarrowpressed = false;
+int g_uparrowpressed = 37;
+int g_downarrowpressed = 37;
+int g_leftarrowpressed = 37;
+int g_rightarrowpressed = 37;
 XMFLOAT3 g_PanDeltaVector(0, 0, 0);
 
 //======================================================================================
@@ -830,6 +830,7 @@ CModelViewerCamera::CModelViewerCamera() :
 //--------------------------------------------------------------------------------------
 void CModelViewerCamera::FrameMove( _In_ float fElapsedTime )
 {
+
     if( IsKeyDown( m_aKeys[CAM_RESET] ) )
         Reset();
 
@@ -872,35 +873,35 @@ void CModelViewerCamera::FrameMove( _In_ float fElapsedTime )
 
     // Move the lookAt position 
     XMVECTOR vLookAt = XMLoadFloat3( &m_vLookAt );
-	vLookAt += vPosDeltaWorld + XMLoadFloat3(&g_PanDeltaVector);
+	XMVECTOR delta = XMLoadFloat3(&g_PanDeltaVector);
+	vLookAt += vPosDeltaWorld + delta;
     if( m_bClipToBoundary )
 		vLookAt = ConstrainToBoundary(vLookAt);
     XMStoreFloat3( &m_vLookAt, vLookAt );
 
     // Update the eye point based on a radius away from the lookAt position
-	XMVECTOR delta = XMLoadFloat3(&g_PanDeltaVector);
-	XMVECTOR vEye = vLookAt - vWorldAhead * m_fRadius;
+	XMVECTOR vEye = delta + vLookAt - vWorldAhead * m_fRadius;
     XMStoreFloat3( &m_vEye, vEye );
 
-	const float cCameraMoveDist = 0.25f;
-	if (g_uparrowpressed == true)
-	{
-		g_PanDeltaVector.y += cCameraMoveDist;
-	}
-
-	if (g_downarrowpressed == true)
+	const float cCameraMoveDist = 1.0f;
+	if (g_uparrowpressed == 42)
 	{
 		g_PanDeltaVector.y -= cCameraMoveDist;
 	}
 
-	if (g_leftarrowpressed == true)
+	if (g_downarrowpressed == 42)
 	{
-		g_PanDeltaVector.x -= cCameraMoveDist;
+		g_PanDeltaVector.y += cCameraMoveDist;
 	}
 
-	if (g_rightarrowpressed == true)
+	if (g_leftarrowpressed == 42)
 	{
 		g_PanDeltaVector.x += cCameraMoveDist;
+	}
+
+	if (g_rightarrowpressed == 42)
+	{
+		g_PanDeltaVector.x -= cCameraMoveDist;
 	}
 
     // Update the view matrix
@@ -1041,7 +1042,7 @@ LRESULT CModelViewerCamera::HandleMessages(HWND hWnd, UINT uMsg, WPARAM wParam, 
 		int iMouseX = (short)LOWORD(lParam);
 		int iMouseY = (short)HIWORD(lParam);
 	
-		g_uparrowpressed = true;
+		g_uparrowpressed = 42;
 
 	/*m_ptLastMouse.x = iMouseX;
 	m_ptLastMouse.y = iMouseY;
@@ -1054,7 +1055,7 @@ LRESULT CModelViewerCamera::HandleMessages(HWND hWnd, UINT uMsg, WPARAM wParam, 
 	{
 		int iMouseX = (short)LOWORD(lParam);
 		int iMouseY = (short)HIWORD(lParam);
-		g_downarrowpressed = true;
+		g_downarrowpressed = 42;
 		::OutputDebugString(L"hi");
 	}
 
@@ -1062,7 +1063,7 @@ LRESULT CModelViewerCamera::HandleMessages(HWND hWnd, UINT uMsg, WPARAM wParam, 
 	{
 		int iMouseX = (short)LOWORD(lParam);
 		int iMouseY = (short)HIWORD(lParam);
-		g_leftarrowpressed = true;
+		g_leftarrowpressed = 42;
 		::OutputDebugString(L"hi");
 	}
 
@@ -1070,29 +1071,32 @@ LRESULT CModelViewerCamera::HandleMessages(HWND hWnd, UINT uMsg, WPARAM wParam, 
 	{
 		int iMouseX = (short)LOWORD(lParam);
 		int iMouseY = (short)HIWORD(lParam);
-		g_rightarrowpressed = true;
+		g_rightarrowpressed = 42;
 		::OutputDebugString(L"hi");
 	}
 
 	if (uMsg == WM_KEYUP && (wParam == VK_RIGHT))
 	{
-		g_rightarrowpressed = false;
-		::OutputDebugString(L"RELEASEDHERE");
+		g_rightarrowpressed = 37;
+		g_PanDeltaVector = XMFLOAT3(0, 0, 0);
 	}
 
 	if (uMsg == WM_KEYUP && (wParam == VK_LEFT))
 	{
-		g_leftarrowpressed = false;
+		g_leftarrowpressed = 37;
+		g_PanDeltaVector = XMFLOAT3(0, 0, 0);
 	}
 
 	if (uMsg == WM_KEYUP && (wParam == VK_UP))
 	{
-		g_uparrowpressed = false;
+		g_uparrowpressed = 37;
+		g_PanDeltaVector = XMFLOAT3(0, 0, 0);
 	}
 
 	if (uMsg == WM_KEYUP && (wParam == VK_DOWN))
 	{
-		g_downarrowpressed = false;
+		g_downarrowpressed = 37;
+		g_PanDeltaVector = XMFLOAT3(0, 0, 0);
 	}
 
     if( uMsg == WM_MOUSEMOVE )
