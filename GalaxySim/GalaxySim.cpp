@@ -156,7 +156,7 @@ public:
 
 std::vector<ObjectData> g_objects;
 
-const float g_constant = -6.67 * pow(10,-11);
+const float g_constant = -6.67 * pow(10, 1);
 const int g_cTimeStringLength = 20;
 
 float g_red[MAX_PARTICLES];

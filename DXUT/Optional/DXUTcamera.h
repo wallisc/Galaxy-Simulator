@@ -364,6 +364,7 @@ protected:
     int m_nRotateModelButtonMask;
     int m_nZoomButtonMask;
     int m_nRotateCameraButtonMask;
+	int m_nPanCameraButtonMask;
 
     bool m_bAttachCameraToModel;
     bool m_bLimitPitch;
