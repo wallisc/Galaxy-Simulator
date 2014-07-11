@@ -1269,7 +1269,7 @@ void CALLBACK OnGUIEvent( UINT nEvent, int nControlID, CDXUTControl* pControl, v
 		
 		break;
 	}*/
-    }	
+    }
 }
 
 
