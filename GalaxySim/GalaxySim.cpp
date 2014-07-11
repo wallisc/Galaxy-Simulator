@@ -147,7 +147,8 @@ public:
 
 std::vector<ObjectData> g_objects;
 
-const float g_constant = -6.67 * pow(10,-11);
+const float g_constant = -6.67 * 10;
+static const double PanPixelScale = 0.15; // units are meters per pixel mouse moves, value is adjustable
 
 float red[MAX_PARTICLES];
 float green[MAX_PARTICLES];
@@ -876,7 +877,18 @@ void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 
     // Update the camera's position based on user input 
 		g_Camera.FrameMove(fElapsedTime);
-	
+		/// This code for camera pan!
+		 /*switch (nControlID)
+		{
+			case ENavigation::ePanPlane:
+			{
+				const double dX = (double)(m_ptLastMouse.x - iMouseX) * PanPixelScale;
+				const double dY = (double)(m_ptLastMouse.y - iMouseY) * PanPixelScale;
+				m_vEye += zBasis.x * dX;
+				m_vEye += zBasis.y * -dY;
+				break;
+			}
+		}*/
 }
 
 
