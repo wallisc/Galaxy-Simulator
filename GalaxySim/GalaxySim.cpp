@@ -181,7 +181,7 @@ float g_systemTime = 0; //sets the inital system time to 0
 LPWSTR g_timeString; //used later for the Jump Time In button user uses to input time to jump to.
 
 
-//--------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------
 // UI control IDs
 //--------------------------------------------------------------------------------------
 #define IDC_TOGGLEFULLSCREEN    1
