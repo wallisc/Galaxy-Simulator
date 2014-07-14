@@ -149,6 +149,8 @@ public:
     float     m_xcoord;
     float     m_ycoord;
     float     m_zcoord;
+
+	//The following three variables aren't read in from the file; added for ease of use so two arrays didn't need to be used later
 	float     m_updateX;
 	float     m_updateY;
 	float     m_updateZ;
@@ -170,11 +172,13 @@ bool g_firstTextBox = true;
 XMMATRIX g_mProj;
 XMMATRIX g_mView;
 
+CB_GS * g_pCBGS;
+
+
 bool g_relevantMouse = false;
 float g_xMouse;
 float g_yMouse;
-int g_height = 600;
-int g_width = 800;
+
 
 double g_timeValue=0.025; //can change this to change speed of simulation, used later to do 2x and 0.5x
 double g_systemTime = 0; //sets the inital system time to 0
@@ -194,7 +198,6 @@ LPWSTR g_timeString; //used later for the Jump Time In button user uses to input
 #define IDC_HALFSPEED			9
 #define IDC_JUMPTIMEIN			10
 #define IDC_SUBMITTIMEIN		11
-#define IDC_TEXTBOXTEST         10
 
 //--------------------------------------------------------------------------------------
 // Forward declarations 
@@ -263,7 +266,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 
     DXUTSetCursorSettings( true, true ); // Show the cursor and clip it when in full screen
     DXUTCreateWindow( L"SkyX" );
-    DXUTCreateDevice( D3D_FEATURE_LEVEL_10_0, true, g_width, g_height );
+    DXUTCreateDevice( D3D_FEATURE_LEVEL_10_0, true, 800, 600 );
     DXUTMainLoop();                      // Enter into the DXUT render loop
 
     g_objects.clear();
@@ -289,19 +292,12 @@ void InitApp()
     g_HUD.AddButton( IDC_TOGGLEREF, L"Toggle REF (F3)", 0, iY += 26, 170, 23, VK_F3 );
     g_HUD.AddButton( IDC_CHANGEDEVICE, L"Change device (F2)", 0, iY += 26, 170, 23, VK_F2 );
     g_HUD.AddButton( IDC_RESETPARTICLES, L"Reset particles (F4)", 0, iY += 26, 170, 22, VK_F4 );
-	g_HUD.AddButton(IDC_DISPLAYINFO, L"Display Object Info (F1)", -30, iY += 26, 200, 23, VK_F1);
 	g_HUD.AddButton(IDC_PAUSE, L"Pause / Unpause", 0, iY += 26, 170, 22);
 	g_HUD.AddButton(IDC_DOUBLESPEED, L"Speed 2x", 0, iY += 26, 170, 23);
 	g_HUD.AddButton(IDC_HALFSPEED, L"Speed 0.5x", 0, iY += 26, 170, 23);
 	g_HUD.AddEditBox(IDC_JUMPTIMEIN, L"", 0, iY += 26, 170, 40, false, &g_JumpTimeInput);
 	g_HUD.AddButton(IDC_SUBMITTIMEIN, L"Jump!", 0, iY += 40, 170, 40);
-	//g_HUD.AddButton(IDC_TEXTBOXTEST, L"Textbox (Pause 1st)", -30, iY += 26, 200, 23);
-	/*textBox.SetID(11);
-	textBox.SetLocation(0, iY += 26);
-	textBox.SetSize(100, 100);
-	pTextBox->m_bIsDefault(false);*/
-
-
+	
     g_SampleUI.SetCallback( OnGUIEvent ); 
 }
 
@@ -976,6 +972,14 @@ void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 		Sleep(static_cast<DWORD>((SECONDS_PER_FRAME - fElapsedTime) * 1000.0f));
 	}
 
+	// Update the camera's position based on user input 
+	g_Camera.FrameMove(fElapsedTime);
+
+	g_mProj = g_Camera.GetProjMatrix();
+	g_mView = g_Camera.GetViewMatrix();
+
+
+
 	if (!g_isPaused)
 	{
 		auto pd3dImmediateContext = DXUTGetD3D11DeviceContext();
@@ -1047,33 +1051,23 @@ void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 		int numHitObjects = 0;
 		ObjectData objectMaxZ;
 		
-		
-
-		//TODO: get the real value of width and height with a method call
+		//mouse location in screen coordinates
 		xScreenMouse = ((2 * g_xMouse) / (float)DXUTGetWindowWidth()) - 1;
 		yScreenMouse = 1 - ((2 * g_yMouse) / (float)DXUTGetWindowHeight());
-
-		//world view projection
-
-		XMFLOAT4X4 worldViewProj;
-		XMFLOAT4X4 * pWorldViewProj = &worldViewProj;
-		XMStoreFloat4x4(pWorldViewProj, XMMatrixMultiply(g_mView, g_mProj));
-		
-		//TODO: Loop through all objects to compare to mouse position
-
 
 		for (ObjectData object : g_objects) {
 			XMVECTOR worldObject = { object.m_updateX, object.m_updateY, object.m_updateZ, 1.0f };
 
-			screenObject = XMVector3TransformCoord(worldObject, XMLoadFloat4x4(pWorldViewProj));
+			//world view projection comes from RenderParticles
+			screenObject = XMVector3TransformCoord(worldObject, XMLoadFloat4x4(&g_pCBGS->m_WorldViewProj));
 			XMFLOAT4 screenCoord; 
 			XMStoreFloat4(&screenCoord, screenObject);
 
 			//screen space radius
-			radius = 10.0f; //TODO: Get this value from diameter; implement diameter visuals
-			XMVECTOR offset = { radius, 0.0f, 0.0f, 0.0f };
+			radius = 20.0f; //TODO: Get this value from hlsl; hlsl value should in turn come from the diameter
+			XMVECTOR offset = { radius + 10.0f , 0.0f, 0.0f, 0.0f };
 			worldSphere = worldObject + offset;
-			screenSphere = XMVector3TransformCoord(worldSphere, XMLoadFloat4x4(pWorldViewProj));
+			screenSphere = XMVector3TransformCoord(worldSphere, XMLoadFloat4x4(&g_pCBGS->m_WorldViewProj));
 			screenRadius = distanceCalc(screenObject, screenSphere);
 
 			leftEdge = XMVectorGetX(screenObject) - screenRadius;
@@ -1093,14 +1087,18 @@ void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 
 		if (numHitObjects == 0) {
 			//print condescending statement about incompetent clicking 
-			g_pTextBox->ClearText();
-			g_pTextBox->SetText(L"No object selected");
+			if (g_pTextBox != nullptr && g_hasDisplay) {
+				g_pTextBox->ClearText();
+				g_pTextBox->SetText(L"No object selected");
+			}
 		}
 		else {
 			if (numHitObjects > 1) {
 				for (int i = 0; i < numHitObjects; i++) {
 					if (i == 0) {
 						objectMaxZ = hitObjects[i];
+
+						//test prints
 						wchar_t buffer[256];
 						swprintf(buffer, sizeof(buffer), L"Reached first z test case!\n");
 						::OutputDebugString(buffer);
@@ -1108,6 +1106,8 @@ void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 					else {
 						if (hitObjects[i].m_updateZ >= objectMaxZ.m_updateZ) {
 							objectMaxZ = hitObjects[i];
+
+							//test prints
 							wchar_t buffer[256];
 							swprintf(buffer, sizeof(buffer), L"Reached second z test case!\n");
 							::OutputDebugString(buffer);
@@ -1117,6 +1117,8 @@ void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 			}
 			else {
 				objectMaxZ = hitObjects[0];
+
+				//test prints
 				wchar_t buffer[256];
 				swprintf(buffer, sizeof(buffer), L"Reached final (i.e. 1 hit) z test case!\n");
 				::OutputDebugString(buffer);
@@ -1143,8 +1145,7 @@ void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 
 	
 	g_relevantMouse = false;
-    // Update the camera's position based on user input 
-		g_Camera.FrameMove(fElapsedTime);
+   
 	
 }
 
@@ -1227,12 +1228,11 @@ void CALLBACK OnGUIEvent( UINT nEvent, int nControlID, CDXUTControl* pControl, v
 		}
 
 		}
-	case IDC_DISPLAYINFO:
-	{
-		//opens text box 
+	case IDC_DISPLAYINFO: //this occurs every time the feature is paused
+	{ 
 		LPCWSTR welcomeMessage = L"Select an object\nto see information\ndisplayed\n(but actually press\nthe button)";
 		if (g_isPaused && !g_hasDisplay && g_firstTextBox) { //always the first case; text box pointer gets assignment here
-			g_HUD.AddEditBox(11, welcomeMessage, 0, 260, 160, 300);
+			g_HUD.AddEditBox(11, welcomeMessage, 0, 280, 160, 300);
 			g_pTextBox = g_HUD.GetEditBox(11);
 			g_hasDisplay = true;
 			g_firstTextBox = false;
@@ -1264,11 +1264,6 @@ void CALLBACK OnGUIEvent( UINT nEvent, int nControlID, CDXUTControl* pControl, v
 		timeFloat = wcstof(timeStr, NULL);
 		jumpTime(timeFloat); break;
 		}
-	/*case IDC_TEXTBOXTEST:
-	{
-		
-		break;
-	}*/
     }
 }
 
@@ -1487,9 +1482,9 @@ bool RenderParticles( ID3D11DeviceContext* pd3dImmediateContext, CXMMATRIX mView
 
     D3D11_MAPPED_SUBRESOURCE MappedResource;
     pd3dImmediateContext->Map( g_pcbGS, 0, D3D11_MAP_WRITE_DISCARD, 0, &MappedResource);
-    auto pCBGS = reinterpret_cast<CB_GS*>( MappedResource.pData );
-    XMStoreFloat4x4( &pCBGS->m_WorldViewProj, XMMatrixMultiply( mView, mProj ) ); 
-    XMStoreFloat4x4( &pCBGS->m_InvView, XMMatrixInverse( nullptr, mView ) );
+    g_pCBGS = reinterpret_cast<CB_GS*>( MappedResource.pData );
+    XMStoreFloat4x4( &g_pCBGS->m_WorldViewProj, XMMatrixMultiply( mView, mProj ) ); 
+    XMStoreFloat4x4( &g_pCBGS->m_InvView, XMMatrixInverse( nullptr, mView ) );
     pd3dImmediateContext->Unmap( g_pcbGS, 0 );
     pd3dImmediateContext->GSSetConstantBuffers( 0, 1, &g_pcbGS );
 
@@ -1533,12 +1528,8 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
     ID3D11DepthStencilView* pDSV = DXUTGetD3D11DepthStencilView();
     pd3dImmediateContext->ClearDepthStencilView( pDSV, D3D11_CLEAR_DEPTH, 1.0, 0 );
 
-    // Get the projection & view matrix from the camera class
-    /*XMMATRIX mProj = g_Camera.GetProjMatrix();
-    XMMATRIX mView = g_Camera.GetViewMatrix();*/
-
-	 g_mProj = g_Camera.GetProjMatrix();
-	 g_mView = g_Camera.GetViewMatrix();
+    // Get the projection & view matrix from the camera class -> now defined in OnFrameMove
+	
 
     // Render the particles
     RenderParticles( pd3dImmediateContext, g_mView, g_mProj );
