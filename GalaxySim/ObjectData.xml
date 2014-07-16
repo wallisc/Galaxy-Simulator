@@ -1,39 +1,39 @@
 <?xml version="1.0"?>
 <Universe>
 
-<MaxParticles>2</MaxParticles>
+  <MaxParticles>2</MaxParticles>
 
-<object>
-  <name>Sun</name>
-  <mass>500</mass>
-  <diameter>6400</diameter>
-  <brightness>6</brightness>
-  <xcoord>0</xcoord>
-  <ycoord>0</ycoord>
-  <zcoord>0</zcoord>
-</object>
+  <object>
+    <name>Sun</name>
+    <mass>500</mass>
+    <diameter>6400</diameter>
+    <brightness>6</brightness>
+    <xcoord>0</xcoord>
+    <ycoord>0</ycoord>
+    <zcoord>0</zcoord>
+  </object>
 
-<object>
-  <name>Earth</name>
-  <mass>20</mass>
-  <diameter>6400</diameter>
-  <brightness>4</brightness>
-  <xcoord>300</xcoord>
-  <ycoord>300</ycoord>
-  <zcoord>300</zcoord>
-</object>
+  <object>
+    <name>Earth</name>
+    <mass>20</mass>
+    <diameter>6400</diameter>
+    <brightness>4</brightness>
+    <xcoord>300</xcoord>
+    <ycoord>300</ycoord>
+    <zcoord>300</zcoord>
+  </object>
 
- <object>
-   <name>Planet 1</name>
-   <mass>20</mass>
-   <diameter>6400</diameter>
-   <brightness>4</brightness>
-   <xcoord>-300</xcoord>
-   <ycoord>-300</ycoord>
-   <zcoord>-300</zcoord>
- </object>
+  <object>
+    <name>Planet 1</name>
+    <mass>20</mass>
+    <diameter>6400</diameter>
+    <brightness>4</brightness>
+    <xcoord>-300</xcoord>
+    <ycoord>-300</ycoord>
+    <zcoord>-300</zcoord>
+  </object>
 
- <object>
+  <object>
     <name>Planet 2</name>
     <mass>200</mass>
     <diameter>6400</diameter>
@@ -41,18 +41,17 @@
     <xcoord>-300</xcoord>
     <ycoord>300</ycoord>
     <zcoord>-300</zcoord>
- </object>
+  </object>
 
- <object>
-   <name>Planet 2</name>
-   <mass>200</mass>
-   <diameter>6400</diameter>
-   <brightness>4</brightness>
-   <xcoord>100</xcoord>
-   <ycoord>200</ycoord>
-   <zcoord>-300</zcoord>
- </object>
+  <object>
+    <name>Planet 3</name>
+    <mass>200</mass>
+    <diameter>6400</diameter>
+    <brightness>4</brightness>
+    <xcoord>100</xcoord>
+    <ycoord>300</ycoord>
+    <zcoord>-300</zcoord>
+  </object>
 
 
 </Universe>
-
