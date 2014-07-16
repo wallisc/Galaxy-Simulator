@@ -10,6 +10,8 @@
 // Ana-Maria Constantin
 // Kanika Verma
 // Melanie Loppnow
+
+
 // 
 //--------------------------------------------------------------------------------------
 #include "DXUT.h"
@@ -28,6 +30,13 @@
 #include <iostream>
 #include <stdlib.h>
 #include <wchar.h>
+#include <cstdlib>
+#include <ctime>
+#include <math.h>
+#include <tchar.h>
+#include <strsafe.h>
+#include <sstream>
+#include <string>
 
 #include "atlbase.h"
 #include "atlstr.h"
@@ -71,6 +80,8 @@ ID3D11ShaderResourceView*           g_pParticleTexRV = nullptr;
 
 const float                         g_fSpread = 400.0f;
 
+CDXUTEditBox						*g_JumpTimeInput = nullptr;
+
 struct PARTICLE_VERTEX
 {
     XMFLOAT4 Color;
@@ -84,7 +95,6 @@ int NUM_PARTICLES;
 
 #define CHKHR(stmt)             do { hr = (stmt); if (FAILED(hr)) goto CleanUp; } while(0) 
 #define HR(stmt)                do { hr = (stmt); goto CleanUp; } while(0) 
-#define SAFE_RELEASE(I)         do { if (I){ I->Release(); } I = NULL; } while(0) 
 
 struct CB_GS
 {
@@ -106,7 +116,7 @@ struct PARTICLE
 
 struct PARTICLE_DETAILS
 {
-	string name;
+	wstring name;
 	float mass;
 	float diameter;
 	int brightness;
@@ -118,24 +128,76 @@ PARTICLE_DETAILS*					g_pParticleArrayTWO = NULL;
 
 
 //will point to arrays that hold info from file until it is put into above two arrays
-string* name;
-float* mass;
-float* diameter;
-int* brightness;
-float* xcoord;
-float* ycoord;
-float* zcoord;
-const int maxnamesize = 200;
+class ObjectData
+{
+public:
+
+    ObjectData() :
+        m_name(L"unknown"), m_mass(0.0f), m_diameter(0.0f), m_brightness(0), m_xcoord(0.0f), m_ycoord(0.0f), m_zcoord(0.0f)
+    {}
+
+    ObjectData(const wstring & name, float mass, float diameter, int brightness, float x, float y, float z) :
+        m_name(name), m_mass(mass), m_diameter(diameter), m_brightness(brightness), m_xcoord(x), m_ycoord(y), m_zcoord(z)
+    {
+        // Could assert on the various properties to ensure they are within range
+    }
+
+    wstring   m_name;
+    float     m_mass;
+    float     m_diameter;
+    int       m_brightness;
+    float     m_xcoord;
+    float     m_ycoord;
+    float     m_zcoord;
+
+	//The following three variables aren't read in from the file; added for ease of use so two arrays didn't need to be used later
+	float     m_updateX;
+	float     m_updateY;
+	float     m_updateZ;
+};
+
+std::vector<ObjectData> g_objects;
+
+const float g_constant = -6.67 * pow(10, 1);
+const int g_cTimeStringLength = 20;
+
+float g_red[MAX_PARTICLES];
+float g_green[MAX_PARTICLES];
+float g_blue[MAX_PARTICLES];
+bool g_isFirst = true;
+bool g_isPaused = false;
+bool g_hasDisplay = false;
+CDXUTEditBox *g_pTextBox;
+bool g_firstTextBox = true; 
+XMMATRIX g_mProj;
+XMMATRIX g_mView;
+
+CB_GS * g_pCBGS;
 
 
+bool g_relevantMouse = false;
+float g_xMouse;
+float g_yMouse;
 
-//--------------------------------------------------------------------------------------
+
+double g_timeValue=0.025; //can change this to change speed of simulation, used later to do 2x and 0.5x
+double g_systemTime = 0; //sets the inital system time to 0
+LPWSTR g_timeString; //used later for the Jump Time In button user uses to input time to jump to.
+
+
+//-------------------------------------------------------------------------------------
 // UI control IDs
 //--------------------------------------------------------------------------------------
 #define IDC_TOGGLEFULLSCREEN    1
 #define IDC_TOGGLEREF           3
 #define IDC_CHANGEDEVICE        4
 #define IDC_RESETPARTICLES      5
+#define IDC_DISPLAYINFO			6
+#define IDC_PAUSE               7
+#define IDC_DOUBLESPEED			8
+#define IDC_HALFSPEED			9
+#define IDC_JUMPTIMEIN			10
+#define IDC_SUBMITTIMEIN		11
 
 //--------------------------------------------------------------------------------------
 // Forward declarations 
@@ -156,12 +218,22 @@ void CALLBACK OnD3D11ReleasingSwapChain( void* pUserContext );
 void CALLBACK OnD3D11DestroyDevice( void* pUserContext );
 void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImmediateContext, double fTime,
                                  float fElapsedTime, void* pUserContext );
+void CALLBACK OnMouseEvent(_In_ bool bLeftButtonDown, _In_ bool bRightButtonDown, _In_ bool bMiddleButtonDown,
+	_In_ bool bSideButton1Down, _In_ bool bSideButton2Down, _In_ int nMouseWheelDelta,
+	_In_ int xPos, _In_ int yPos, _In_opt_ void* pUserContext);
 
 void InitApp();
 void RenderText();
 //declare WriteAttributes function here, content is below ParseFile()
 HRESULT WriteAttributes(IXmlReader* pReader);
 int ParseFile();
+//functions associated with various buttons
+void displayObjectInfo();
+void doubleSpeed();
+void halfSpeed();
+LPWSTR GetSimTime();
+void jumpTime(float newTime);
+
 
 //--------------------------------------------------------------------------------------
 // Entry point to the program. Initializes everything and goes into a message processing 
@@ -184,6 +256,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
     DXUTSetCallbackD3D11FrameRender( OnD3D11FrameRender );
     DXUTSetCallbackD3D11SwapChainReleasing( OnD3D11ReleasingSwapChain );
     DXUTSetCallbackD3D11DeviceDestroyed( OnD3D11DestroyDevice );
+	DXUTSetCallbackMouse(OnMouseEvent);
 
 	ParseFile();
 
@@ -192,12 +265,17 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
     DXUTInit( true, true );                 // Use this line instead to try to create a hardware device
 
     DXUTSetCursorSettings( true, true ); // Show the cursor and clip it when in full screen
-    DXUTCreateWindow( L"GalaxySim" );
+    DXUTCreateWindow( L"SkyX" );
     DXUTCreateDevice( D3D_FEATURE_LEVEL_10_0, true, 800, 600 );
     DXUTMainLoop();                      // Enter into the DXUT render loop
 
+    g_objects.clear();
+
     return DXUTGetExitCode();
 }
+
+
+
 
 
 //--------------------------------------------------------------------------------------
@@ -214,6 +292,12 @@ void InitApp()
     g_HUD.AddButton( IDC_TOGGLEREF, L"Toggle REF (F3)", 0, iY += 26, 170, 23, VK_F3 );
     g_HUD.AddButton( IDC_CHANGEDEVICE, L"Change device (F2)", 0, iY += 26, 170, 23, VK_F2 );
     g_HUD.AddButton( IDC_RESETPARTICLES, L"Reset particles (F4)", 0, iY += 26, 170, 22, VK_F4 );
+	g_HUD.AddButton(IDC_PAUSE, L"Pause / Unpause", 0, iY += 26, 170, 22);
+	g_HUD.AddButton(IDC_DOUBLESPEED, L"Speed 2x", 0, iY += 26, 170, 23);
+	g_HUD.AddButton(IDC_HALFSPEED, L"Speed 0.5x", 0, iY += 26, 170, 23);
+	g_HUD.AddEditBox(IDC_JUMPTIMEIN, L"", 0, iY += 26, 170, 40, false, &g_JumpTimeInput);
+	g_HUD.AddButton(IDC_SUBMITTIMEIN, L"Jump!", 0, iY += 40, 170, 40);
+
     g_SampleUI.SetCallback( OnGUIEvent ); 
 }
 
@@ -230,6 +314,8 @@ int ParseFile(){
 	const WCHAR* pwszLocalName;
 	const WCHAR* pwszValue;
 	UINT cwchPrefix;
+
+    ObjectData objectData;
 
 	//Open read-only input stream 
 	LPCWSTR fileName = L"ObjectData.xml";
@@ -259,8 +345,6 @@ int ParseFile(){
 
 	//read until there are no more nodes 
 	//Pretty sure this is where we would change the printf's outside the if's so they go to an array? probably? 
-	int first = 0;
-	int count = 0;
 
 	const WCHAR * elementName = NULL;
 
@@ -294,17 +378,6 @@ int ParseFile(){
 
 				elementName = pwszLocalName;
 
-				if (elementName != NULL && wcscmp(elementName, L"object") == 0){
-					if (first == 0)
-					{
-						first = 1;
-					}
-					else
-					{
-						count++;
-					}
-				}
-
 			}
 			if (FAILED(hr = WriteAttributes(pReader)))
 			{
@@ -333,6 +406,11 @@ int ParseFile(){
 				//wprintf(L"End Element: %s\n", pwszLocalName);
 				
 			}
+
+            if (pwszLocalName != NULL && wcscmp(pwszLocalName, L"object") == 0){
+                g_objects.push_back(objectData);
+            }
+
 			break;
 
 		case XmlNodeType_Text:
@@ -343,49 +421,32 @@ int ParseFile(){
 			}
 			wprintf(L"Text: %s\n", pwszValue);
 
-			if (elementName != NULL && wcscmp(elementName, L"MaxParticles") == 0)
-			{
-				NUM_PARTICLES = _wtoi(pwszValue);
-
-				name = new string[NUM_PARTICLES];
-				mass = new float[NUM_PARTICLES];
-				diameter = new float[NUM_PARTICLES];
-				brightness = new int[NUM_PARTICLES];
-				xcoord = new float[NUM_PARTICLES];
-				ycoord = new float[NUM_PARTICLES];
-				zcoord = new float[NUM_PARTICLES];
-			}
-
-			
-
 			if (elementName != NULL && wcscmp(elementName, L"name") == 0){
-				char buffer[maxnamesize];
-				wcstombs_s(NULL, buffer, sizeof(char) * maxnamesize, pwszValue, maxnamesize);
-				name[count] = buffer;
+                objectData.m_name = pwszValue;
 			}
 
 			else if (elementName != NULL && wcscmp(elementName, L"mass") == 0){
-				mass[count] = wcstof(pwszValue, NULL);
+                objectData.m_mass = wcstof(pwszValue, NULL);
 			}
 
 			else if (elementName != NULL && wcscmp(elementName, L"diameter") == 0){
-				diameter[count] = wcstof(pwszValue, NULL);
+                objectData.m_diameter = wcstof(pwszValue, NULL);
 			}
 
 			else if (elementName != NULL && wcscmp(elementName, L"brightness") == 0){
-				brightness[count] = int(pwszValue);
+                objectData.m_brightness = (int)wcstof(pwszValue, NULL);
 			}
 
 			else if (elementName != NULL && wcscmp(elementName, L"xcoord") == 0){
-				xcoord[count] = wcstof(pwszValue, NULL);
+                objectData.m_xcoord = wcstof(pwszValue, NULL);
 			}
 
 			else if (elementName != NULL && wcscmp(elementName, L"ycoord") == 0){
-				ycoord[count] = wcstof(pwszValue, NULL);
+                objectData.m_ycoord = wcstof(pwszValue, NULL);
 			}
 
 			else if (elementName != NULL && wcscmp(elementName, L"zcoord") == 0){
-				zcoord[count] = wcstof(pwszValue, NULL);
+                objectData.m_zcoord = wcstof(pwszValue, NULL);
 			}
 
 			break;
@@ -435,9 +496,10 @@ int ParseFile(){
 	}
 
 #if 0 // Keep this code around as example of using OutputDebugString
-	for (int i = 0; i <= count; i++){
+    for (auto object : g_objects)
+    {
 		char buffer[256];
-		sprintf(buffer, "Name Array: %s\n", name[i].c_str());
+        sprintf_s(buffer, sizeof(buffer), "Name Array: %s\n", object.m_name.c_str());
 		::OutputDebugStringA(buffer);
 	}
 #endif
@@ -527,11 +589,25 @@ HRESULT CreateParticleBuffer( ID3D11Device* pd3dDevice )
     if( !pVertices )
         return E_OUTOFMEMORY;
 
-    for( UINT i = 0; i < MAX_PARTICLES; i++ )
-    {
-        pVertices[i].Color = XMFLOAT4( 0.2f, 0.2f, 0.8f, 1 );
-    }
+	//random number generator for color values
+	srand(static_cast <unsigned> (time(NULL)));
 
+	if (g_isFirst) {
+		for (UINT i = 0; i < MAX_PARTICLES; i++) {
+			g_red[i] = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+			g_green[i] = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+			g_blue[i] = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+
+			pVertices[i].Color = XMFLOAT4(g_red[i], g_green[i], g_blue[i], 1.000000);
+		}
+		g_isFirst = false;
+	}
+	else {
+		for (UINT i = 0; i < MAX_PARTICLES; i++) {
+			pVertices[i].Color = XMFLOAT4(g_red[i], g_green[i], g_blue[i], 1.000000);
+		}
+	}
+	
     vbInitData.pSysMem = pVertices;
     V_RETURN( pd3dDevice->CreateBuffer( &vbdesc, &vbInitData, &g_pParticleBuffer ) );
     DXUT_SetDebugName( g_pParticleBuffer, "Particles" );
@@ -581,34 +657,193 @@ XMFLOAT4 createPositionFloat(float xParticle, float yParticle, float zParticle){
 	return XMFLOAT4(xParticle, yParticle, zParticle, 10000.0f * 10000.0f);
 }
 
+//method for performing vector subtraction when dealing with XMFLOAT4
+//definition for XMFLOAT4 is in the sample, line 570
+XMFLOAT4 VectorSubtraction(XMFLOAT4 vector1, XMFLOAT4 vector2)
+{
+	float xcoord = vector1.x - vector2.x;
+	float ycoord = vector1.y - vector2.y;
+	float zcoord = vector1.z - vector2.z;
+	float wcoord = vector1.w - vector2.w;
+	return XMFLOAT4(xcoord, ycoord, zcoord, wcoord);
+}
+
+//method for calculating vector addition, in XMFLOAT4 format
+//will be necessary when adding invidividual accelerations
+XMFLOAT4 VectorAddition(XMFLOAT4 vector1, XMFLOAT4 vector2)
+{
+	float xcoord = vector1.x + vector2.x;
+	float ycoord = vector1.y + vector2.y;
+	float zcoord = vector1.z + vector2.z;
+	float wcoord = vector1.w + vector2.w;
+	return XMFLOAT4(xcoord, ycoord, zcoord, wcoord);
+}
+
+//method for calculating the magnitude of an XMFLOAT4 vector
+//we will only take into account the x, y, z coordinates necessary for calculating the position!!
+float VectorMagnitude(XMFLOAT4 vector)
+{
+	float magnitude = sqrt(pow(vector.x, 2) + pow(vector.y, 2) + pow(vector.z, 2));
+	return magnitude;
+}
+
+//method for multiplying an XMFLOAT4 vector with a constant
+//will use this for calculating acceleration and making things move when implementing physical laws
+XMFLOAT4 ConstantVectorMultiplication(float constant, XMFLOAT4 vector)
+{
+	float xcoord = constant * vector.x;
+	float ycoord = constant * vector.y;
+	float zcoord = constant * vector.z;
+	float wcoord = constant * vector.w;
+	return XMFLOAT4(xcoord, ycoord, zcoord, wcoord);
+}
+
+
 //--------------------------------------------------------------------------------------
 // Functions used to load particles (overarching one is fillParticles2) other ones support it
 //--------------------------------------------------------------------------------------
 
-void fillPosVel(PARTICLE particles[], float x[], float y[], float z[], XMFLOAT4 Velocity){
+void fillPosVel(PARTICLE particles[], std::vector<ObjectData> & objects, XMFLOAT4 Velocity){
 	//method that loads g_pParticleArray with position as a vector and velocity (that is being updated constantly?)
 	//create and then call here a getVelocity methods 
 
-	for (int i = 0; i < NUM_PARTICLES; i++){
-		particles[i].pos = createPositionFloat(x[i], y[i], z[i]);
+    int i = 0;
+    for (auto object : objects)
+    {
+        particles[i].pos = createPositionFloat(object.m_xcoord, object.m_ycoord, object.m_zcoord);
 		particles[i].velo = Velocity;
+        i++;
+	}
+
+    NUM_PARTICLES = i;
+}
+
+void fillDetails(PARTICLE_DETAILS particles2[], std::vector<ObjectData> & objects){
+
+    int i = 0;
+    for (auto object : objects) {
+		particles2[i].name = object.m_name;
+        particles2[i].mass = object.m_mass;
+        particles2[i].diameter = object.m_diameter;
+        particles2[i].brightness = object.m_brightness;
+        i++;
+	}
+    assert(i == NUM_PARTICLES);
+	}
+
+void fillParticles2(PARTICLE particles[], PARTICLE_DETAILS particles2[], std::vector<ObjectData> & objects, XMFLOAT4 Velocity){
+	fillPosVel(particles, objects, Velocity);
+	fillDetails(particles2, objects);
+
+}
+
+//--------------------------------------------------------------------------------------
+// Functions that help display information to the user
+//-
+
+
+//Function that displays object information.Gets called when user presses Display Object Info button
+// Currently displays to output window, later will display to pane on the right
+void displayObjectInfo(){
+	for (auto object : g_objects)
+	{
+		wchar_t buffer[256];
+		swprintf(buffer, sizeof(buffer), L"Name: %s\n", object.m_name.c_str());
+		::OutputDebugString(buffer);
+
+		swprintf(buffer, sizeof(buffer), L"Mass: %f\n", object.m_mass);
+		::OutputDebugString(buffer);
+
+		swprintf(buffer, sizeof(buffer), L"Diameter: %f\n", object.m_diameter);
+		::OutputDebugString(buffer);
+
+		swprintf(buffer, sizeof(buffer), L"Brightness: %d\n", object.m_brightness);
+		::OutputDebugString(buffer);
+
+		swprintf(buffer, sizeof(buffer), L"Position: x: %f y: %f z: %f\n\n", object.m_xcoord, object.m_ycoord, object.m_zcoord);
+		::OutputDebugString(buffer);
 	}
 }
 
-void fillDetails(PARTICLE_DETAILS particles2[], string nameIn[], float massIn[], float diameterIn[], int brightnessIn[]){
-	for (int i = 0; i < NUM_PARTICLES; i++){
-		particles2[i].name = nameIn[i];
-		particles2[i].mass = massIn[i];
-		particles2[i].diameter = diameterIn[i];
-		particles2[i].brightness = brightnessIn[i];
+//function that gets the current simulation time as a float and assigns it as a string to the string inputted as a parameter
+void GetSimTime(WCHAR *currentTime){
+
+	if (currentTime == NULL || g_systemTime == NULL){
+		return;
 	}
+	
+	HRESULT hr = StringCbPrintfW(currentTime, g_cTimeStringLength*sizeof(WCHAR), L"%f", g_systemTime);
 }
 
-void fillParticles2(PARTICLE particles[], PARTICLE_DETAILS particles2[], float x[], float y[], float z[], XMFLOAT4 Velocity, string nameIn[], float massIn[], float diameterIn[], int brightnessIn[]){
-	fillPosVel(particles, x, y, z, Velocity);
-	fillDetails(particles2, nameIn, massIn, diameterIn, brightnessIn);
+//--------------------------------------------------------------------------------------
+// Functions that allow user to change the speed of the simulation
+//--------------------------------------------------------------------------------------
 
+//doubles the value of g_timeValue so the simul speed goes 2x; called when user presses 2x button
+void doubleSpeed(){
+	g_timeValue = g_timeValue * 2;
 }
+
+//divides in half the value of g_timeValue so that simul speed slows down by half
+//called when user presses 0.5x button
+void halfSpeed(){
+	g_timeValue = g_timeValue / 2;
+}
+
+//--------------------------------------------------------------------------------------
+// Functions that allow user to jump in time in the simulation
+//--------------------------------------------------------------------------------------
+
+
+//this method calculates and updates new position and velocity for jumping in time
+void jumpTime(float newTime){
+
+	//initial velocity for all particles
+	XMFLOAT4 initialVelo = XMFLOAT4(0, 0, 0, 1);
+
+	for (int i = 0; i < NUM_PARTICLES; i++)
+	{
+		//initial position of object i
+		XMFLOAT4 initialPositioni = createPositionFloat(g_objects[i].m_xcoord, g_objects[i].m_ycoord, g_objects[i].m_zcoord);		
+
+		// here I calculate acceleration for each object in particular
+		//ind_acc = new XMFLOAT4[NUM_PARTICLES];
+		XMFLOAT4 acceleration = XMFLOAT4(0, 0, 0, 0);
+
+		for (int j = 0; j < NUM_PARTICLES; j++)
+		{
+			if (i != j)
+			{
+				XMFLOAT4 ijdist = VectorSubtraction(initialPositioni, createPositionFloat(g_objects[j].m_xcoord, g_objects[j].m_ycoord, g_objects[j].m_zcoord));
+				float ijdist_magnitude = VectorMagnitude(ijdist);
+
+				float g_accConstant = g_constant * g_pParticleArrayTWO[j].mass / pow(ijdist_magnitude, 3);
+				XMFLOAT4 g_acc = ConstantVectorMultiplication(g_accConstant, ijdist);
+				acceleration = VectorAddition(acceleration, g_acc);
+
+				//ind_acc[j] = g_acc;
+			}
+		}
+
+		//update velocity and position using acceleration
+
+		//calculates displacement between starting point and jumped time point
+		XMFLOAT4 displacement;
+		//breaks x=vt+1/2at^2 into two parts
+		XMFLOAT4 vt = ConstantVectorMultiplication(newTime, initialVelo);
+		XMFLOAT4 atsquared = ConstantVectorMultiplication(0.5, ConstantVectorMultiplication(pow(newTime, 2), acceleration));
+		displacement = VectorAddition(vt, atsquared);
+		
+		//update the velocity and position of the particle
+		g_pParticleArray[i].velo = VectorAddition(initialVelo, ConstantVectorMultiplication(newTime, acceleration));
+		g_pParticleArray[i].pos = VectorAddition(initialPositioni, displacement);
+
+	}
+
+	g_systemTime = newTime;
+}
+
+
 
 //--------------------------------------------------------------------------------------
 HRESULT CreateParticlePosVeloBuffers( ID3D11Device* pd3dDevice )
@@ -650,7 +885,7 @@ HRESULT CreateParticlePosVeloBuffers( ID3D11Device* pd3dDevice )
         XMFLOAT3( fCenterSpread, 0, 0 ), XMFLOAT4( 0, 0, 0, 1 ),
         g_fSpread, NUM_PARTICLES );*/
 
-	fillParticles2(g_pParticleArray, g_pParticleArrayTWO, xcoord, ycoord, zcoord, XMFLOAT4(0, 0, 0, 1), name, mass, diameter, brightness);
+	fillParticles2(g_pParticleArray, g_pParticleArrayTWO, g_objects, XMFLOAT4(0, 0, 0, 1));
 
 
     D3D11_SUBRESOURCE_DATA InitData;
@@ -681,6 +916,47 @@ bool CALLBACK ModifyDeviceSettings( DXUTDeviceSettings* pDeviceSettings, void* p
     return true;
 }
 
+float distanceCalc(XMVECTOR center, XMVECTOR side) {
+	float distance = 0;
+	float centerX = XMVectorGetX(center);
+	float sideX = XMVectorGetX(side);
+	float centerY = XMVectorGetY(center);
+	float sideY = XMVectorGetY(side);
+	float centerZ = XMVectorGetZ(center);
+	float sideZ = XMVectorGetZ(side);
+
+	float xSquared = powf((sideX - centerX), 2);
+	float ySquared = powf((sideY - centerY), 2);
+	float zSquared = powf((sideZ - centerZ), 2);
+
+	distance = sqrtf(xSquared + ySquared + zSquared);
+
+	return distance; 
+}
+
+
+//--------------------------------------------------------------------------------------
+// This callback function handles mouse related user input. 
+//--------------------------------------------------------------------------------------
+void CALLBACK OnMouseEvent(bool bLeftButtonDown, bool bRightButtonDown, bool bMiddleButtonDown,
+	 bool bSideButton1Down, bool bSideButton2Down, int nMouseWheelDelta,
+	 int xPos, int yPos, void* pUserContext) 
+{
+	if (g_isPaused && g_hasDisplay && bLeftButtonDown) {
+		g_xMouse = (float)xPos;
+		g_yMouse = (float)yPos;
+		g_relevantMouse = true;
+	}
+}
+
+wstring concatenateObjInfo(ObjectData currentObject) {
+	wstring objectInfo(L"Name: " + currentObject.m_name + L"\nMass: " + to_wstring(currentObject.m_mass) + L"\nDiameter: " +
+		to_wstring(currentObject.m_diameter) + L"\nBrightness: " + to_wstring(currentObject.m_brightness) +
+		L"\nPosition:\nx: " + to_wstring(currentObject.m_updateX) + L"\ny: " + to_wstring(currentObject.m_updateY) +
+		L"\nz: " + to_wstring(currentObject.m_updateZ));
+
+	return objectInfo;
+}
 
 //--------------------------------------------------------------------------------------
 // This callback function will be called once at the beginning of every frame. This is the
@@ -688,35 +964,189 @@ bool CALLBACK ModifyDeviceSettings( DXUTDeviceSettings* pDeviceSettings, void* p
 // intended to contain actual rendering calls, which should instead be placed in the 
 // OnFrameRender callback.  
 //--------------------------------------------------------------------------------------
-void CALLBACK OnFrameMove( double fTime, float fElapsedTime, void* pUserContext )
+void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 {
-    if(fElapsedTime < SECONDS_PER_FRAME)
-    {
-       Sleep(static_cast<DWORD>((SECONDS_PER_FRAME - fElapsedTime) * 1000.0f));
-    }
+	
+	if (fElapsedTime < SECONDS_PER_FRAME)
+	{
+		Sleep(static_cast<DWORD>((SECONDS_PER_FRAME - fElapsedTime) * 1000.0f));
+	}
 
-    auto pd3dImmediateContext = DXUTGetD3D11DeviceContext();
-    
-    D3D11_MAPPED_SUBRESOURCE ms;
-    pd3dImmediateContext->Map(g_pParticlePosVelo0, 0, D3D11_MAP_WRITE_DISCARD, 0, &ms);
+	// Update the camera's position based on user input 
+	g_Camera.FrameMove(fElapsedTime);
 
-    for (int i = 0; i < NUM_PARTICLES; i++)
-    {
-        // Insert gravity calculations here
-        //g_pParticleArray[i].pos.x -= 2.0f;
-		//move each object's button
+	g_mProj = g_Camera.GetProjMatrix();
+	g_mView = g_Camera.GetViewMatrix();
+
+
+
+	if (!g_isPaused)
+	{
+		auto pd3dImmediateContext = DXUTGetD3D11DeviceContext();
+
+		D3D11_MAPPED_SUBRESOURCE ms;
+		pd3dImmediateContext->Map(g_pParticlePosVelo0, 0, D3D11_MAP_WRITE_DISCARD, 0, &ms);
+
+		g_systemTime = g_systemTime + g_timeValue;
+		for (int i = 0; i < NUM_PARTICLES; i++)
+		{
+
+			// here I calculate acceleration for each object in particular
+			//ind_acc = new XMFLOAT4[NUM_PARTICLES];
+			XMFLOAT4 acceleration = XMFLOAT4(0, 0, 0, 0);
+
+			for (int j = 0; j < NUM_PARTICLES; j++)
+			{
+				if (i != j)
+				{
+					XMFLOAT4 ijdist = VectorSubtraction(g_pParticleArray[i].pos, g_pParticleArray[j].pos);
+					float ijdist_magnitude = VectorMagnitude(ijdist);
+
+					float g_accConstant = g_constant * g_pParticleArrayTWO[j].mass / pow(ijdist_magnitude, 3);
+					XMFLOAT4 g_acc = ConstantVectorMultiplication(g_accConstant, ijdist);
+					acceleration = VectorAddition(acceleration, g_acc);
+
+					//ind_acc[j] = g_acc;
+				}
+			}
+
+			//update velocity and position using acceleration
+			g_pParticleArray[i].velo = VectorAddition(g_pParticleArray[i].velo, ConstantVectorMultiplication(g_timeValue, acceleration));
+			g_pParticleArray[i].pos = VectorAddition(g_pParticleArray[i].pos, ConstantVectorMultiplication(g_timeValue, g_pParticleArray[i].velo));
+			//g_pParticleArray[i].pos.x -= 2.0f;
+			//move each object's button
+
+			g_objects[i].m_updateX = g_pParticleArray[i].pos.x;
+			g_objects[i].m_updateY = g_pParticleArray[i].pos.y;
+			g_objects[i].m_updateZ = g_pParticleArray[i].pos.z;
+
+
+
+
+		}
+
+
+
+		memcpy(ms.pData, g_pParticleArray, sizeof(PARTICLE) * NUM_PARTICLES);
+
+		pd3dImmediateContext->Unmap(g_pParticlePosVelo0, NULL);
+
+		std::swap(g_pParticlePosVelo0, g_pParticlePosVelo1);
+		std::swap(g_pParticlePosVeloRV0, g_pParticlePosVeloRV1);
+	}
+	else if(g_isPaused && g_hasDisplay && g_relevantMouse) {
+
+		float xScreenMouse;
+		float yScreenMouse;
+		float leftEdge;
+		float rightEdge;
+		float bottomEdge;
+		float topEdge;
+		XMVECTOR screenSphere;
+		XMVECTOR screenObject;
+		XMVECTOR worldSphere;
+		float radius;
+		float screenRadius;
+		std::vector<ObjectData> hitObjects;
+		int numHitObjects = 0;
+		ObjectData objectMaxZ;
 		
-    }
+		//mouse location in screen coordinates
+		xScreenMouse = ((2 * g_xMouse) / (float)DXUTGetWindowWidth()) - 1;
+		yScreenMouse = 1 - ((2 * g_yMouse) / (float)DXUTGetWindowHeight());
 
-    memcpy(ms.pData, g_pParticleArray, sizeof(PARTICLE) * NUM_PARTICLES);
-       
-    pd3dImmediateContext->Unmap(g_pParticlePosVelo0, NULL);
+		for (ObjectData object : g_objects) {
+			XMVECTOR worldObject = { object.m_updateX, object.m_updateY, object.m_updateZ, 1.0f };
 
-    std::swap( g_pParticlePosVelo0, g_pParticlePosVelo1 );
-    std::swap( g_pParticlePosVeloRV0, g_pParticlePosVeloRV1 );
+			//world view projection comes from RenderParticles
+			screenObject = XMVector3TransformCoord(worldObject, XMLoadFloat4x4(&g_pCBGS->m_WorldViewProj));
+			XMFLOAT4 screenCoord; 
+			XMStoreFloat4(&screenCoord, screenObject);
 
-    // Update the camera's position based on user input 
-    g_Camera.FrameMove( fElapsedTime );
+			//screen space radius
+			radius = 20.0f; //TODO: Get this value from hlsl; hlsl value should in turn come from the diameter
+			XMVECTOR offset = { radius + 10.0f , 0.0f, 0.0f, 0.0f };
+			worldSphere = worldObject + offset;
+			screenSphere = XMVector3TransformCoord(worldSphere, XMLoadFloat4x4(&g_pCBGS->m_WorldViewProj));
+			screenRadius = distanceCalc(screenObject, screenSphere);
+
+			leftEdge = XMVectorGetX(screenObject) - screenRadius;
+			rightEdge = XMVectorGetX(screenObject) + screenRadius;
+			bottomEdge = XMVectorGetY(screenObject) - screenRadius;
+			topEdge = XMVectorGetY(screenObject) + screenRadius;
+
+			wchar_t buffer[256];
+			swprintf(buffer, sizeof(buffer), L"Box: left: %f right: %f bottom: %f top: %f\n centerX: %f centerY %f \n mouseX: %f mouseY: %f\n\n", leftEdge, rightEdge, bottomEdge, topEdge, XMVectorGetX(screenObject), XMVectorGetY(screenObject), xScreenMouse, yScreenMouse);
+			::OutputDebugString(buffer);
+			
+			if ((xScreenMouse >= leftEdge && xScreenMouse <= rightEdge) && (yScreenMouse >= bottomEdge && yScreenMouse <= topEdge)) {
+				hitObjects.push_back(object);
+				numHitObjects++;
+			}
+		}
+
+		if (numHitObjects == 0) {
+			//print condescending statement about incompetent clicking 
+			if (g_pTextBox != nullptr && g_hasDisplay) {
+			g_pTextBox->ClearText();
+			g_pTextBox->SetText(L"No object selected");
+		}
+		}
+		else {
+			if (numHitObjects > 1) {
+				for (int i = 0; i < numHitObjects; i++) {
+					if (i == 0) {
+						objectMaxZ = hitObjects[i];
+
+						//test prints
+						wchar_t buffer[256];
+						swprintf(buffer, sizeof(buffer), L"Reached first z test case!\n");
+						::OutputDebugString(buffer);
+					}
+					else {
+						if (hitObjects[i].m_updateZ >= objectMaxZ.m_updateZ) {
+							objectMaxZ = hitObjects[i];
+
+							//test prints
+							wchar_t buffer[256];
+							swprintf(buffer, sizeof(buffer), L"Reached second z test case!\n");
+							::OutputDebugString(buffer);
+						}
+					}
+				}
+			}
+			else {
+				objectMaxZ = hitObjects[0];
+
+				//test prints
+				wchar_t buffer[256];
+				swprintf(buffer, sizeof(buffer), L"Reached final (i.e. 1 hit) z test case!\n");
+				::OutputDebugString(buffer);
+			}
+
+			
+
+			//TODO: text wrapping
+			if (g_pTextBox != nullptr && g_hasDisplay) { 
+				wstring objectInfo = concatenateObjInfo(objectMaxZ); 
+
+				g_pTextBox->ClearText();
+				g_pTextBox->SetText(objectInfo.c_str());
+			}
+		}
+
+		wchar_t buffer[256];
+		swprintf(buffer, sizeof(buffer), L"number of hits recorded: %i\n\n", numHitObjects);
+		::OutputDebugString(buffer);
+
+		hitObjects.clear();
+
+	}
+
+	
+	g_relevantMouse = false;
+   
+	
 }
 
 
@@ -764,8 +1194,12 @@ void CALLBACK OnGUIEvent( UINT nEvent, int nControlID, CDXUTControl* pControl, v
     {
     case IDC_TOGGLEFULLSCREEN:
         DXUTToggleFullScreen(); break;
-    case IDC_TOGGLEREF:
-        DXUTToggleREF(); break;
+	case IDC_TOGGLEREF:
+	{
+		DXUTPause(false, false);
+		g_isPaused = false;
+		DXUTToggleREF(); break;
+	}
     case IDC_CHANGEDEVICE:
         g_D3DSettingsDlg.SetActive( !g_D3DSettingsDlg.IsActive() ); break;
 
@@ -778,6 +1212,58 @@ void CALLBACK OnGUIEvent( UINT nEvent, int nControlID, CDXUTControl* pControl, v
             CreateParticlePosVeloBuffers(DXUTGetD3D11Device());
             break;
         }
+	case IDC_PAUSE:
+		{
+		if (g_hasDisplay) {
+			g_pTextBox->SetVisible(false);
+			g_hasDisplay = false;
+		}
+		if (!g_isPaused) {
+			DXUTPause(false, false);
+			g_isPaused = true;
+		}
+		else {
+			DXUTPause(true, false);
+			g_isPaused = false;
+		}
+
+		}
+	case IDC_DISPLAYINFO: //this occurs every time the feature is paused
+	{
+		LPCWSTR welcomeMessage = L"Select an object\nto see information\ndisplayed\n(but actually press\nthe button)";
+		if (g_isPaused && !g_hasDisplay && g_firstTextBox) { //always the first case; text box pointer gets assignment here
+			g_HUD.AddEditBox(11, welcomeMessage, 0, 280, 160, 300);
+			g_pTextBox = g_HUD.GetEditBox(11);
+			g_hasDisplay = true;
+			g_firstTextBox = false;
+		}
+		else if (g_isPaused && !g_hasDisplay)
+		{
+			g_pTextBox->SetText(welcomeMessage);
+			g_pTextBox->SetVisible(true);
+			g_hasDisplay = true;
+		}
+		else if (g_hasDisplay) {
+			g_pTextBox->SetVisible(false);
+			g_hasDisplay = false;
+		}
+		break;
+	}
+	case IDC_DOUBLESPEED:
+		doubleSpeed(); break;
+	case IDC_HALFSPEED:
+		halfSpeed(); break;
+	case IDC_SUBMITTIMEIN:
+		{
+		LPCWSTR timeStr;
+		float timeFloat;
+		timeStr=g_JumpTimeInput->GetText();
+		if (timeStr == NULL){
+			break;
+		}
+		timeFloat = wcstof(timeStr, NULL);
+		jumpTime(timeFloat); break;
+		}
     }
 }
 
@@ -960,6 +1446,10 @@ void RenderText()
     g_pTxtHelper->SetForegroundColor( Colors::Yellow );
     g_pTxtHelper->DrawTextLine( DXUTGetFrameStats( DXUTIsVsyncEnabled() ) );
     g_pTxtHelper->DrawTextLine( DXUTGetDeviceStats() );
+	g_pTxtHelper->DrawTextLine(L"Time:");
+	WCHAR currentTime[g_cTimeStringLength];
+	GetSimTime(currentTime);
+	g_pTxtHelper->DrawTextLine(currentTime);
     g_pTxtHelper->End();
 }
 
@@ -992,9 +1482,9 @@ bool RenderParticles( ID3D11DeviceContext* pd3dImmediateContext, CXMMATRIX mView
 
     D3D11_MAPPED_SUBRESOURCE MappedResource;
     pd3dImmediateContext->Map( g_pcbGS, 0, D3D11_MAP_WRITE_DISCARD, 0, &MappedResource);
-    auto pCBGS = reinterpret_cast<CB_GS*>( MappedResource.pData );
-    XMStoreFloat4x4( &pCBGS->m_WorldViewProj, XMMatrixMultiply( mView, mProj ) ); 
-    XMStoreFloat4x4( &pCBGS->m_InvView, XMMatrixInverse( nullptr, mView ) );
+    g_pCBGS = reinterpret_cast<CB_GS*>( MappedResource.pData );
+    XMStoreFloat4x4( &g_pCBGS->m_WorldViewProj, XMMatrixMultiply( mView, mProj ) ); 
+    XMStoreFloat4x4( &g_pCBGS->m_InvView, XMMatrixInverse( nullptr, mView ) );
     pd3dImmediateContext->Unmap( g_pcbGS, 0 );
     pd3dImmediateContext->GSSetConstantBuffers( 0, 1, &g_pcbGS );
 
@@ -1038,12 +1528,11 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
     ID3D11DepthStencilView* pDSV = DXUTGetD3D11DepthStencilView();
     pd3dImmediateContext->ClearDepthStencilView( pDSV, D3D11_CLEAR_DEPTH, 1.0, 0 );
 
-    // Get the projection & view matrix from the camera class
-    XMMATRIX mProj = g_Camera.GetProjMatrix();
-    XMMATRIX mView = g_Camera.GetViewMatrix();
+    // Get the projection & view matrix from the camera class -> now defined in OnFrameMove
+
 
     // Render the particles
-    RenderParticles( pd3dImmediateContext, mView, mProj );
+    RenderParticles( pd3dImmediateContext, g_mView, g_mProj );
 
     DXUT_BeginPerfEvent( DXUT_PERFEVENTCOLOR, L"HUD / Stats" );
     g_HUD.OnRender( fElapsedTime );
@@ -1074,14 +1563,6 @@ void CALLBACK OnD3D11DestroyDevice( void* pUserContext )
     SAFE_DELETE( g_pTxtHelper );
     SAFE_DELETE_ARRAY( g_pParticleArray );
 	SAFE_DELETE_ARRAY(g_pParticleArrayTWO);
-
-	SAFE_DELETE_ARRAY(name);
-	SAFE_DELETE_ARRAY(mass);
-	SAFE_DELETE_ARRAY(diameter);
-	SAFE_DELETE_ARRAY(brightness);
-	SAFE_DELETE_ARRAY(xcoord);
-	SAFE_DELETE_ARRAY(ycoord);
-	SAFE_DELETE_ARRAY(zcoord);
 
     SAFE_RELEASE( g_pParticleBuffer ); 
     SAFE_RELEASE( g_pParticleVertexLayout );
