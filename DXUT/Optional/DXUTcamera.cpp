@@ -38,8 +38,7 @@ XMVECTOR Normalize(XMVECTOR v)
 	float x = XMVectorGetX(v);
 	float y = XMVectorGetY(v);
 	float z = XMVectorGetZ(v);
-	float w = XMVectorGetW(v);
-	float magnitude = sqrt(pow(x, 2) + pow(y, 2) + pow(z, 2) + pow(w, 2));
+	float magnitude = sqrt(pow(x, 2) + pow(y, 2) + pow(z, 2));
 	XMVECTOR result = v / magnitude;
 	return result;
 }
@@ -896,9 +895,9 @@ void CModelViewerCamera::FrameMove( _In_ float fElapsedTime )
     // Move the lookAt position 
     XMVECTOR vLookAt = XMLoadFloat3( &m_vLookAt );
 	XMVECTOR delta = XMLoadFloat3(&g_PanDeltaVector);
-	//XMVECTOR orizontal = Normalize(vWorldAhead);
-	//XMVECTOR vertical = Normalize(vWorldUp);
-	XMVECTOR vRightDirection = CrossProduct(vWorldAhead, vWorldUp);
+	XMVECTOR orizontal = Normalize(vWorldAhead);
+	XMVECTOR vertical = Normalize(vWorldUp);
+	XMVECTOR vRightDirection = CrossProduct(orizontal, vertical);
 
 	// Calculate direction of left camera axis
 	// cross vWorldUp with vLookAt
@@ -931,7 +930,7 @@ void CModelViewerCamera::FrameMove( _In_ float fElapsedTime )
     XMStoreFloat3( &m_vLookAt, vLookAt );
 
     // Update the eye point based on a radius away from the lookAt position
-	XMVECTOR vEye = delta + vLookAt - vWorldAhead * m_fRadius;
+	XMVECTOR vEye = vLookAt - vWorldAhead * m_fRadius;
     XMStoreFloat3( &m_vEye, vEye );
 	
 
