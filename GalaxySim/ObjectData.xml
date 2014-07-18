@@ -3,56 +3,72 @@
 
 <MaxParticles>2</MaxParticles>
 
-<object>
-  <name>Sun</name>
-  <mass>500</mass>
-  <diameter>6400</diameter>
-  <brightness>6</brightness>
-  <xcoord>0</xcoord>
-  <ycoord>0</ycoord>
-  <zcoord>0</zcoord>
-</object>
+  <object>
+    <name>Sun</name>
+    <mass>1988500000000000000000000000000</mass>
+    <diameter>1392000</diameter>
+    <brightness>6</brightness>
+    <xcoord>0</xcoord>
+    <ycoord>0</ycoord>
+    <zcoord>0</zcoord>
+    <xvelo>0</xvelo>
+    <yvelo>0</yvelo>
+    <zvelo>0</zvelo>
+    <red>.555555</red>
+    <green>.433333</green>
+    <blue>.000000</blue>
+  </object>
 
-<object>
-  <name>Earth</name>
-  <mass>20</mass>
-  <diameter>6400</diameter>
-  <brightness>4</brightness>
-  <xcoord>300</xcoord>
-  <ycoord>300</ycoord>
-  <zcoord>300</zcoord>
-</object>
-
- <object>
-   <name>Planet 1</name>
-   <mass>20</mass>
-   <diameter>6400</diameter>
-   <brightness>4</brightness>
-   <xcoord>-300</xcoord>
-   <ycoord>-300</ycoord>
-   <zcoord>-300</zcoord>
- </object>
-
- <object>
-    <name>Planet 2</name>
-    <mass>200</mass>
-    <diameter>6400</diameter>
+  <object>
+    <name>Venus</name>
+    <mass>4868500000000000000000000</mass>
+    <diameter>12103.6</diameter>
     <brightness>4</brightness>
-    <xcoord>-300</xcoord>
-    <ycoord>300</ycoord>
-    <zcoord>-300</zcoord>
- </object>
-
- <object>
-   <name>Planet 3</name>
-   <mass>200</mass>
-   <diameter>6400</diameter>
-   <brightness>4</brightness>
-   <xcoord>100</xcoord>
-   <ycoord>300</ycoord>
-   <zcoord>-300</zcoord>
- </object>
+    <xcoord>43200</xcoord>
+    <ycoord>45030.9</ycoord>
+    <zcoord>-1878.157</zcoord>
+    <xvelo>-91327.47919</xvelo>
+    <yvelo>86785.93086</yvelo>
+    <zvelo>6459.896244</zvelo>
+    <red>.666589</red>
+    <green>.222222</green>
+    <blue>.000000</blue>
+  </object>
 
 
+  <object>
+    <name>Earth</name>
+    <mass>5970000000000000000000000</mass>
+    <diameter>12756</diameter>
+    <brightness>4</brightness>
+    <xcoord>33263.09995</xcoord>
+    <ycoord>-81276.1315</ycoord>
+    <zcoord>2.36678</zcoord>
+    <xvelo>97480.40753</xvelo>
+    <yvelo>40178.74208</yvelo>
+    <zvelo>0.709178527</zvelo>
+    <red>.000000</red>
+    <green>.865423</green>
+    <blue>.512365</blue>
+  </object>
+
+  <object>
+    <name>Mars</name>
+    <mass>641850000000000000000000</mass>
+    <diameter>6779.8</diameter>
+    <brightness>4</brightness>
+    <xcoord>-51400</xcoord>
+    <ycoord>-120000</ycoord>
+    <zcoord>-1230</zcoord>
+    <xvelo>-91327.47919</xvelo>
+    <yvelo>-27184.86573</yvelo>
+    <zvelo>-2615.148049</zvelo>
+    <red>.999999</red>
+    <green>.111111</green>
+    <blue>.000000</blue>
+  </object>
+
+
+  
 </Universe>
 
