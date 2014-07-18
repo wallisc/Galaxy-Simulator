@@ -935,7 +935,7 @@ HRESULT CreateParticlePosVeloBuffers( ID3D11Device* pd3dDevice )
 
 	fillParticles(g_pParticleArray, g_pParticleArrayTWO, g_objects);
 
-
+	
     D3D11_SUBRESOURCE_DATA InitData;
     InitData.pSysMem = g_pParticleArray;
     V_RETURN( pd3dDevice->CreateBuffer( &desc, &InitData, &g_pParticlePosVelo0 ) );
