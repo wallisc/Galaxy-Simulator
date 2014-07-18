@@ -1475,7 +1475,7 @@ HRESULT CALLBACK OnD3D11CreateDevice( ID3D11Device* pd3dDevice, const DXGI_SURFA
 
     // Setup the camera's view parameters
 
-    XMVECTOR vecEye = XMVectorSet( 0, 0, -g_fSpread * 3, 0.f );
+    XMVECTOR vecEye = XMVectorSet( 0, 0, -g_fSpread * 2000, 0.f );
     g_Camera.SetViewParams( vecEye, g_XMZero );
 
     CompilingShadersDlg.DestroyDialog();
