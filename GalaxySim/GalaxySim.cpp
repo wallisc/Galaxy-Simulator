@@ -851,53 +851,84 @@ void jumpTime(float newTime){
 
 	for (int i = 0; i < NUM_PARTICLES; i++)
 	{
-		//initial position of object i
-		XMFLOAT4 initialPositioni = createPositionFloat(g_objects[i].m_xcoord, g_objects[i].m_ycoord, g_objects[i].m_zcoord);		
-
-		// here I calculate acceleration for each object in particular
-		//ind_acc = new XMFLOAT4[NUM_PARTICLES];
-		XMFLOAT4 acceleration = XMFLOAT4(0, 0, 0, 0);
-
-		for (int j = 0; j < NUM_PARTICLES; j++)
-		{
-			if (i != j)
-			{
-				XMFLOAT4 ijdist = VectorSubtraction(initialPositioni, createPositionFloat(g_objects[j].m_xcoord, g_objects[j].m_ycoord, g_objects[j].m_zcoord));
-				float ijdist_magnitude = VectorMagnitude(ijdist);
-
-				float g_accConstant = g_constant * g_pParticleArrayTWO[j].mass / pow(ijdist_magnitude, 3);
-				XMFLOAT4 g_acc = ConstantVectorMultiplication(g_accConstant, ijdist);
-				acceleration = VectorAddition(acceleration, g_acc);
-
-				//ind_acc[j] = g_acc;
-			}
+		//reset all particles to their initial pos and velo
+		for (int q = 0; q < NUM_PARTICLES; q++){
+			g_pParticleArray[q].velo = createPositionFloat(g_objects[q].m_xvelo, g_objects[q].m_yvelo, g_objects[q].m_zvelo);
+			g_pParticleArray[q].pos = createPositionFloat(g_objects[q].m_xcoord, g_objects[q].m_ycoord, g_objects[q].m_zcoord);
 		}
 
-		//update velocity and position using acceleration
+		float timeIncrement = newTime / 2;
 
-		//calculates displacement between starting point and jumped time point
-		XMFLOAT4 displacement;
-		//breaks x=vt+1/2at^2 into two parts
-		XMFLOAT4 vt = ConstantVectorMultiplication(newTime, initialVelo);
-		XMFLOAT4 atsquared = ConstantVectorMultiplication(0.5, ConstantVectorMultiplication(pow(newTime, 2), acceleration));
-		displacement = VectorAddition(vt, atsquared);
-		
-		//update the velocity and position of the particle
-		g_pParticleArray[i].velo = VectorAddition(initialVelo, ConstantVectorMultiplication(newTime, acceleration));
-		g_pParticleArray[i].pos = VectorAddition(initialPositioni, displacement);
+		for (int k = 0; k < newTime; k = k + timeIncrement){
 
+			for (int i = 0; i < NUM_PARTICLES; i++)
+			{
+				////initial velocity for all particles
+				//XMFLOAT4 initialVelo = XMFLOAT4(0, 0, 0, 1);
+
+				////temp testing with different initial velo
+				//if (g_pParticleArrayTWO[i].name.compare(L"Earth") == 0){
+				//	initialVelo = XMFLOAT4(97480, 40178, .70917, 0);
+				//}
+				//if (g_pParticleArrayTWO[i].name.compare(L"Mars") == 0){
+				//	initialVelo = XMFLOAT4(83338.28, -27184.865, -2615.148, 0);
+				//}
+				//if (g_pParticleArrayTWO[i].name.compare(L"Venus") == 0){
+				//	initialVelo = XMFLOAT4(-91327.48, 86785.93, 6459.896, 0);
+				//}
+				//initial position of object i
+				//XMFLOAT4 initialPositioni = createPositionFloat(g_objects[i].m_xcoord, g_objects[i].m_ycoord, g_objects[i].m_zcoord);
+
+				// here I calculate acceleration for each object in particular
+				//ind_acc = new XMFLOAT4[NUM_PARTICLES];
+				XMFLOAT4 acceleration = XMFLOAT4(0, 0, 0, 0);
+
+				for (int j = 0; j < NUM_PARTICLES; j++)
+				{
+					if (i != j)
+					{
+						XMFLOAT4 ijdist = VectorSubtraction(g_pParticleArray[i].pos, g_pParticleArray[j].pos);
+						float ijdist_magnitude = VectorMagnitude(ijdist);
+
+						float g_accConstant = g_constant * g_pParticleArrayTWO[j].mass / pow(ijdist_magnitude, 3);
+						XMFLOAT4 g_acc = ConstantVectorMultiplication(g_accConstant, ijdist);
+						acceleration = VectorAddition(acceleration, g_acc);
+
+						//ind_acc[j] = g_acc;
+					}
+				}
+
+				////update velocity and position using acceleration
+
+				////calculates displacement between starting point and jumped time point
+				//XMFLOAT4 displacement;
+				////breaks x=vt+1/2at^2 into two parts
+				//XMFLOAT4 vt = ConstantVectorMultiplication(newTime, initialVelo);
+				//XMFLOAT4 atsquared = ConstantVectorMultiplication(0.5, ConstantVectorMultiplication(pow(newTime, 2), acceleration));
+				//displacement = VectorAddition(vt, atsquared);
+
+				////update the velocity and position of the particle
+				//g_pParticleArray[i].velo = VectorAddition(initialVelo, ConstantVectorMultiplication(newTime, acceleration));
+				//g_pParticleArray[i].pos = VectorAddition(initialPositioni, displacement);
+
+				//update velocity and position using acceleration
+				g_pParticleArray[i].velo = VectorAddition(g_pParticleArray[i].velo, ConstantVectorMultiplication(timeIncrement, acceleration));
+				g_pParticleArray[i].pos = VectorAddition(g_pParticleArray[i].pos, ConstantVectorMultiplication(timeIncrement, g_pParticleArray[i].velo));
+
+			}
+
+
+		}
+		g_systemTime = newTime;
 	}
-
-	g_systemTime = newTime;
+	 
 }
-
-
 
 //--------------------------------------------------------------------------------------
 HRESULT CreateParticlePosVeloBuffers( ID3D11Device* pd3dDevice )
 {
     HRESULT hr = S_OK;
-
+	
     D3D11_BUFFER_DESC desc;
     ZeroMemory( &desc, sizeof(desc) );
     desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
@@ -1135,7 +1166,7 @@ void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 
 			//inverse view matrix comes from RenderParticles
 			//screen space radius
-			radius = 4000.0f; //TODO: Get this value from hlsl; hlsl value should in turn come from the diameter
+			radius = 2500.0f; //TODO: Get this value from hlsl; hlsl value should in turn come from the diameter
 			XMVECTOR offset = { radius, 0.0f, 0.0f, 0.0f };
 			convertTo3x3(g_pCBGS->m_InvView);
 
