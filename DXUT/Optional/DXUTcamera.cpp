@@ -1081,7 +1081,6 @@ LRESULT CModelViewerCamera::HandleMessages(HWND hWnd, UINT uMsg, WPARAM wParam, 
 		int iMouseX = (short)LOWORD(lParam);
 		int iMouseY = (short)HIWORD(lParam);
 		g_downarrowpressed = 42;
-		::OutputDebugString(L"hi");
 	}
 
 	if ((uMsg == WM_KEYDOWN) && (wParam == VK_LEFT))
@@ -1089,7 +1088,6 @@ LRESULT CModelViewerCamera::HandleMessages(HWND hWnd, UINT uMsg, WPARAM wParam, 
 		int iMouseX = (short)LOWORD(lParam);
 		int iMouseY = (short)HIWORD(lParam);
 		g_leftarrowpressed = 42;
-		::OutputDebugString(L"hi");
 	}
 
 	if ((uMsg == WM_KEYDOWN) && (wParam == VK_RIGHT))
@@ -1097,7 +1095,6 @@ LRESULT CModelViewerCamera::HandleMessages(HWND hWnd, UINT uMsg, WPARAM wParam, 
 		int iMouseX = (short)LOWORD(lParam);
 		int iMouseY = (short)HIWORD(lParam);
 		g_rightarrowpressed = 42;
-		::OutputDebugString(L"hi");
 	}
 
 	if (uMsg == WM_KEYUP && (wParam == VK_RIGHT))
