@@ -151,7 +151,8 @@ public:
 
 std::vector<ObjectData> g_objects;
 
-const float g_constant = -6.67 * pow(10, 1);
+//const float g_constant = -8.644 * pow(10, -13);
+const float g_constant = -8.644E-16;
 const int g_cTimeStringLength = 20;
 
 float g_red[MAX_PARTICLES];
@@ -160,7 +161,7 @@ float g_blue[MAX_PARTICLES];
 bool g_isFirst = true;
 bool g_isPaused = false;
 
-double g_timeValue=0.01; //can change this to change speed of simulation, used later to do 2x and 0.5x
+double g_timeValue=0.005; //can change this to change speed of simulation, used later to do 2x and 0.5x
 double g_systemTime = 0; //sets the inital system time to 0
 LPWSTR g_timeString; //used later for the Jump Time In button user uses to input time to jump to.
 
@@ -776,6 +777,9 @@ void jumpTime(float newTime){
 
 	for (int i = 0; i < NUM_PARTICLES; i++)
 	{
+		if (g_pParticleArrayTWO[i].name.compare(L"Earth")==0){
+			initialVelo = XMFLOAT4(97480, 40178, .70917, 0);
+		}
 		//initial position of object i
 		XMFLOAT4 initialPositioni = createPositionFloat(g_objects[i].m_xcoord, g_objects[i].m_ycoord, g_objects[i].m_zcoord);		
 
@@ -859,6 +863,15 @@ HRESULT CreateParticlePosVeloBuffers( ID3D11Device* pd3dDevice )
         g_fSpread, NUM_PARTICLES );*/
 
 	fillParticles2(g_pParticleArray, g_pParticleArrayTWO, g_objects, XMFLOAT4(0, 0, 0, 1));
+	
+	//temp testing changing earth's inital velocity 
+	for (int i = 0; i < NUM_PARTICLES; i++){
+		if (g_pParticleArrayTWO[i].name.compare(L"Earth")==0){
+			g_pParticleArray[i].velo = XMFLOAT4(97480.40753, 40178.74, .709178, 0);
+		}
+	}
+
+
 
 
     D3D11_SUBRESOURCE_DATA InitData;

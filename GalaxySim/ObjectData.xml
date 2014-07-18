@@ -3,10 +3,11 @@
 
   <MaxParticles>2</MaxParticles>
 
+
   <object>
     <name>Sun</name>
-    <mass>500</mass>
-    <diameter>6400</diameter>
+    <mass>1988500000000000000000000000000</mass>
+    <diameter>1392000</diameter>
     <brightness>6</brightness>
     <xcoord>0</xcoord>
     <ycoord>0</ycoord>
@@ -15,43 +16,12 @@
 
   <object>
     <name>Earth</name>
-    <mass>20</mass>
-    <diameter>6400</diameter>
+    <mass>5970000000000000000000000</mass>
+    <diameter>12756</diameter>
     <brightness>4</brightness>
-    <xcoord>300</xcoord>
-    <ycoord>300</ycoord>
-    <zcoord>300</zcoord>
+    <xcoord>33263.09995</xcoord>
+    <ycoord>-81276.1315</ycoord>
+    <zcoord>2.36678</zcoord>
   </object>
-
-  <object>
-    <name>Planet 1</name>
-    <mass>20</mass>
-    <diameter>6400</diameter>
-    <brightness>4</brightness>
-    <xcoord>-300</xcoord>
-    <ycoord>-300</ycoord>
-    <zcoord>-300</zcoord>
-  </object>
-
-  <object>
-    <name>Planet 2</name>
-    <mass>200</mass>
-    <diameter>6400</diameter>
-    <brightness>4</brightness>
-    <xcoord>-300</xcoord>
-    <ycoord>300</ycoord>
-    <zcoord>-300</zcoord>
-  </object>
-
-  <object>
-    <name>Planet 3</name>
-    <mass>200</mass>
-    <diameter>6400</diameter>
-    <brightness>4</brightness>
-    <xcoord>100</xcoord>
-    <ycoord>300</ycoord>
-    <zcoord>-300</zcoord>
-  </object>
-
 
 </Universe>
