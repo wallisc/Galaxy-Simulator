@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <Universe>
 
-  <MaxParticles>2</MaxParticles>
+  <MaxParticles>4</MaxParticles>
 
 
   <object>
@@ -15,6 +15,17 @@
   </object>
 
   <object>
+    <name>Venus</name>
+    <mass>4868500000000000000000000</mass>
+    <diameter>12103.6</diameter>
+    <brightness>4</brightness>
+    <xcoord>43200</xcoord>
+    <ycoord>45030.9</ycoord>
+    <zcoord>-1878.157</zcoord>
+  </object>
+
+
+  <object>
     <name>Earth</name>
     <mass>5970000000000000000000000</mass>
     <diameter>12756</diameter>
@@ -23,5 +34,16 @@
     <ycoord>-81276.1315</ycoord>
     <zcoord>2.36678</zcoord>
   </object>
+
+  <object>
+    <name>Mars</name>
+    <mass>641850000000000000000000</mass>
+    <diameter>6779.8</diameter>
+    <brightness>4</brightness>
+    <xcoord>-51400</xcoord>
+    <ycoord>-120000</ycoord>
+    <zcoord>-1230</zcoord>
+  </object>
+  
 
 </Universe>
