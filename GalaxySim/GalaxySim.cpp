@@ -1135,7 +1135,7 @@ void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 
 			//inverse view matrix comes from RenderParticles
 			//screen space radius
-			radius = 2500.0f; //TODO: Get this value from hlsl; hlsl value should in turn come from the diameter
+			radius = 4000.0f; //TODO: Get this value from hlsl; hlsl value should in turn come from the diameter
 			XMVECTOR offset = { radius, 0.0f, 0.0f, 0.0f };
 			convertTo3x3(g_pCBGS->m_InvView);
 
@@ -1433,7 +1433,7 @@ HRESULT CALLBACK OnD3D11CreateDevice( ID3D11Device* pd3dDevice, const DXGI_SURFA
 
     // Setup the camera's view parameters
 
-    XMVECTOR vecEye = XMVectorSet( 0, 0, -g_fSpread * 3, 0.f );
+    XMVECTOR vecEye = XMVectorSet( 0, 0, -g_fSpread * 1000, 0.f );
     g_Camera.SetViewParams( vecEye, g_XMZero );
 
     CompilingShadersDlg.DestroyDialog();
