@@ -1,8 +1,12 @@
 <?xml version="1.0"?>
 <Universe>
 
+<<<<<<< HEAD
   <MaxParticles>4</MaxParticles>
 
+=======
+<MaxParticles>2</MaxParticles>
+>>>>>>> MelSandbox
 
   <object>
     <name>Sun</name>
@@ -12,6 +16,15 @@
     <xcoord>0</xcoord>
     <ycoord>0</ycoord>
     <zcoord>0</zcoord>
+<<<<<<< HEAD
+=======
+    <xvelo>0</xvelo>
+    <yvelo>0</yvelo>
+    <zvelo>0</zvelo>
+    <red>.555555</red>
+    <green>.433333</green>
+    <blue>.000000</blue>
+>>>>>>> MelSandbox
   </object>
 
   <object>
@@ -22,6 +35,15 @@
     <xcoord>43200</xcoord>
     <ycoord>45030.9</ycoord>
     <zcoord>-1878.157</zcoord>
+<<<<<<< HEAD
+=======
+    <xvelo>-91327.47919</xvelo>
+    <yvelo>86785.93086</yvelo>
+    <zvelo>6459.896244</zvelo>
+    <red>.666589</red>
+    <green>.222222</green>
+    <blue>.000000</blue>
+>>>>>>> MelSandbox
   </object>
 
 
@@ -33,6 +55,15 @@
     <xcoord>33263.09995</xcoord>
     <ycoord>-81276.1315</ycoord>
     <zcoord>2.36678</zcoord>
+<<<<<<< HEAD
+=======
+    <xvelo>97480.40753</xvelo>
+    <yvelo>40178.74208</yvelo>
+    <zvelo>0.709178527</zvelo>
+    <red>.000000</red>
+    <green>.865423</green>
+    <blue>.512365</blue>
+>>>>>>> MelSandbox
   </object>
 
   <object>
@@ -43,7 +74,22 @@
     <xcoord>-51400</xcoord>
     <ycoord>-120000</ycoord>
     <zcoord>-1230</zcoord>
+<<<<<<< HEAD
   </object>
   
 
 </Universe>
+=======
+    <xvelo>-91327.47919</xvelo>
+    <yvelo>-27184.86573</yvelo>
+    <zvelo>-2615.148049</zvelo>
+    <red>.999999</red>
+    <green>.111111</green>
+    <blue>.000000</blue>
+  </object>
+
+
+  
+</Universe>
+
+>>>>>>> MelSandbox
