@@ -120,6 +120,9 @@ struct PARTICLE_DETAILS
 	float mass;
 	float diameter;
 	int brightness;
+	float red;
+	float green;
+	float blue;
 };
 
 
@@ -149,12 +152,19 @@ public:
     float     m_xcoord;
     float     m_ycoord;
     float     m_zcoord;
+	float     m_xvelo;
+	float     m_yvelo;
+	float     m_zvelo;
+	float     m_red;
+	float     m_green;
+	float     m_blue;
 
 };
 
 std::vector<ObjectData> g_objects;
 
-const float g_constant = -6.67 * pow(10, 1);
+//const float g_constant = -6.67 * pow(10, 1);
+const float g_constant = -8.644 * pow(10, -16);
 const int g_cTimeStringLength = 20;
 
 float g_red[MAX_PARTICLES];
@@ -177,8 +187,9 @@ bool g_relevantMouse = false;
 float g_xMouse;
 float g_yMouse;
 
+bool g_loaded = false;
 
-double g_timeValue=0.025; //can change this to change speed of simulation, used later to do 2x and 0.5x
+double g_timeValue=0.005; //can change this to change speed of simulation, used later to do 2x and 0.5x
 double g_systemTime = 0; //sets the inital system time to 0
 LPWSTR g_timeString; //used later for the Jump Time In button user uses to input time to jump to.
 
@@ -442,9 +453,26 @@ int ParseFile(){
 			else if (elementName != NULL && wcscmp(elementName, L"ycoord") == 0){
                 objectData.m_ycoord = wcstof(pwszValue, NULL);
 			}
-
 			else if (elementName != NULL && wcscmp(elementName, L"zcoord") == 0){
                 objectData.m_zcoord = wcstof(pwszValue, NULL);
+			}
+			else if (elementName != NULL && wcscmp(elementName, L"xvelo") == 0){
+				objectData.m_xvelo = wcstof(pwszValue, NULL);
+			}
+			else if (elementName != NULL && wcscmp(elementName, L"yvelo") == 0){
+				objectData.m_yvelo = wcstof(pwszValue, NULL);
+			}
+			else if (elementName != NULL && wcscmp(elementName, L"zvelo") == 0){
+				objectData.m_zvelo = wcstof(pwszValue, NULL);
+			}
+			else if (elementName != NULL && wcscmp(elementName, L"red") == 0){
+				objectData.m_red = wcstof(pwszValue, NULL);
+			}
+			else if (elementName != NULL && wcscmp(elementName, L"green") == 0){
+				objectData.m_green = wcstof(pwszValue, NULL);
+			}
+			else if (elementName != NULL && wcscmp(elementName, L"blue") == 0){
+				objectData.m_blue = wcstof(pwszValue, NULL);
 			}
 
 			break;
@@ -583,33 +611,45 @@ HRESULT CreateParticleBuffer( ID3D11Device* pd3dDevice )
     D3D11_SUBRESOURCE_DATA vbInitData;
     ZeroMemory( &vbInitData, sizeof( D3D11_SUBRESOURCE_DATA ) );
 
-    auto pVertices = new PARTICLE_VERTEX[ MAX_PARTICLES ];
+	auto pVertices = new PARTICLE_VERTEX[MAX_PARTICLES];
     if( !pVertices )
         return E_OUTOFMEMORY;
+
+
 
 	//random number generator for color values
 	srand(static_cast <unsigned> (time(NULL)));
 
 	if (g_isFirst) {
-		for (UINT i = 0; i < MAX_PARTICLES; i++) {
-			g_red[i] = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
-			g_green[i] = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
-			g_blue[i] = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+		for (UINT i = 0; i < g_objects.size(); i++) {
 
-			pVertices[i].Color = XMFLOAT4(g_red[i], g_green[i], g_blue[i], 1.000000);
+			if (g_objects[i].m_red < 0) {
+				g_objects[i].m_red = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+			}
+			if (g_objects[i].m_green < 0) {
+				g_objects[i].m_green = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+			}
+			if (g_objects[i].m_blue < 0) {
+				g_objects[i].m_blue = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+			}
+
+			pVertices[i].Color = XMFLOAT4(g_objects[i].m_red, g_objects[i].m_green, g_objects[i].m_blue, 1.000000);
 		}
 		g_isFirst = false;
 	}
 	else {
 		for (UINT i = 0; i < MAX_PARTICLES; i++) {
-			pVertices[i].Color = XMFLOAT4(g_red[i], g_green[i], g_blue[i], 1.000000);
+			pVertices[i].Color = XMFLOAT4(g_objects[i].m_red, g_objects[i].m_green, g_objects[i].m_blue, 1.000000);
 		}
 	}
 	
+
+
+
     vbInitData.pSysMem = pVertices;
     V_RETURN( pd3dDevice->CreateBuffer( &vbdesc, &vbInitData, &g_pParticleBuffer ) );
     DXUT_SetDebugName( g_pParticleBuffer, "Particles" );
-    SAFE_DELETE_ARRAY( pVertices );
+	SAFE_DELETE_ARRAY(pVertices);
 
     return hr;
 }
@@ -655,6 +695,10 @@ XMFLOAT4 createPositionFloat(float xParticle, float yParticle, float zParticle){
 	return XMFLOAT4(xParticle, yParticle, zParticle, 10000.0f * 10000.0f);
 }
 
+XMFLOAT4 createVelocityFloat(float xVelocity, float yVelocity, float zVelocity) {
+	return XMFLOAT4(xVelocity, yVelocity, zVelocity, 1);
+}
+
 //method for performing vector subtraction when dealing with XMFLOAT4
 //definition for XMFLOAT4 is in the sample, line 570
 XMFLOAT4 VectorSubtraction(XMFLOAT4 vector1, XMFLOAT4 vector2)
@@ -698,10 +742,10 @@ XMFLOAT4 ConstantVectorMultiplication(float constant, XMFLOAT4 vector)
 
 
 //--------------------------------------------------------------------------------------
-// Functions used to load particles (overarching one is fillParticles2) other ones support it
+// Functions used to load particles (overarching one is fillParticles) other ones support it
 //--------------------------------------------------------------------------------------
 
-void fillPosVel(PARTICLE particles[], std::vector<ObjectData> & objects, XMFLOAT4 Velocity){
+void fillPosVel(PARTICLE particles[], std::vector<ObjectData> & objects){
 	//method that loads g_pParticleArray with position as a vector and velocity (that is being updated constantly?)
 	//create and then call here a getVelocity methods 
 
@@ -709,12 +753,14 @@ void fillPosVel(PARTICLE particles[], std::vector<ObjectData> & objects, XMFLOAT
     for (auto object : objects)
     {
         particles[i].pos = createPositionFloat(object.m_xcoord, object.m_ycoord, object.m_zcoord);
-		particles[i].velo = Velocity;
+		particles[i].velo = createVelocityFloat(object.m_xvelo, object.m_yvelo, object.m_zvelo);
         i++;
 	}
 
     NUM_PARTICLES = i;
 }
+
+
 
 void fillDetails(PARTICLE_DETAILS particles2[], std::vector<ObjectData> & objects){
 
@@ -724,13 +770,17 @@ void fillDetails(PARTICLE_DETAILS particles2[], std::vector<ObjectData> & object
         particles2[i].mass = object.m_mass;
         particles2[i].diameter = object.m_diameter;
         particles2[i].brightness = object.m_brightness;
+		particles2[i].red = object.m_red;
+		particles2[i].green = object.m_green;
+		particles2[i].blue = object.m_blue;
         i++;
 	}
     assert(i == NUM_PARTICLES);
+	g_loaded = true;
 	}
 
-void fillParticles2(PARTICLE particles[], PARTICLE_DETAILS particles2[], std::vector<ObjectData> & objects, XMFLOAT4 Velocity){
-	fillPosVel(particles, objects, Velocity);
+void fillParticles(PARTICLE particles[], PARTICLE_DETAILS particles2[], std::vector<ObjectData> & objects){
+	fillPosVel(particles, objects);
 	fillDetails(particles2, objects);
 
 }
@@ -883,7 +933,7 @@ HRESULT CreateParticlePosVeloBuffers( ID3D11Device* pd3dDevice )
         XMFLOAT3( fCenterSpread, 0, 0 ), XMFLOAT4( 0, 0, 0, 1 ),
         g_fSpread, NUM_PARTICLES );*/
 
-	fillParticles2(g_pParticleArray, g_pParticleArrayTWO, g_objects, XMFLOAT4(0, 0, 0, 1));
+	fillParticles(g_pParticleArray, g_pParticleArrayTWO, g_objects);
 
 
     D3D11_SUBRESOURCE_DATA InitData;
@@ -1085,7 +1135,7 @@ void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 
 			//inverse view matrix comes from RenderParticles
 			//screen space radius
-			radius = 20.0f; //TODO: Get this value from hlsl; hlsl value should in turn come from the diameter
+			radius = 2500.0f; //TODO: Get this value from hlsl; hlsl value should in turn come from the diameter
 			XMVECTOR offset = { radius, 0.0f, 0.0f, 0.0f };
 			convertTo3x3(g_pCBGS->m_InvView);
 
@@ -1332,7 +1382,7 @@ HRESULT CALLBACK OnD3D11CreateDevice( ID3D11Device* pd3dDevice, const DXGI_SURFA
     SAFE_RELEASE( pBlobRenderParticlesGS );
     SAFE_RELEASE( pBlobRenderParticlesPS );
 
-    V_RETURN( CreateParticleBuffer( pd3dDevice ) );
+	V_RETURN(CreateParticleBuffer(pd3dDevice));
     V_RETURN( CreateParticlePosVeloBuffers( pd3dDevice ) );
 
     // Setup constant buffer
