@@ -13,8 +13,35 @@
 #include "DXUT.h"
 #include "DXUTcamera.h"
 #include "DXUTres.h"
+#include "assert.h"
+#include "DirectXMath.h"
 
 using namespace DirectX;
+
+int g_uparrowpressed = 37;
+int g_downarrowpressed = 37;
+int g_leftarrowpressed = 37;
+int g_rightarrowpressed = 37;
+XMFLOAT3 g_PanDeltaVector(0, 0, 0);
+
+XMVECTOR CrossProduct(XMVECTOR v, XMVECTOR u)
+{
+	float xcoord = XMVectorGetY(v) * XMVectorGetZ(u) - XMVectorGetZ(v)*XMVectorGetY(u);
+	float ycoord = XMVectorGetX(u) * XMVectorGetZ(v) - XMVectorGetX(v) * XMVectorGetZ(u);
+	float zcoord = XMVectorGetX(v) * XMVectorGetY(u) - XMVectorGetX(u) * XMVectorGetZ(v);
+	XMVECTOR result = {xcoord, ycoord, zcoord, 0.0f};
+	return result;
+}
+
+XMVECTOR Normalize(XMVECTOR v)
+{
+	float x = XMVectorGetX(v);
+	float y = XMVectorGetY(v);
+	float z = XMVectorGetZ(v);
+	float magnitude = sqrt(pow(x, 2) + pow(y, 2) + pow(z, 2));
+	XMVECTOR result = v / magnitude;
+	return result;
+}
 
 //======================================================================================
 // CD3DArcBall
@@ -97,7 +124,7 @@ void CD3DArcBall::OnEnd()
 
 //--------------------------------------------------------------------------------------
 _Use_decl_annotations_
-LRESULT CD3DArcBall::HandleMessages( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam )
+LRESULT CD3DArcBall::HandleMessages(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     // Current mouse position
     int iMouseX = ( short )LOWORD( lParam );
@@ -278,7 +305,7 @@ void CBaseCamera::SetProjParams( float fFOV, float fAspect, float fNearPlane, fl
 // Call this from your message proc so this class can handle window messages
 //--------------------------------------------------------------------------------------
 _Use_decl_annotations_
-LRESULT CBaseCamera::HandleMessages( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam )
+LRESULT CBaseCamera::HandleMessages(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     UNREFERENCED_PARAMETER( hWnd );
     UNREFERENCED_PARAMETER( lParam );
@@ -796,6 +823,7 @@ CModelViewerCamera::CModelViewerCamera() :
     m_nRotateModelButtonMask(MOUSE_LEFT_BUTTON),
     m_nZoomButtonMask(MOUSE_WHEEL),
     m_nRotateCameraButtonMask(MOUSE_RIGHT_BUTTON),
+	m_nPanCameraButtonMask(VK_LEFT | VK_RIGHT | VK_UP | VK_DOWN),
     m_bAttachCameraToModel(false),
     m_bLimitPitch(false),
     m_bDragSinceLastUpdate(true),
@@ -822,6 +850,7 @@ CModelViewerCamera::CModelViewerCamera() :
 //--------------------------------------------------------------------------------------
 void CModelViewerCamera::FrameMove( _In_ float fElapsedTime )
 {
+
     if( IsKeyDown( m_aKeys[CAM_RESET] ) )
         Reset();
 
@@ -844,6 +873,7 @@ void CModelViewerCamera::FrameMove( _In_ float fElapsedTime )
 
     // Simple euler method to calculate position delta
     XMVECTOR vPosDelta = XMLoadFloat3( &m_vVelocity ) * fElapsedTime;
+	
 
     // Change the radius from the camera to the model based on wheel scrolling
     if( m_nMouseWheelDelta && m_nZoomButtonMask == MOUSE_WHEEL )
@@ -858,20 +888,51 @@ void CModelViewerCamera::FrameMove( _In_ float fElapsedTime )
     // Transform vectors based on camera's rotation matrix
     XMVECTOR vWorldUp = XMVector3TransformCoord( g_XMIdentityR1, mCameraRot );
     XMVECTOR vWorldAhead = XMVector3TransformCoord( g_XMIdentityR2, mCameraRot );
-
+	
     // Transform the position delta by the camera's rotation 
     XMVECTOR vPosDeltaWorld = XMVector3TransformCoord( vPosDelta, mCameraRot );
 
     // Move the lookAt position 
     XMVECTOR vLookAt = XMLoadFloat3( &m_vLookAt );
-    vLookAt += vPosDeltaWorld;
+	XMVECTOR delta = XMLoadFloat3(&g_PanDeltaVector);
+	XMVECTOR orizontal = Normalize(vWorldAhead);
+	XMVECTOR vertical = Normalize(vWorldUp);
+	XMVECTOR vRightDirection = CrossProduct(orizontal, vertical);
+
+	// Calculate direction of left camera axis
+	// cross vWorldUp with vLookAt
+
+	const float cCameraMoveDist = 1.0f;
+	if (g_uparrowpressed == 42)
+	{
+		delta -= vWorldUp * cCameraMoveDist;
+	}
+
+	if (g_downarrowpressed == 42)
+	{
+		delta += vWorldUp * cCameraMoveDist;
+	}
+
+	if (g_leftarrowpressed == 42)
+	{
+		delta -= vRightDirection * cCameraMoveDist;
+	}
+
+	if (g_rightarrowpressed == 42)
+	{
+		delta += vRightDirection * cCameraMoveDist;
+	}
+
+	vLookAt += vPosDeltaWorld + delta;
+
     if( m_bClipToBoundary )
-        vLookAt = ConstrainToBoundary( vLookAt );
+		vLookAt = ConstrainToBoundary(vLookAt);
     XMStoreFloat3( &m_vLookAt, vLookAt );
 
     // Update the eye point based on a radius away from the lookAt position
-    XMVECTOR vEye = vLookAt - vWorldAhead * m_fRadius;
+	XMVECTOR vEye = vLookAt - vWorldAhead * m_fRadius;
     XMStoreFloat3( &m_vEye, vEye );
+	
 
     // Update the view matrix
     XMMATRIX mView = XMMatrixLookAtLH( vEye, vLookAt, vWorldUp );
@@ -952,6 +1013,7 @@ void CModelViewerCamera::Reset()
     m_fRadius = m_fDefaultRadius;
     m_WorldArcBall.Reset();
     m_ViewArcBall.Reset();
+	g_PanDeltaVector = XMFLOAT3(0, 0, 0);
 }
 
 
@@ -982,9 +1044,9 @@ void CModelViewerCamera::SetViewParams( FXMVECTOR vEyePt, FXMVECTOR vLookatPt )
 // Call this from your message proc so this class can handle window messages
 //--------------------------------------------------------------------------------------
 _Use_decl_annotations_
-LRESULT CModelViewerCamera::HandleMessages( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam )
+LRESULT CModelViewerCamera::HandleMessages(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    CBaseCamera::HandleMessages( hWnd, uMsg, wParam, lParam );
+	CBaseCamera::HandleMessages(hWnd, uMsg, wParam, lParam);
 
     if( ( ( uMsg == WM_LBUTTONDOWN || uMsg == WM_LBUTTONDBLCLK ) && m_nRotateModelButtonMask & MOUSE_LEFT_BUTTON ) ||
         ( ( uMsg == WM_MBUTTONDOWN || uMsg == WM_MBUTTONDBLCLK ) && m_nRotateModelButtonMask & MOUSE_MIDDLE_BUTTON ) ||
@@ -1004,6 +1066,59 @@ LRESULT CModelViewerCamera::HandleMessages( HWND hWnd, UINT uMsg, WPARAM wParam,
         int iMouseY = ( short )HIWORD( lParam );
         m_ViewArcBall.OnBegin( iMouseX, iMouseY );
     }
+	
+	if ((uMsg == WM_KEYDOWN) && (wParam == VK_UP))
+	{
+		int iMouseX = (short)LOWORD(lParam);
+		int iMouseY = (short)HIWORD(lParam);
+	
+		g_uparrowpressed = 42;
+	}
+
+	if ((uMsg == WM_KEYDOWN) && (wParam == VK_DOWN))
+	{
+		int iMouseX = (short)LOWORD(lParam);
+		int iMouseY = (short)HIWORD(lParam);
+		g_downarrowpressed = 42;
+	}
+
+	if ((uMsg == WM_KEYDOWN) && (wParam == VK_LEFT))
+	{
+		int iMouseX = (short)LOWORD(lParam);
+		int iMouseY = (short)HIWORD(lParam);
+		g_leftarrowpressed = 42;
+	}
+
+	if ((uMsg == WM_KEYDOWN) && (wParam == VK_RIGHT))
+	{
+		int iMouseX = (short)LOWORD(lParam);
+		int iMouseY = (short)HIWORD(lParam);
+		g_rightarrowpressed = 42;
+	}
+
+	if (uMsg == WM_KEYUP && (wParam == VK_RIGHT))
+	{
+		g_rightarrowpressed = 37;
+		g_PanDeltaVector = XMFLOAT3(0, 0, 0);
+	}
+
+	if (uMsg == WM_KEYUP && (wParam == VK_LEFT))
+	{
+		g_leftarrowpressed = 37;
+		g_PanDeltaVector = XMFLOAT3(0, 0, 0);
+	}
+
+	if (uMsg == WM_KEYUP && (wParam == VK_UP))
+	{
+		g_uparrowpressed = 37;
+		g_PanDeltaVector = XMFLOAT3(0, 0, 0);
+	}
+
+	if (uMsg == WM_KEYUP && (wParam == VK_DOWN))
+	{
+		g_downarrowpressed = 37;
+		g_PanDeltaVector = XMFLOAT3(0, 0, 0);
+	}
 
     if( uMsg == WM_MOUSEMOVE )
     {
