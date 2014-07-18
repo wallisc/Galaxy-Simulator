@@ -150,10 +150,6 @@ public:
     float     m_ycoord;
     float     m_zcoord;
 
-	//The following three variables aren't read in from the file; added for ease of use so two arrays didn't need to be used later
-	float     m_updateX;
-	float     m_updateY;
-	float     m_updateZ;
 };
 
 std::vector<ObjectData> g_objects;
@@ -174,6 +170,8 @@ XMMATRIX g_mView;
 
 CB_GS * g_pCBGS;
 
+int g_height = 600;
+int g_width = 800;
 
 bool g_relevantMouse = false;
 float g_xMouse;
@@ -266,7 +264,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 
     DXUTSetCursorSettings( true, true ); // Show the cursor and clip it when in full screen
     DXUTCreateWindow( L"SkyX" );
-    DXUTCreateDevice( D3D_FEATURE_LEVEL_10_0, true, 800, 600 );
+    DXUTCreateDevice( D3D_FEATURE_LEVEL_10_0, true, g_width, g_height );
     DXUTMainLoop();                      // Enter into the DXUT render loop
 
     g_objects.clear();
@@ -925,7 +923,7 @@ float distanceCalc(XMVECTOR center, XMVECTOR side) {
 	float centerZ = XMVectorGetZ(center);
 	float sideZ = XMVectorGetZ(side);
 
-	float xSquared = powf((sideX - centerX), 2);
+	float xSquared = powf((sideX - centerX), 2); //***Overflow concerns?
 	float ySquared = powf((sideY - centerY), 2);
 	float zSquared = powf((sideZ - centerZ), 2);
 
@@ -934,6 +932,38 @@ float distanceCalc(XMVECTOR center, XMVECTOR side) {
 	return distance; 
 }
 
+float distanceCalc(float cx, float cy, float sx, float sy) {
+	float distance = 0;
+
+	float xSquared = powf((sx - cx), 2);
+	float ySquared = powf((sy - cy), 2);
+
+	distance = sqrtf(xSquared + ySquared);
+
+	return distance; 
+}
+
+//float distanceCalc(float cx, float cy, float sx, float sy, float cz) {
+//	float distance = 0;
+//
+//	float xSquared = powf((sx - cx), 2);
+//	float ySquared = powf((sy - cy), 2);
+//	float zSquared = powf(cz, 2);
+//
+//	distance = sqrtf(xSquared + ySquared + zSquared);
+//
+//	return distance;
+//}
+
+void convertTo3x3(XMFLOAT4X4 matrix4x4) {
+	g_pCBGS->m_InvView._43 = 0;
+	g_pCBGS->m_InvView._14 = 0;
+	g_pCBGS->m_InvView._24 = 0;
+	g_pCBGS->m_InvView._34 = 0;
+	g_pCBGS->m_InvView._44 = 1;
+	g_pCBGS->m_InvView._42 = 0;
+	g_pCBGS->m_InvView._41 = 0;
+}
 
 //--------------------------------------------------------------------------------------
 // This callback function handles mouse related user input. 
@@ -949,11 +979,11 @@ void CALLBACK OnMouseEvent(bool bLeftButtonDown, bool bRightButtonDown, bool bMi
 	}
 }
 
-wstring concatenateObjInfo(ObjectData currentObject) {
-	wstring objectInfo(L"Name: " + currentObject.m_name + L"\nMass: " + to_wstring(currentObject.m_mass) + L"\nDiameter: " +
-		to_wstring(currentObject.m_diameter) + L"\nBrightness: " + to_wstring(currentObject.m_brightness) +
-		L"\nPosition:\nx: " + to_wstring(currentObject.m_updateX) + L"\ny: " + to_wstring(currentObject.m_updateY) +
-		L"\nz: " + to_wstring(currentObject.m_updateZ));
+wstring concatenateObjInfo(int index) {
+	wstring objectInfo(L"Name: " + g_pParticleArrayTWO[index].name + L"\nMass: " + to_wstring(g_pParticleArrayTWO[index].mass) + L"\nDiameter: " +
+		to_wstring(g_pParticleArrayTWO[index].diameter) + L"\nBrightness: " + to_wstring(g_pParticleArrayTWO[index].brightness) +
+		L"\nPosition:\nx: " + to_wstring(g_pParticleArray[index].pos.x) + L"\ny: " + to_wstring(g_pParticleArray[index].pos.y) +
+		L"\nz: " + to_wstring(g_pParticleArray[index].pos.z));
 
 	return objectInfo;
 }
@@ -1016,12 +1046,6 @@ void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 			//g_pParticleArray[i].pos.x -= 2.0f;
 			//move each object's button
 
-			g_objects[i].m_updateX = g_pParticleArray[i].pos.x;
-			g_objects[i].m_updateY = g_pParticleArray[i].pos.y;
-			g_objects[i].m_updateZ = g_pParticleArray[i].pos.z;
-
-
-
 
 		}
 
@@ -1034,120 +1058,81 @@ void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 		std::swap(g_pParticlePosVelo0, g_pParticlePosVelo1);
 		std::swap(g_pParticlePosVeloRV0, g_pParticlePosVeloRV1);
 	}
-	else if(g_isPaused && g_hasDisplay && g_relevantMouse) {
+	else if (g_isPaused && g_hasDisplay && g_relevantMouse) {
 
 		float xScreenMouse;
 		float yScreenMouse;
-		float leftEdge;
-		float rightEdge;
-		float bottomEdge;
-		float topEdge;
+		float mouseRadius;
 		XMVECTOR screenSphere;
 		XMVECTOR screenObject;
 		XMVECTOR worldSphere;
 		float radius;
 		float screenRadius;
-		std::vector<ObjectData> hitObjects;
-		int numHitObjects = 0;
-		ObjectData objectMaxZ;
-		
+		int foundIndex = -1;
+		float zCoordHit = NULL;
+
 		//mouse location in screen coordinates
 		xScreenMouse = ((2 * g_xMouse) / (float)DXUTGetWindowWidth()) - 1;
 		yScreenMouse = 1 - ((2 * g_yMouse) / (float)DXUTGetWindowHeight());
 
-		for (ObjectData object : g_objects) {
-			XMVECTOR worldObject = { object.m_updateX, object.m_updateY, object.m_updateZ, 1.0f };
+		for (int i = 0; i < NUM_PARTICLES; i++) {
+			XMVECTOR worldObject = { g_pParticleArray[i].pos.x, g_pParticleArray[i].pos.y, g_pParticleArray[i].pos.z, 1.0f };
 
 			//world view projection comes from RenderParticles
 			screenObject = XMVector3TransformCoord(worldObject, XMLoadFloat4x4(&g_pCBGS->m_WorldViewProj));
-			XMFLOAT4 screenCoord; 
+			XMFLOAT4 screenCoord;
 			XMStoreFloat4(&screenCoord, screenObject);
 
+			//inverse view matrix comes from RenderParticles
 			//screen space radius
 			radius = 20.0f; //TODO: Get this value from hlsl; hlsl value should in turn come from the diameter
-			XMVECTOR offset = { radius + 10.0f , 0.0f, 0.0f, 0.0f };
-			worldSphere = worldObject + offset;
-			screenSphere = XMVector3TransformCoord(worldSphere, XMLoadFloat4x4(&g_pCBGS->m_WorldViewProj));
-			screenRadius = distanceCalc(screenObject, screenSphere);
+			XMVECTOR offset = { radius, 0.0f, 0.0f, 0.0f };
+			convertTo3x3(g_pCBGS->m_InvView);
 
-			leftEdge = XMVectorGetX(screenObject) - screenRadius;
-			rightEdge = XMVectorGetX(screenObject) + screenRadius;
-			bottomEdge = XMVectorGetY(screenObject) - screenRadius;
-			topEdge = XMVectorGetY(screenObject) + screenRadius;
+			XMVECTOR worldOffset = XMVector3Transform(offset, XMLoadFloat4x4(&g_pCBGS->m_InvView));
+			worldSphere = worldObject + worldOffset;
+			screenSphere = XMVector3TransformCoord(worldSphere, XMLoadFloat4x4(&g_pCBGS->m_WorldViewProj));
+			screenRadius = distanceCalc(screenObject, screenSphere);		
+
+			mouseRadius = distanceCalc(XMVectorGetX(screenObject), XMVectorGetY(screenObject), xScreenMouse, yScreenMouse);
 
 			wchar_t buffer[256];
-			swprintf(buffer, sizeof(buffer), L"Box: left: %f right: %f bottom: %f top: %f\n centerX: %f centerY %f \n mouseX: %f mouseY: %f\n\n", leftEdge, rightEdge, bottomEdge, topEdge, XMVectorGetX(screenObject), XMVectorGetY(screenObject), xScreenMouse, yScreenMouse);
+			swprintf(buffer, sizeof(buffer), L"screen: %f mouse: %f\n centerX: %f centerY %f \n mouseX: %f mouseY: %f\n\n", screenRadius, mouseRadius, XMVectorGetX(screenObject), XMVectorGetY(screenObject), xScreenMouse, yScreenMouse);
 			::OutputDebugString(buffer);
-			
-			if ((xScreenMouse >= leftEdge && xScreenMouse <= rightEdge) && (yScreenMouse >= bottomEdge && yScreenMouse <= topEdge)) {
-				hitObjects.push_back(object);
-				numHitObjects++;
-			}
-		}
 
-		if (numHitObjects == 0) {
-			//print condescending statement about incompetent clicking 
-			if (g_pTextBox != nullptr && g_hasDisplay) {
-			g_pTextBox->ClearText();
-			g_pTextBox->SetText(L"No object selected");
-		}
-		}
-		else {
-			if (numHitObjects > 1) {
-				for (int i = 0; i < numHitObjects; i++) {
-					if (i == 0) {
-						objectMaxZ = hitObjects[i];
+			if (mouseRadius <= screenRadius) { //Checks if click is within radius
 
-						//test prints
-						wchar_t buffer[256];
-						swprintf(buffer, sizeof(buffer), L"Reached first z test case!\n");
-						::OutputDebugString(buffer);
-					}
-					else {
-						if (hitObjects[i].m_updateZ >= objectMaxZ.m_updateZ) {
-							objectMaxZ = hitObjects[i];
-
-							//test prints
-							wchar_t buffer[256];
-							swprintf(buffer, sizeof(buffer), L"Reached second z test case!\n");
-							::OutputDebugString(buffer);
-						}
-					}
+				if (foundIndex < 0) { //First hit
+					zCoordHit = g_pParticleArray[i].pos.z;
+					foundIndex = i;
 				}
+				else if (zCoordHit <= g_pParticleArray[i].pos.z) { //Additional hits. Compares z coordinates. 
+					zCoordHit = g_pParticleArray[i].pos.z;
+					foundIndex = i;
+				}
+
 			}
-			else {
-				objectMaxZ = hitObjects[0];
+		}
 
-				//test prints
-				wchar_t buffer[256];
-				swprintf(buffer, sizeof(buffer), L"Reached final (i.e. 1 hit) z test case!\n");
-				::OutputDebugString(buffer);
-			}
-
-			
-
+		if (foundIndex < 0 && g_pTextBox != nullptr && g_hasDisplay) {
+				g_pTextBox->ClearText();
+				g_pTextBox->SetText(L"No object selected");
+		}
+		else if (g_pTextBox != nullptr && g_hasDisplay) {
 			//TODO: text wrapping
-			if (g_pTextBox != nullptr && g_hasDisplay) { 
-				wstring objectInfo = concatenateObjInfo(objectMaxZ); 
-
+				wstring objectInfo = concatenateObjInfo(foundIndex);
 				g_pTextBox->ClearText();
 				g_pTextBox->SetText(objectInfo.c_str());
-			}
 		}
-
-		wchar_t buffer[256];
-		swprintf(buffer, sizeof(buffer), L"number of hits recorded: %i\n\n", numHitObjects);
-		::OutputDebugString(buffer);
-
-		hitObjects.clear();
-
+		foundIndex = -1;
 	}
 
 	
 	g_relevantMouse = false;
+
    
-	
 }
+
 
 
 //--------------------------------------------------------------------------------------
@@ -1533,6 +1518,7 @@ void CALLBACK OnD3D11FrameRender( ID3D11Device* pd3dDevice, ID3D11DeviceContext*
 
     // Render the particles
     RenderParticles( pd3dImmediateContext, g_mView, g_mProj );
+	
 
     DXUT_BeginPerfEvent( DXUT_PERFEVENTCOLOR, L"HUD / Stats" );
     g_HUD.OnRender( fElapsedTime );
