@@ -207,6 +207,7 @@ LPWSTR g_timeString; //used later for the Jump Time In button user uses to input
 #define IDC_HALFSPEED			9
 #define IDC_JUMPTIMEIN			10
 #define IDC_SUBMITTIMEIN		11
+#define IDC_RESETCAMERA			12
 
 //--------------------------------------------------------------------------------------
 // Forward declarations 
@@ -306,6 +307,7 @@ void InitApp()
 	g_HUD.AddButton(IDC_HALFSPEED, L"Speed 0.5x", 0, iY += 26, 170, 23);
 	g_HUD.AddEditBox(IDC_JUMPTIMEIN, L"", 0, iY += 26, 170, 40, false, &g_JumpTimeInput);
 	g_HUD.AddButton(IDC_SUBMITTIMEIN, L"Jump!", 0, iY += 40, 170, 40);
+	g_HUD.AddButton(IDC_RESETCAMERA, L"Reset Camera Position", 0, iY += 40, 170, 23);
 
 	g_SampleUI.SetCallback(OnGUIEvent);
 }
@@ -1341,6 +1343,12 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 		timeFloat = wcstof(timeStr, NULL);
 		jumpTime(timeFloat); break;
 	}
+	case IDC_RESETCAMERA:
+	{
+		g_Camera.Reset();
+		break;
+	}
+
 	}
 }
 
