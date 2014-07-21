@@ -1311,7 +1311,7 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 	{
 		LPCWSTR welcomeMessage = L"Select an object\nto see information\ndisplayed\n(but actually press\nthe button)";
 		if (g_isPaused && !g_hasDisplay && g_firstTextBox) { //always the first case; text box pointer gets assignment here
-			g_HUD.AddEditBox(11, welcomeMessage, 0, 280, 160, 300);
+			g_HUD.AddEditBox(11, welcomeMessage, 0, 295, 160, 300);
 			g_pTextBox = g_HUD.GetEditBox(11);
 			g_hasDisplay = true;
 			g_firstTextBox = false;
