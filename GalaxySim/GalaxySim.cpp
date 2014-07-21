@@ -248,6 +248,7 @@ void doubleSpeed();
 void halfSpeed();
 LPWSTR GetSimTime();
 void jumpTime(float newTime);
+void GravityMotionIteration(float timeIncrement);
 
 
 //--------------------------------------------------------------------------------------
@@ -896,24 +897,7 @@ void halfSpeed(){
 //--------------------------------------------------------------------------------------
 
 
-//this method calculates and updates new position and velocity for jumping in time
-void jumpTime(float newTime){
 
-	//reset all particles to their initial pos and velo
-	for (int q = 0; q < NUM_PARTICLES; q++){
-		g_pParticleArray[q].velo = createPositionFloat(g_objects[q].m_xvelo, g_objects[q].m_yvelo, g_objects[q].m_zvelo);
-		g_pParticleArray[q].pos = createPositionFloat(g_objects[q].m_xcoord, g_objects[q].m_ycoord, g_objects[q].m_zcoord);
-	}
-
-	//iterate through time by increments of time Value
-	for (float k = 0; k < newTime; k = k + g_timeValue){
-
-		GravityMotionIteration(g_timeValue);
-
-	}
-	g_systemTime = newTime;
-	
-}
 
 
 
@@ -1334,7 +1318,31 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 	}
 }
 
+//this method calculates and updates new position and velocity for jumping in time
+void jumpTime(float newTime){
 
+	//iterate through time by increments of time Value
+
+	//move forward to a time
+	if (newTime > g_systemTime){
+		for (float k = g_systemTime; k < newTime; k = k + g_timeValue){
+
+			GravityMotionIteration(g_timeValue);
+
+		}
+	}
+	//move backward to a time
+	else if (newTime < g_systemTime){
+		for (float k = g_systemTime; k > newTime; k = k - g_timeValue){
+
+			GravityMotionIteration(-g_timeValue);
+
+		}
+	}
+
+	g_systemTime = newTime;
+
+}
 //--------------------------------------------------------------------------------------
 bool CALLBACK IsD3D11DeviceAcceptable(const CD3D11EnumAdapterInfo *AdapterInfo, UINT Output, const CD3D11EnumDeviceInfo *DeviceInfo,
 	DXGI_FORMAT BackBufferFormat, bool bWindowed, void* pUserContext)
