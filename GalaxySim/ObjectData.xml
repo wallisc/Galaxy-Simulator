@@ -68,6 +68,38 @@
     <blue>.000000</blue>
   </object>
 
+  <object>
+    <name>Saturn</name>
+    <mass>568319000000000000000000000</mass>
+    <diameter>120536</diameter>
+    <brightness>4</brightness>
+    <xcoord>-529383.4376</xcoord>
+    <ycoord>-673476</ycoord>
+    <zcoord>32784.23</zcoord>
+    <xvelo>25420.18</xvelo>
+    <yvelo>61846063.98</yvelo>
+    <zvelo>1246.955</zvelo>
+    <red>.444444</red>
+    <green>.222222</green>
+    <blue>.000000</blue>
+  </object>
+
+  <object>
+    <name>Neptune</name>
+    <mass>102410000000000000000000000</mass>
+    <diameter>49532</diameter>
+    <brightness>4</brightness>
+    <xcoord>2360994</xcoord>
+    <ycoord>-1065621.561</ycoord>
+    <zcoord>-32437.26</zcoord>
+    <xvelo>7889.569</xvelo>
+    <yvelo>17926.203</yvelo>
+    <zvelo>-548.89</zvelo>
+    <red>.111111</red>
+    <green>.444444</green>
+    <blue>.999999</blue>
+  </object>
+
 
   
 </Universe>
