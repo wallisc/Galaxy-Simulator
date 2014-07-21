@@ -1354,10 +1354,7 @@ void jumpTime(float newTime){
 		}
 	}
 
-	g_systemTime = newTime;
-	DXUTPause(false, false);
-	g_isPaused = true;
-	
+	g_systemTime = newTime;	
 
 }
 //--------------------------------------------------------------------------------------
