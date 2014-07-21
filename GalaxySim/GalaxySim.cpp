@@ -192,6 +192,7 @@ float g_yMouse;
 bool g_loaded = false;
 
 double g_timeValue = 0.001; //can change this to change speed of simulation, used later to do 2x and 0.5x
+double g_timeValueToHoursConversion = g_timeValue*3800; //number of hours represented by the value of timeValue
 int g_iterationsPerFrame = 1;
 double g_systemTime = 0; //sets the inital system time to 0
 LPWSTR g_timeString; //used later for the Jump Time In button user uses to input time to jump to.
@@ -1089,7 +1090,7 @@ void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 			D3D11_MAPPED_SUBRESOURCE ms;
 			pd3dImmediateContext->Map(g_pParticlePosVelo0, 0, D3D11_MAP_WRITE_DISCARD, 0, &ms);
 
-			g_systemTime = g_systemTime + 3.8;
+			g_systemTime = g_systemTime + g_timeValueToHoursConversion;
 			
 			GravityMotionIteration(g_timeValue);
 
@@ -1327,7 +1328,7 @@ void jumpTime(float newTime){
 
 	//move forward to a time
 	if (newTime > g_systemTime){
-		for (float k = g_systemTime; k < newTime; k = k + 3.8){
+		for (float k = g_systemTime; k < newTime; k = k + g_timeValueToHoursConversion){
 
 			GravityMotionIteration(g_timeValue);
 
@@ -1336,7 +1337,7 @@ void jumpTime(float newTime){
 	}
 	//move backward to a time
 	else if (newTime < g_systemTime){
-		for (float k = g_systemTime; k > newTime; k = k - 3.8){
+		for (float k = g_systemTime; k > newTime; k = k - g_timeValueToHoursConversion){
 
 			GravityMotionIteration(-g_timeValue);
 
@@ -1345,6 +1346,7 @@ void jumpTime(float newTime){
 	}
 
 	//to test where the particle is when you jump to a time
+	//put a breakpoint at float acoord=1.0 and see values of x, y, and zcoord
 	for (int i = 0; i < NUM_PARTICLES; i++){
 		if (g_pParticleArrayTWO[i].name == L"Earth"){
 			float xcoord = g_pParticleArray[i].pos.x;
