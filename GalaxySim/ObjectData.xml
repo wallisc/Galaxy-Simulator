@@ -36,21 +36,7 @@
   </object>
 
 
-  <object>
-    <name>Earth</name>
-    <mass>5970000000000000000000000</mass>
-    <diameter>12756</diameter>
-    <brightness>4</brightness>
-    <xcoord>33263.09995</xcoord>
-    <ycoord>-81276.1315</ycoord>
-    <zcoord>2.36678</zcoord>
-    <xvelo>97480.40753</xvelo>
-    <yvelo>40178.74208</yvelo>
-    <zvelo>0.709178527</zvelo>
-    <red>.000000</red>
-    <green>.865423</green>
-    <blue>.512365</blue>
-  </object>
+
 
   <object>
     <name>Mars</name>
@@ -100,7 +86,21 @@
     <blue>.999999</blue>
   </object>
 
-
+  <object>
+    <name>Earth</name>
+    <mass>5970000000000000000000000</mass>
+    <diameter>12756</diameter>
+    <brightness>4</brightness>
+    <xcoord>33263.09995</xcoord>
+    <ycoord>-81276.1315</ycoord>
+    <zcoord>2.36678</zcoord>
+    <xvelo>97480.40753</xvelo>
+    <yvelo>40178.74208</yvelo>
+    <zvelo>0.709178527</zvelo>
+    <red>.000000</red>
+    <green>.865423</green>
+    <blue>.512365</blue>
+  </object>
 
 </Universe>
 

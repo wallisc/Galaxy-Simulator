@@ -191,7 +191,7 @@ float g_yMouse;
 
 bool g_loaded = false;
 
-double g_timeValue = 0.005; //can change this to change speed of simulation, used later to do 2x and 0.5x
+double g_timeValue = 0.001; //can change this to change speed of simulation, used later to do 2x and 0.5x
 int g_iterationsPerFrame = 1;
 double g_systemTime = 0; //sets the inital system time to 0
 LPWSTR g_timeString; //used later for the Jump Time In button user uses to input time to jump to.
@@ -800,8 +800,7 @@ void fillParticles(PARTICLE particles[], PARTICLE_DETAILS particles2[], std::vec
 //-
 
 
-//Function that displays object information.Gets called when user presses Display Object Info button
-// Currently displays to output window, later will display to pane on the right
+//Function that displays object information to an output window.
 void displayObjectInfo(){
 	for (auto object : g_objects)
 	{
@@ -873,7 +872,6 @@ void GravityMotionIteration(float timeIncrement){
 		//update velocity and position using acceleration
 		g_pParticleArray[i].velo = VectorAddition(g_pParticleArray[i].velo, ConstantVectorMultiplication(timeIncrement, acceleration));
 		g_pParticleArray[i].pos = VectorAddition(g_pParticleArray[i].pos, ConstantVectorMultiplication(timeIncrement, g_pParticleArray[i].velo));
-
 	}
 }
 
@@ -1091,7 +1089,7 @@ void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 			D3D11_MAPPED_SUBRESOURCE ms;
 			pd3dImmediateContext->Map(g_pParticlePosVelo0, 0, D3D11_MAP_WRITE_DISCARD, 0, &ms);
 
-			g_systemTime = g_systemTime + g_timeValue;
+			g_systemTime = g_systemTime + 3.8;
 			
 			GravityMotionIteration(g_timeValue);
 
@@ -1307,7 +1305,8 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 			break;
 		}
 		timeFloat = wcstof(timeStr, NULL);
-		jumpTime(timeFloat); break;
+		jumpTime(timeFloat); 
+		break;
 	}
 	case IDC_RESETCAMERA:
 	{
@@ -1321,26 +1320,44 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 //this method calculates and updates new position and velocity for jumping in time
 void jumpTime(float newTime){
 
+	//convert back to hours
+	newTime = newTime * 24;
+
 	//iterate through time by increments of time Value
 
 	//move forward to a time
 	if (newTime > g_systemTime){
-		for (float k = g_systemTime; k < newTime; k = k + g_timeValue){
+		for (float k = g_systemTime; k < newTime; k = k + 3.8){
 
 			GravityMotionIteration(g_timeValue);
 
 		}
+
 	}
 	//move backward to a time
 	else if (newTime < g_systemTime){
-		for (float k = g_systemTime; k > newTime; k = k - g_timeValue){
+		for (float k = g_systemTime; k > newTime; k = k - 3.8){
 
 			GravityMotionIteration(-g_timeValue);
 
 		}
+
+	}
+
+	//to test where the particle is when you jump to a time
+	for (int i = 0; i < NUM_PARTICLES; i++){
+		if (g_pParticleArrayTWO[i].name == L"Earth"){
+			float xcoord = g_pParticleArray[i].pos.x;
+			float ycoord = g_pParticleArray[i].pos.y;
+			float zcoord = g_pParticleArray[i].pos.z;
+			float acoord=1.0;
+		}
 	}
 
 	g_systemTime = newTime;
+	DXUTPause(false, false);
+	g_isPaused = true;
+	
 
 }
 //--------------------------------------------------------------------------------------
@@ -1527,7 +1544,7 @@ void RenderText()
 	g_pTxtHelper->DrawTextLine(iterations);
 	g_pTxtHelper->DrawTextLine(L"Time:");
 	WCHAR currentTime[g_cFloatStringLength];
-	GetWCharFromFloat(currentTime, g_systemTime);
+	GetWCharFromFloat(currentTime, g_systemTime/24);
 	g_pTxtHelper->DrawTextLine(currentTime);
 	g_pTxtHelper->End();
 }
