@@ -80,7 +80,8 @@ ID3D11ShaderResourceView*           g_pParticleTexRV = nullptr;
 
 const float                         g_fSpread = 400.0f;
 
-CDXUTEditBox						*g_JumpTimeInput = nullptr;
+CDXUTEditBox						*g_JumpTimeInputBox = nullptr;
+CDXUTEditBox						*g_IterationsPerFrameInBox = nullptr;
 
 struct PARTICLE_VERTEX
 {
@@ -165,7 +166,8 @@ std::vector<ObjectData> g_objects;
 
 //const float g_constant = -8.644 * pow(10, -13);
 const float g_constant = -8.644E-16;
-const int g_cTimeStringLength = 20;
+const int g_cFloatStringLength = 20;
+const int g_cIntStringLength = 20;
 
 float g_red[MAX_PARTICLES];
 float g_green[MAX_PARTICLES];
@@ -189,7 +191,8 @@ float g_yMouse;
 
 bool g_loaded = false;
 
-double g_timeValue = 0.005; //can change this to change speed of simulation, used later to do 2x and 0.5x
+double g_timeValue = 0.001; //can change this to change speed of simulation, used later to do 2x and 0.5x
+int g_iterationsPerFrame = 1;
 double g_systemTime = 0; //sets the inital system time to 0
 LPWSTR g_timeString; //used later for the Jump Time In button user uses to input time to jump to.
 
@@ -208,6 +211,8 @@ LPWSTR g_timeString; //used later for the Jump Time In button user uses to input
 #define IDC_JUMPTIMEIN			10
 #define IDC_SUBMITTIMEIN		11
 #define IDC_RESETCAMERA			12
+#define IDC_ITERATEPERFRAMEIN   13
+#define	IDC_SUBMITITERATEIN     14
 
 //--------------------------------------------------------------------------------------
 // Forward declarations 
@@ -243,6 +248,7 @@ void doubleSpeed();
 void halfSpeed();
 LPWSTR GetSimTime();
 void jumpTime(float newTime);
+void GravityMotionIteration(float timeIncrement);
 
 
 //--------------------------------------------------------------------------------------
@@ -303,11 +309,13 @@ void InitApp()
 	g_HUD.AddButton(IDC_CHANGEDEVICE, L"Change device (F2)", 0, iY += 26, 170, 23, VK_F2);
 	g_HUD.AddButton(IDC_RESETPARTICLES, L"Reset particles (F4)", 0, iY += 26, 170, 22, VK_F4);
 	g_HUD.AddButton(IDC_PAUSE, L"Pause / Unpause", 0, iY += 26, 170, 22);
-	g_HUD.AddButton(IDC_DOUBLESPEED, L"Speed 2x", 0, iY += 26, 170, 23);
-	g_HUD.AddButton(IDC_HALFSPEED, L"Speed 0.5x", 0, iY += 26, 170, 23);
-	g_HUD.AddEditBox(IDC_JUMPTIMEIN, L"", 0, iY += 26, 170, 40, false, &g_JumpTimeInput);
-	g_HUD.AddButton(IDC_SUBMITTIMEIN, L"Jump!", 0, iY += 40, 170, 40);
-	g_HUD.AddButton(IDC_RESETCAMERA, L"Reset Camera Position", 0, iY += 40, 170, 23);
+	//g_HUD.AddButton(IDC_DOUBLESPEED, L"Speed 2x", 0, iY += 26, 170, 23);
+	//g_HUD.AddButton(IDC_HALFSPEED, L"Speed 0.5x", 0, iY += 26, 170, 23);
+	g_HUD.AddEditBox(IDC_ITERATEPERFRAMEIN, L"", 0, iY += 26, 170, 40, false, &g_IterationsPerFrameInBox);
+	g_HUD.AddButton(IDC_SUBMITITERATEIN, L"Enter Iterations/Frame", 0, iY += 40, 170, 23);
+	g_HUD.AddEditBox(IDC_JUMPTIMEIN, L"", 0, iY += 26, 170, 40, false, &g_JumpTimeInputBox);
+	g_HUD.AddButton(IDC_SUBMITTIMEIN, L"Jump!", 0, iY += 40, 170, 23);
+	g_HUD.AddButton(IDC_RESETCAMERA, L"Reset Camera Position", 0, iY += 26, 170, 23);
 
 	g_SampleUI.SetCallback(OnGUIEvent);
 }
@@ -792,8 +800,7 @@ void fillParticles(PARTICLE particles[], PARTICLE_DETAILS particles2[], std::vec
 //-
 
 
-//Function that displays object information.Gets called when user presses Display Object Info button
-// Currently displays to output window, later will display to pane on the right
+//Function that displays object information to an output window.
 void displayObjectInfo(){
 	for (auto object : g_objects)
 	{
@@ -815,14 +822,57 @@ void displayObjectInfo(){
 	}
 }
 
-//function that gets the current simulation time as a float and assigns it as a string to the string inputted as a parameter
-void GetSimTime(WCHAR *currentTime){
+//--------------------------------------------------------------------------------------
+// Functions that help with type conversions
+//--------------------------------------------------------------------------------------
 
-	if (currentTime == NULL || g_systemTime == NULL){
+//input a WCHAR string and a float, assigns value of float to the WCHAR string
+void GetWCharFromFloat(WCHAR *string, float inputFloat){
+	if (string == NULL || inputFloat == NULL){
 		return;
 	}
 
-	HRESULT hr = StringCbPrintfW(currentTime, g_cTimeStringLength*sizeof(WCHAR), L"%f", g_systemTime);
+	HRESULT hr = StringCbPrintfW(string, g_cFloatStringLength*sizeof(WCHAR), L"%f", inputFloat);
+}
+
+//input a WCHAR string and an int, assigns value of int to the WCHAR string
+void GetWCharFromInt(WCHAR *string, int inputInt){
+	if (string == NULL || inputInt == NULL){
+		return;
+	}
+
+	HRESULT hr = StringCbPrintfW(string, g_cIntStringLength*sizeof(WCHAR), L"%i", inputInt);
+}
+
+//--------------------------------------------------------------------------------------
+// Functions related to motion of objects according to physical laws
+//--------------------------------------------------------------------------------------
+
+//moves the objects by timeIncrement according to gravitational physical laws
+void GravityMotionIteration(float timeIncrement){
+	for (int i = 0; i < NUM_PARTICLES; i++)
+	{
+
+		//calculates acceleration for each object in particular
+		XMFLOAT4 acceleration = XMFLOAT4(0, 0, 0, 0);
+
+		for (int j = 0; j < NUM_PARTICLES; j++)
+		{
+			if (i != j)
+			{
+				XMFLOAT4 ijdist = VectorSubtraction(g_pParticleArray[i].pos, g_pParticleArray[j].pos);
+				float ijdist_magnitude = VectorMagnitude(ijdist);
+
+				float g_accConstant = g_constant * g_pParticleArrayTWO[j].mass / pow(ijdist_magnitude, 3);
+				XMFLOAT4 g_acc = ConstantVectorMultiplication(g_accConstant, ijdist);
+				acceleration = VectorAddition(acceleration, g_acc);
+			}
+		}
+
+		//update velocity and position using acceleration
+		g_pParticleArray[i].velo = VectorAddition(g_pParticleArray[i].velo, ConstantVectorMultiplication(timeIncrement, acceleration));
+		g_pParticleArray[i].pos = VectorAddition(g_pParticleArray[i].pos, ConstantVectorMultiplication(timeIncrement, g_pParticleArray[i].velo));
+	}
 }
 
 //--------------------------------------------------------------------------------------
@@ -845,80 +895,7 @@ void halfSpeed(){
 //--------------------------------------------------------------------------------------
 
 
-//this method calculates and updates new position and velocity for jumping in time
-void jumpTime(float newTime){
 
-	//reset all particles to their initial pos and velo
-	for (int q = 0; q < NUM_PARTICLES; q++){
-		g_pParticleArray[q].velo = createPositionFloat(g_objects[q].m_xvelo, g_objects[q].m_yvelo, g_objects[q].m_zvelo);
-		g_pParticleArray[q].pos = createPositionFloat(g_objects[q].m_xcoord, g_objects[q].m_ycoord, g_objects[q].m_zcoord);
-	}
-
-	float timeIncrement = newTime / 2;
-
-	for (int k = 0; k < newTime; k = k + timeIncrement){
-
-		for (int i = 0; i < NUM_PARTICLES; i++)
-		{
-			////initial velocity for all particles
-			//XMFLOAT4 initialVelo = XMFLOAT4(0, 0, 0, 1);
-
-			////temp testing with different initial velo
-			//if (g_pParticleArrayTWO[i].name.compare(L"Earth") == 0){
-			//	initialVelo = XMFLOAT4(97480, 40178, .70917, 0);
-			//}
-			//if (g_pParticleArrayTWO[i].name.compare(L"Mars") == 0){
-			//	initialVelo = XMFLOAT4(83338.28, -27184.865, -2615.148, 0);
-			//}
-			//if (g_pParticleArrayTWO[i].name.compare(L"Venus") == 0){
-			//	initialVelo = XMFLOAT4(-91327.48, 86785.93, 6459.896, 0);
-			//}
-			//initial position of object i
-			//XMFLOAT4 initialPositioni = createPositionFloat(g_objects[i].m_xcoord, g_objects[i].m_ycoord, g_objects[i].m_zcoord);
-
-			// here I calculate acceleration for each object in particular
-			//ind_acc = new XMFLOAT4[NUM_PARTICLES];
-			XMFLOAT4 acceleration = XMFLOAT4(0, 0, 0, 0);
-
-			for (int j = 0; j < NUM_PARTICLES; j++)
-			{
-				if (i != j)
-				{
-					XMFLOAT4 ijdist = VectorSubtraction(g_pParticleArray[i].pos, g_pParticleArray[j].pos);
-					float ijdist_magnitude = VectorMagnitude(ijdist);
-
-					float g_accConstant = g_constant * g_pParticleArrayTWO[j].mass / pow(ijdist_magnitude, 3);
-					XMFLOAT4 g_acc = ConstantVectorMultiplication(g_accConstant, ijdist);
-					acceleration = VectorAddition(acceleration, g_acc);
-
-					//ind_acc[j] = g_acc;
-				}
-			}
-
-			////update velocity and position using acceleration
-
-			////calculates displacement between starting point and jumped time point
-			//XMFLOAT4 displacement;
-			////breaks x=vt+1/2at^2 into two parts
-			//XMFLOAT4 vt = ConstantVectorMultiplication(newTime, initialVelo);
-			//XMFLOAT4 atsquared = ConstantVectorMultiplication(0.5, ConstantVectorMultiplication(pow(newTime, 2), acceleration));
-			//displacement = VectorAddition(vt, atsquared);
-
-			////update the velocity and position of the particle
-			//g_pParticleArray[i].velo = VectorAddition(initialVelo, ConstantVectorMultiplication(newTime, acceleration));
-			//g_pParticleArray[i].pos = VectorAddition(initialPositioni, displacement);
-
-			//update velocity and position using acceleration
-			g_pParticleArray[i].velo = VectorAddition(g_pParticleArray[i].velo, ConstantVectorMultiplication(timeIncrement, acceleration));
-			g_pParticleArray[i].pos = VectorAddition(g_pParticleArray[i].pos, ConstantVectorMultiplication(timeIncrement, g_pParticleArray[i].velo));
-
-		}
-
-
-	}
-	g_systemTime = newTime;
-
-}
 
 
 
@@ -1106,51 +1083,25 @@ void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 
 	if (!g_isPaused)
 	{
-		auto pd3dImmediateContext = DXUTGetD3D11DeviceContext();
+		for (int i = 0; i < g_iterationsPerFrame; i++){
+			auto pd3dImmediateContext = DXUTGetD3D11DeviceContext();
 
-		D3D11_MAPPED_SUBRESOURCE ms;
-		pd3dImmediateContext->Map(g_pParticlePosVelo0, 0, D3D11_MAP_WRITE_DISCARD, 0, &ms);
+			D3D11_MAPPED_SUBRESOURCE ms;
+			pd3dImmediateContext->Map(g_pParticlePosVelo0, 0, D3D11_MAP_WRITE_DISCARD, 0, &ms);
 
-		g_systemTime = g_systemTime + g_timeValue;
-		for (int i = 0; i < NUM_PARTICLES; i++)
-		{
-
-			// here I calculate acceleration for each object in particular
-			//ind_acc = new XMFLOAT4[NUM_PARTICLES];
-			XMFLOAT4 acceleration = XMFLOAT4(0, 0, 0, 0);
-
-			for (int j = 0; j < NUM_PARTICLES; j++)
-			{
-				if (i != j)
-				{
-					XMFLOAT4 ijdist = VectorSubtraction(g_pParticleArray[i].pos, g_pParticleArray[j].pos);
-					float ijdist_magnitude = VectorMagnitude(ijdist);
-
-					float g_accConstant = g_constant * g_pParticleArrayTWO[j].mass / pow(ijdist_magnitude, 3);
-					XMFLOAT4 g_acc = ConstantVectorMultiplication(g_accConstant, ijdist);
-					acceleration = VectorAddition(acceleration, g_acc);
-
-					//ind_acc[j] = g_acc;
-				}
-			}
-
-			//update velocity and position using acceleration
-			g_pParticleArray[i].velo = VectorAddition(g_pParticleArray[i].velo, ConstantVectorMultiplication(g_timeValue, acceleration));
-			g_pParticleArray[i].pos = VectorAddition(g_pParticleArray[i].pos, ConstantVectorMultiplication(g_timeValue, g_pParticleArray[i].velo));
-			//g_pParticleArray[i].pos.x -= 2.0f;
-			//move each object's button
+			g_systemTime = g_systemTime + 3.8;
+			
+			GravityMotionIteration(g_timeValue);
 
 
+			memcpy(ms.pData, g_pParticleArray, sizeof(PARTICLE) * NUM_PARTICLES);
+
+			pd3dImmediateContext->Unmap(g_pParticlePosVelo0, NULL);
+
+			std::swap(g_pParticlePosVelo0, g_pParticlePosVelo1);
+			std::swap(g_pParticlePosVeloRV0, g_pParticlePosVeloRV1);
 		}
 
-
-
-		memcpy(ms.pData, g_pParticleArray, sizeof(PARTICLE) * NUM_PARTICLES);
-
-		pd3dImmediateContext->Unmap(g_pParticlePosVelo0, NULL);
-
-		std::swap(g_pParticlePosVelo0, g_pParticlePosVelo1);
-		std::swap(g_pParticlePosVeloRV0, g_pParticlePosVeloRV1);
 	}
 	else if (g_isPaused && g_hasDisplay && g_relevantMouse) {
 
@@ -1289,6 +1240,7 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 		SAFE_RELEASE(g_pParticlePosVeloRV0);
 		SAFE_RELEASE(g_pParticlePosVeloRV1);
 		CreateParticlePosVeloBuffers(DXUTGetD3D11Device());
+		g_systemTime = 0;
 		break;
 	}
 	case IDC_PAUSE:
@@ -1328,20 +1280,33 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 		}
 		break;
 	}
-	case IDC_DOUBLESPEED:
-		doubleSpeed(); break;
-	case IDC_HALFSPEED:
-		halfSpeed(); break;
+	case IDC_SUBMITITERATEIN:
+	{
+		LPCWSTR iterateStr;
+		float iterateFloat;
+		iterateStr = g_IterationsPerFrameInBox->GetText();
+		if (iterateStr == NULL){
+			break;
+		}
+		iterateFloat = wcstof(iterateStr, NULL);
+		int iterateInt = (int)(iterateFloat+0.5);
+		g_iterationsPerFrame = iterateInt; break;
+	}
+	//case IDC_DOUBLESPEED:
+	//	doubleSpeed(); break;
+	//case IDC_HALFSPEED:
+	//	halfSpeed(); break;
 	case IDC_SUBMITTIMEIN:
 	{
 		LPCWSTR timeStr;
 		float timeFloat;
-		timeStr = g_JumpTimeInput->GetText();
+		timeStr = g_JumpTimeInputBox->GetText();
 		if (timeStr == NULL){
 			break;
 		}
 		timeFloat = wcstof(timeStr, NULL);
-		jumpTime(timeFloat); break;
+		jumpTime(timeFloat); 
+		break;
 	}
 	case IDC_RESETCAMERA:
 	{
@@ -1352,7 +1317,46 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 	}
 }
 
+//this method calculates and updates new position and velocity for jumping in time
+void jumpTime(float newTime){
 
+	//convert back to hours
+	newTime = newTime * 24;
+
+	//iterate through time by increments of time Value
+
+	//move forward to a time
+	if (newTime > g_systemTime){
+		for (float k = g_systemTime; k < newTime; k = k + 3.8){
+
+			GravityMotionIteration(g_timeValue);
+
+		}
+
+	}
+	//move backward to a time
+	else if (newTime < g_systemTime){
+		for (float k = g_systemTime; k > newTime; k = k - 3.8){
+
+			GravityMotionIteration(-g_timeValue);
+
+		}
+
+	}
+
+	//to test where the particle is when you jump to a time
+	for (int i = 0; i < NUM_PARTICLES; i++){
+		if (g_pParticleArrayTWO[i].name == L"Earth"){
+			float xcoord = g_pParticleArray[i].pos.x;
+			float ycoord = g_pParticleArray[i].pos.y;
+			float zcoord = g_pParticleArray[i].pos.z;
+			float acoord=1.0;
+		}
+	}
+
+	g_systemTime = newTime;	
+
+}
 //--------------------------------------------------------------------------------------
 bool CALLBACK IsD3D11DeviceAcceptable(const CD3D11EnumAdapterInfo *AdapterInfo, UINT Output, const CD3D11EnumDeviceInfo *DeviceInfo,
 	DXGI_FORMAT BackBufferFormat, bool bWindowed, void* pUserContext)
@@ -1531,9 +1535,13 @@ void RenderText()
 	g_pTxtHelper->SetForegroundColor(Colors::Yellow);
 	g_pTxtHelper->DrawTextLine(DXUTGetFrameStats(DXUTIsVsyncEnabled()));
 	g_pTxtHelper->DrawTextLine(DXUTGetDeviceStats());
+	g_pTxtHelper->DrawTextLine(L"Motion Iterations per Frame:");
+	WCHAR iterations[g_cIntStringLength];
+	GetWCharFromInt(iterations, g_iterationsPerFrame);
+	g_pTxtHelper->DrawTextLine(iterations);
 	g_pTxtHelper->DrawTextLine(L"Time:");
-	WCHAR currentTime[g_cTimeStringLength];
-	GetSimTime(currentTime);
+	WCHAR currentTime[g_cFloatStringLength];
+	GetWCharFromFloat(currentTime, g_systemTime/24);
 	g_pTxtHelper->DrawTextLine(currentTime);
 	g_pTxtHelper->End();
 }
