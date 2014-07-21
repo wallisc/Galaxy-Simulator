@@ -119,7 +119,7 @@ struct PARTICLE_DETAILS
 	wstring name;
 	float mass;
 	float diameter;
-	int brightness;
+	float brightness;
 	float red;
 	float green;
 	float blue;
@@ -136,11 +136,13 @@ class ObjectData
 public:
 
 	ObjectData() :
-		m_name(L"unknown"), m_mass(0.0f), m_diameter(0.0f), m_brightness(0), m_xcoord(0.0f), m_ycoord(0.0f), m_zcoord(0.0f)
+		m_name(L"unknown"), m_mass(0.0f), m_diameter(0.0f), m_brightness(0.0f), m_xcoord(0.0f), m_ycoord(0.0f), m_zcoord(0.0f), m_xvelo(0.0f), m_yvelo(0.0f), 
+		m_zvelo(0.0f), m_red(0.0f), m_green(0.0f), m_blue(0.0f)
 	{}
 
-	ObjectData(const wstring & name, float mass, float diameter, int brightness, float x, float y, float z) :
-		m_name(name), m_mass(mass), m_diameter(diameter), m_brightness(brightness), m_xcoord(x), m_ycoord(y), m_zcoord(z)
+	ObjectData(const wstring & name, float mass, float diameter, int brightness, float x, float y, float z, float xv, float yv, float zv, float r, float g, float b) :
+		m_name(name), m_mass(mass), m_diameter(diameter), m_brightness(brightness), m_xcoord(x), m_ycoord(y), m_zcoord(z), 
+		m_xvelo(xv), m_yvelo(yv), m_zvelo(zv), m_red(r), m_green(g), m_blue(b)
 	{
 		// Could assert on the various properties to ensure they are within range
 	}
@@ -148,7 +150,7 @@ public:
 	wstring   m_name;
 	float     m_mass;
 	float     m_diameter;
-	int       m_brightness;
+	float     m_brightness;
 	float     m_xcoord;
 	float     m_ycoord;
 	float     m_zcoord;
@@ -445,7 +447,7 @@ int ParseFile(){
 			}
 
 			else if (elementName != NULL && wcscmp(elementName, L"brightness") == 0){
-				objectData.m_brightness = (int)wcstof(pwszValue, NULL);
+				objectData.m_brightness = wcstof(pwszValue, NULL);
 			}
 
 			else if (elementName != NULL && wcscmp(elementName, L"xcoord") == 0){
@@ -634,14 +636,17 @@ HRESULT CreateParticleBuffer(ID3D11Device* pd3dDevice)
 			if (g_objects[i].m_blue < 0) {
 				g_objects[i].m_blue = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
 			}
+			if (g_objects[i].m_brightness < 0) {
+				g_objects[i].m_brightness = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+			}
 
-			pVertices[i].Color = XMFLOAT4(g_objects[i].m_red, g_objects[i].m_green, g_objects[i].m_blue, 1.000000);
+			pVertices[i].Color = XMFLOAT4(g_objects[i].m_red, g_objects[i].m_green, g_objects[i].m_blue, g_objects[i].m_brightness);
 		}
 		g_isFirst = false;
 	}
 	else {
 		for (UINT i = 0; i < MAX_PARTICLES; i++) {
-			pVertices[i].Color = XMFLOAT4(g_objects[i].m_red, g_objects[i].m_green, g_objects[i].m_blue, 1.000000);
+			pVertices[i].Color = XMFLOAT4(g_objects[i].m_red, g_objects[i].m_green, g_objects[i].m_blue, g_objects[i].m_brightness);
 		}
 	}
 
