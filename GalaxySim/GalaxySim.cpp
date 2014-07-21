@@ -905,15 +905,14 @@ void jumpTime(float newTime){
 		g_pParticleArray[q].pos = createPositionFloat(g_objects[q].m_xcoord, g_objects[q].m_ycoord, g_objects[q].m_zcoord);
 	}
 
-	float timeIncrement = newTime / 2;
+	//iterate through time by increments of time Value
+	for (float k = 0; k < newTime; k = k + g_timeValue){
 
-	for (int k = 0; k < newTime; k = k + timeIncrement){
-
-		GravityMotionIteration(timeIncrement);
+		GravityMotionIteration(g_timeValue);
 
 	}
 	g_systemTime = newTime;
-
+	
 }
 
 
@@ -1259,6 +1258,7 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 		SAFE_RELEASE(g_pParticlePosVeloRV0);
 		SAFE_RELEASE(g_pParticlePosVeloRV1);
 		CreateParticlePosVeloBuffers(DXUTGetD3D11Device());
+		g_systemTime = 0;
 		break;
 	}
 	case IDC_PAUSE:
