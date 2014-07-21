@@ -203,7 +203,6 @@ LPWSTR g_timeString; //used later for the Jump Time In button user uses to input
 #define IDC_TOGGLEREF           3
 #define IDC_CHANGEDEVICE        4
 #define IDC_RESETPARTICLES      5
-#define IDC_DISPLAYINFO			6
 #define IDC_PAUSE               7
 #define IDC_DOUBLESPEED			8
 #define IDC_HALFSPEED			9
@@ -1268,6 +1267,39 @@ LRESULT CALLBACK MsgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, boo
 	return 0;
 }
 
+void pauseControl() {
+	if (g_hasDisplay) {
+		g_pTextBox->SetVisible(false);
+		g_hasDisplay = false;
+	}
+	if (!g_isPaused) {
+		DXUTPause(false, false);
+		g_isPaused = true;
+	}
+	else {
+		DXUTPause(true, false);
+		g_isPaused = false;
+	}
+
+	LPCWSTR welcomeMessage = L"Select an object\nto see information\ndisplayed\n(but actually press\nthe button)";
+	if (g_isPaused && !g_hasDisplay && g_firstTextBox) { //always the first case; text box pointer gets assignment here
+		g_HUD.AddEditBox(11, welcomeMessage, 0, 295, 160, 300);
+		g_pTextBox = g_HUD.GetEditBox(11);
+		g_hasDisplay = true;
+		g_firstTextBox = false;
+	}
+	else if (g_isPaused && !g_hasDisplay)
+	{
+		g_pTextBox->SetText(welcomeMessage);
+		g_pTextBox->SetVisible(true);
+		g_hasDisplay = true;
+	}
+	else if (g_hasDisplay) {
+		g_pTextBox->SetVisible(false);
+		g_hasDisplay = false;
+	}
+}
+
 
 //--------------------------------------------------------------------------------------
 // Handles the GUI events
@@ -1298,40 +1330,7 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 	}
 	case IDC_PAUSE:
 	{
-		if (g_hasDisplay) {
-			g_pTextBox->SetVisible(false);
-			g_hasDisplay = false;
-		}
-		if (!g_isPaused) {
-			DXUTPause(false, false);
-			g_isPaused = true;
-		}
-		else {
-			DXUTPause(true, false);
-			g_isPaused = false;
-		}
-
-	}
-	case IDC_DISPLAYINFO: //this occurs every time the feature is paused
-	{
-		LPCWSTR welcomeMessage = L"Select an object\nto see information\ndisplayed\n(but actually press\nthe button)";
-		if (g_isPaused && !g_hasDisplay && g_firstTextBox) { //always the first case; text box pointer gets assignment here
-			g_HUD.AddEditBox(11, welcomeMessage, 0, 295, 160, 300);
-			g_pTextBox = g_HUD.GetEditBox(11);
-			g_hasDisplay = true;
-			g_firstTextBox = false;
-		}
-		else if (g_isPaused && !g_hasDisplay)
-		{
-			g_pTextBox->SetText(welcomeMessage);
-			g_pTextBox->SetVisible(true);
-			g_hasDisplay = true;
-		}
-		else if (g_hasDisplay) {
-			g_pTextBox->SetVisible(false);
-			g_hasDisplay = false;
-		}
-		break;
+		pauseControl();
 	}
 	case IDC_DOUBLESPEED:
 		doubleSpeed(); break;
