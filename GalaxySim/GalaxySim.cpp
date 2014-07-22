@@ -193,7 +193,7 @@ bool g_loaded = false;
 
 double g_timeValue = 0.001; //can change this to change speed of simulation, used later to do 2x and 0.5x
 double g_timeValueToHoursConversion = g_timeValue*3800; //number of hours represented by the value of timeValue
-int g_iterationsPerFrame = 1;
+int g_iterationsPerFrame = 10;
 double g_systemTime = 0; //sets the inital system time to 0
 LPWSTR g_timeString; //used later for the Jump Time In button user uses to input time to jump to.
 
@@ -309,15 +309,14 @@ void InitApp()
 	g_HUD.AddButton(IDC_TOGGLEREF, L"Toggle REF (F3)", 0, iY += 26, 170, 23, VK_F3);
 	g_HUD.AddButton(IDC_CHANGEDEVICE, L"Change device (F2)", 0, iY += 26, 170, 23, VK_F2);
 	g_HUD.AddButton(IDC_RESETPARTICLES, L"Reset particles (F4)", 0, iY += 26, 170, 22, VK_F4);
-	g_HUD.AddButton(IDC_PAUSE, L"Pause / Unpause", 0, iY += 26, 170, 22);
+	g_HUD.AddButton(IDC_RESETCAMERA, L"Reset Camera Position", 0, iY += 26, 170, 23);
 	//g_HUD.AddButton(IDC_DOUBLESPEED, L"Speed 2x", 0, iY += 26, 170, 23);
 	//g_HUD.AddButton(IDC_HALFSPEED, L"Speed 0.5x", 0, iY += 26, 170, 23);
 	g_HUD.AddEditBox(IDC_ITERATEPERFRAMEIN, L"", 0, iY += 26, 170, 40, false, &g_IterationsPerFrameInBox);
 	g_HUD.AddButton(IDC_SUBMITITERATEIN, L"Enter Iterations/Frame", 0, iY += 40, 170, 23);
 	g_HUD.AddEditBox(IDC_JUMPTIMEIN, L"", 0, iY += 26, 170, 40, false, &g_JumpTimeInputBox);
 	g_HUD.AddButton(IDC_SUBMITTIMEIN, L"Jump!", 0, iY += 40, 170, 23);
-	g_HUD.AddButton(IDC_RESETCAMERA, L"Reset Camera Position", 0, iY += 26, 170, 23);
-
+	g_HUD.AddButton(IDC_PAUSE, L"Pause / Unpause", 0, iY += 26, 170, 22);
 	g_SampleUI.SetCallback(OnGUIEvent);
 }
 
@@ -1541,7 +1540,7 @@ void RenderText()
 	WCHAR iterations[g_cIntStringLength];
 	GetWCharFromInt(iterations, g_iterationsPerFrame);
 	g_pTxtHelper->DrawTextLine(iterations);
-	g_pTxtHelper->DrawTextLine(L"Time:");
+	g_pTxtHelper->DrawTextLine(L"Days:");
 	WCHAR currentTime[g_cFloatStringLength];
 	GetWCharFromFloat(currentTime, g_systemTime/24);
 	g_pTxtHelper->DrawTextLine(currentTime);
