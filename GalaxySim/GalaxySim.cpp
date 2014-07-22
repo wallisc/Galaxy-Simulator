@@ -1081,7 +1081,9 @@ wstring concatenateObjInfo(int index) {
 	wstring objectInfo(L"Name: " + g_pParticleArrayTWO[index].name + L"\nMass: " + to_wstring(g_pParticleArrayTWO[index].mass) + L"\nDiameter: " +
 		to_wstring(g_pParticleArrayTWO[index].diameter) + L"\nBrightness: " + to_wstring(g_pParticleArrayTWO[index].brightness) +
 		L"\nPosition:\nx: " + to_wstring(g_pParticleArray[index].pos.x) + L"\ny: " + to_wstring(g_pParticleArray[index].pos.y) +
-		L"\nz: " + to_wstring(g_pParticleArray[index].pos.z));
+		L"\nz: " + to_wstring(g_pParticleArray[index].pos.z) +
+		L"\nVelocity:\nx: " + to_wstring(g_pParticleArray[index].velo.x) + L"\ny: " + to_wstring(g_pParticleArray[index].velo.y) +
+		L"\nz: " + to_wstring(g_pParticleArray[index].velo.z));
 
 	return objectInfo;
 }
@@ -1281,7 +1283,7 @@ void pauseControl() {
 		g_isPaused = false;
 	}
 
-	LPCWSTR welcomeMessage = L"Select an object\nto see information\ndisplayed\n(but actually press\nthe button)";
+	LPCWSTR welcomeMessage = L"Select an object\nto see information\ndisplayed";
 	if (g_isPaused && !g_hasDisplay && g_firstTextBox) { //always the first case; text box pointer gets assignment here
 		g_HUD.AddEditBox(11, welcomeMessage, 0, 295, 160, 300);
 		g_pTextBox = g_HUD.GetEditBox(11);
@@ -1331,6 +1333,7 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 	case IDC_PAUSE:
 	{
 		pauseControl();
+		break;
 	}
 	case IDC_DOUBLESPEED:
 		doubleSpeed(); break;
