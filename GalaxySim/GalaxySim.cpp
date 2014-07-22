@@ -1130,7 +1130,7 @@ void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 
 			//inverse view matrix comes from RenderParticles
 			//screen space radius
-			radius = 2500.0f; //TODO: Get this value from hlsl; hlsl value should in turn come from the diameter
+			radius = 8000.0f; //TODO: Get this value from hlsl; hlsl value should in turn come from the diameter
 			XMVECTOR offset = { radius, 0.0f, 0.0f, 0.0f };
 			convertTo3x3(g_pCBGS->m_InvView);
 
