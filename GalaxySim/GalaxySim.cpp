@@ -1331,6 +1331,7 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 	case IDC_PAUSE:
 	{
 		pauseControl();
+		break;
 	}
 	case IDC_DOUBLESPEED:
 		doubleSpeed(); break;
