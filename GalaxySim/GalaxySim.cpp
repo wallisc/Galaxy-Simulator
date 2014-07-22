@@ -648,7 +648,7 @@ HRESULT CreateParticleBuffer(ID3D11Device* pd3dDevice)
 		g_isFirst = false;
 	}
 	else {
-		for (UINT i = 0; i < MAX_PARTICLES; i++) {
+		for (UINT i = 0; i < g_objects.size(); i++) {
 			pVertices[i].Color = XMFLOAT4(g_objects[i].m_red, g_objects[i].m_green, g_objects[i].m_blue, 1.000000);
 		}
 	}
