@@ -1566,7 +1566,8 @@ bool RenderParticles(ID3D11DeviceContext* pd3dImmediateContext, CXMMATRIX mView,
 	pd3dImmediateContext->IASetVertexBuffers(0, 1, pBuffers, stride, offset);
 	pd3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
 
-	ID3D11ShaderResourceView* aRViews[1] = { g_pParticlePosVeloRV0 };
+    // Use the back buffer of the 2 particle PosVelo buffers
+	ID3D11ShaderResourceView* aRViews[1] = { g_pParticlePosVeloRV1 };
 	pd3dImmediateContext->VSSetShaderResources(0, 1, aRViews);
 
 	D3D11_MAPPED_SUBRESOURCE MappedResource;
