@@ -1281,7 +1281,7 @@ void pauseControl() {
 			g_isPaused = false;
 		}
 
-		LPCWSTR welcomeMessage = L"Select an object\nto see information\ndisplayed\n(but actually press\nthe button)";
+		LPCWSTR welcomeMessage = L"Select an object\nto see information\ndisplayed\n";
 		if (g_isPaused && !g_hasDisplay && g_firstTextBox) { //always the first case; text box pointer gets assignment here
 			g_HUD.AddEditBox(11, welcomeMessage, 0, 295, 160, 300);
 			g_pTextBox = g_HUD.GetEditBox(11);
