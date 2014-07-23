@@ -57,6 +57,7 @@ CD3DSettingsDlg                     g_D3DSettingsDlg;           // Device settin
 CDXUTDialog                         g_HUD;                      // dialog for standard controls
 CDXUTDialog                         g_SampleUI;                 // dialog for sample specific controls
 CDXUTTextHelper*                    g_pTxtHelper = nullptr;
+CDXUTTimer							g_Timer;
 
 ID3D11VertexShader*                 g_pRenderParticlesVS = nullptr;
 ID3D11GeometryShader*               g_pRenderParticlesGS = nullptr;
@@ -195,6 +196,7 @@ double g_timeValue = 0.005; //can change this to change speed of simulation, use
 double g_systemTime = 0; //sets the inital system time to 0
 LPWSTR g_timeString; //used later for the Jump Time In button user uses to input time to jump to.
 
+double g_difference;
 
 //-------------------------------------------------------------------------------------
 // UI control IDs
@@ -252,6 +254,7 @@ void jumpTime(float newTime);
 //--------------------------------------------------------------------------------------
 int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR lpCmdLine, _In_ int nCmdShow)
 {
+	double startTime = g_Timer.GetAbsoluteTime();
 	// Enable run-time memory check for debug builds.
 #if defined(DEBUG) | defined(_DEBUG)
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
@@ -269,7 +272,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 	DXUTSetCallbackD3D11DeviceDestroyed(OnD3D11DestroyDevice);
 	DXUTSetCallbackMouse(OnMouseEvent);
 
-	ParseFile();
+	
 
 	InitApp();
 
@@ -277,8 +280,18 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 
 	DXUTSetCursorSettings(true, true); // Show the cursor and clip it when in full screen
 	DXUTCreateWindow(L"SkyX");
+	ParseFile();
 	DXUTCreateDevice(D3D_FEATURE_LEVEL_10_0, true, g_width, g_height);
-	DXUTMainLoop();                      // Enter into the DXUT render loop
+
+	wchar_t buffer[256];
+	double endTime = g_Timer.GetAbsoluteTime();
+	g_difference = endTime - startTime;
+	swprintf(buffer, sizeof(buffer), L"Absolute Time: %f\n", g_difference);
+	::OutputDebugString(buffer);
+
+	DXUTMainLoop(); // Enter into the DXUT render loop
+
+	
 
 	g_objects.clear();
 
@@ -1083,8 +1096,8 @@ wstring concatenateObjInfo(int index) {
 		L"\nPosition:\nx: " + to_wstring(g_pParticleArray[index].pos.x) + L"\ny: " + to_wstring(g_pParticleArray[index].pos.y) +
 		L"\nz: " + to_wstring(g_pParticleArray[index].pos.z) +
 		L"\nVelocity:\nx: " + to_wstring(g_pParticleArray[index].velo.x) + L"\ny: " + to_wstring(g_pParticleArray[index].velo.y) +
-		L"\nz: " + to_wstring(g_pParticleArray[index].velo.z));
-
+		L"\nz: " + to_wstring(g_pParticleArray[index].velo.z) + L"\nTime: " + to_wstring(g_difference));
+	
 	return objectInfo;
 }
 
@@ -1097,11 +1110,13 @@ wstring concatenateObjInfo(int index) {
 void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 {
 
+	
+
 	if (fElapsedTime < SECONDS_PER_FRAME)
 	{
 		Sleep(static_cast<DWORD>((SECONDS_PER_FRAME - fElapsedTime) * 1000.0f));
 	}
-
+	
 	// Update the camera's position based on user input 
 	g_Camera.FrameMove(fElapsedTime);
 
@@ -1196,9 +1211,9 @@ void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 
 			mouseRadius = distanceCalc(XMVectorGetX(screenObject), XMVectorGetY(screenObject), xScreenMouse, yScreenMouse);
 
-			wchar_t buffer[256];
+		/*	wchar_t buffer[256];
 			swprintf(buffer, sizeof(buffer), L"screen: %f mouse: %f\n centerX: %f centerY %f \n mouseX: %f mouseY: %f\n\n", screenRadius, mouseRadius, XMVectorGetX(screenObject), XMVectorGetY(screenObject), xScreenMouse, yScreenMouse);
-			::OutputDebugString(buffer);
+			::OutputDebugString(buffer);*/
 
 			if (mouseRadius <= screenRadius) { //Checks if click is within radius
 
