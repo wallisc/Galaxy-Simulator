@@ -1346,14 +1346,14 @@ void jumpTime(float newTime){
 
 	//to test where the particle is when you jump to a time
 	//put a breakpoint at float acoord=1.0 and see values of x, y, and zcoord
-	for (int i = 0; i < NUM_PARTICLES; i++){
-		if (g_pParticleArrayTWO[i].name == L"Earth"){
-			float xcoord = g_pParticleArray[i].pos.x;
-			float ycoord = g_pParticleArray[i].pos.y;
-			float zcoord = g_pParticleArray[i].pos.z;
-			float acoord=1.0;
-		}
-	}
+	//for (int i = 0; i < NUM_PARTICLES; i++){
+	//	if (g_pParticleArrayTWO[i].name == L"Earth"){
+	//		float xcoord = g_pParticleArray[i].pos.x;
+	//		float ycoord = g_pParticleArray[i].pos.y;
+	//		float zcoord = g_pParticleArray[i].pos.z;
+	//		float acoord=1.0;
+	//	}
+	//}
 
 	g_systemTime = newTime;	
 
