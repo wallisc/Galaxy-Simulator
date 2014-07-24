@@ -197,6 +197,9 @@ int g_iterationsPerFrame = 10;
 double g_systemTime = 0; //sets the inital system time to 0
 LPWSTR g_timeString; //used later for the Jump Time In button user uses to input time to jump to.
 
+//temporary counter
+int g_counter = 0;
+
 
 //-------------------------------------------------------------------------------------
 // UI control IDs
@@ -895,9 +898,58 @@ void halfSpeed(){
 //--------------------------------------------------------------------------------------
 
 
+//this method calculates and updates new position and velocity for jumping in time
+void jumpTime(float newTime){
 
+	//convert back to hours
+	newTime = newTime * 24;
 
+	//iterate through time by increments of time Value
 
+	//move forward to a time
+	if (newTime > g_systemTime){
+		for (float k = g_systemTime; k < newTime; k = k + g_timeValueToHoursConversion){
+
+			GravityMotionIteration(g_timeValue);
+
+		}
+
+	}
+	//move backward to a time
+	else if (newTime < g_systemTime){
+		for (float k = g_systemTime; k > newTime; k = k - g_timeValueToHoursConversion){
+
+			GravityMotionIteration(-g_timeValue);
+
+		}
+
+	}
+
+	//to test where the particle is when you jump to a time
+	//put a breakpoint at float acoord=1.0 and see values of x, y, and zcoord
+	for (int i = 0; i < NUM_PARTICLES; i++){
+		wstring name = g_pParticleArrayTWO[i].name;
+		float xcoord = g_pParticleArray[i].pos.x;
+		float ycoord = g_pParticleArray[i].pos.y;
+		float zcoord = g_pParticleArray[i].pos.z;
+		float xvelo = g_pParticleArray[i].velo.x;
+		float yvelo = g_pParticleArray[i].velo.y;
+		float zvelo = g_pParticleArray[i].velo.z;
+		float acoord=1.0;
+	}
+	
+	g_systemTime = newTime;
+
+}
+
+//--------------------------------------------------------------------------------------
+// Functions that help test the accuracy of the simulation
+//--------------------------------------------------------------------------------------
+
+//fills arrays with hardcoded real values from NASA JPL Database
+void loadKnownValues(){
+
+}
 
 //--------------------------------------------------------------------------------------
 HRESULT CreateParticlePosVeloBuffers(ID3D11Device* pd3dDevice)
@@ -1083,7 +1135,12 @@ void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 
 	if (!g_isPaused)
 	{
+
+
 		for (int i = 0; i < g_iterationsPerFrame; i++){
+
+
+
 			auto pd3dImmediateContext = DXUTGetD3D11DeviceContext();
 
 			D3D11_MAPPED_SUBRESOURCE ms;
@@ -1093,6 +1150,22 @@ void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 			
 			GravityMotionIteration(g_timeValue);
 
+			//temporary counter iteration
+			g_counter++;
+
+			//just for getting values at a particlular time
+			if (g_counter==322){
+				for (int i = 0; i < NUM_PARTICLES; i++){
+					wstring name = g_pParticleArrayTWO[i].name;
+					float xcoord = g_pParticleArray[i].pos.x;
+					float ycoord = g_pParticleArray[i].pos.y;
+					float zcoord = g_pParticleArray[i].pos.z;
+					float xvelo = g_pParticleArray[i].velo.x;
+					float yvelo = g_pParticleArray[i].velo.y;
+					float zvelo = g_pParticleArray[i].velo.z;
+					float acoord = 1.0;
+				}
+			}
 
 			memcpy(ms.pData, g_pParticleArray, sizeof(PARTICLE) * NUM_PARTICLES);
 
@@ -1317,47 +1390,7 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 	}
 }
 
-//this method calculates and updates new position and velocity for jumping in time
-void jumpTime(float newTime){
 
-	//convert back to hours
-	newTime = newTime * 24;
-
-	//iterate through time by increments of time Value
-
-	//move forward to a time
-	if (newTime > g_systemTime){
-		for (float k = g_systemTime; k < newTime; k = k + g_timeValueToHoursConversion){
-
-			GravityMotionIteration(g_timeValue);
-
-		}
-
-	}
-	//move backward to a time
-	else if (newTime < g_systemTime){
-		for (float k = g_systemTime; k > newTime; k = k - g_timeValueToHoursConversion){
-
-			GravityMotionIteration(-g_timeValue);
-
-		}
-
-	}
-
-	//to test where the particle is when you jump to a time
-	//put a breakpoint at float acoord=1.0 and see values of x, y, and zcoord
-	//for (int i = 0; i < NUM_PARTICLES; i++){
-	//	if (g_pParticleArrayTWO[i].name == L"Earth"){
-	//		float xcoord = g_pParticleArray[i].pos.x;
-	//		float ycoord = g_pParticleArray[i].pos.y;
-	//		float zcoord = g_pParticleArray[i].pos.z;
-	//		float acoord=1.0;
-	//	}
-	//}
-
-	g_systemTime = newTime;	
-
-}
 //--------------------------------------------------------------------------------------
 bool CALLBACK IsD3D11DeviceAcceptable(const CD3D11EnumAdapterInfo *AdapterInfo, UINT Output, const CD3D11EnumDeviceInfo *DeviceInfo,
 	DXGI_FORMAT BackBufferFormat, bool bWindowed, void* pUserContext)
