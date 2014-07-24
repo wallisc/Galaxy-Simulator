@@ -196,7 +196,15 @@ double g_timeValue = 0.005; //can change this to change speed of simulation, use
 double g_systemTime = 0; //sets the inital system time to 0
 LPWSTR g_timeString; //used later for the Jump Time In button user uses to input time to jump to.
 
-double g_difference;
+//testing constants
+double g_startUpTime;
+double g_pauseTime;
+double g_unPauseTime;
+double g_winToFullTime;
+double g_fullToWinTime;
+double g_hitTestTime;
+
+double g_hitTestStart;
 
 //-------------------------------------------------------------------------------------
 // UI control IDs
@@ -254,7 +262,7 @@ void jumpTime(float newTime);
 //--------------------------------------------------------------------------------------
 int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR lpCmdLine, _In_ int nCmdShow)
 {
-	double startTime = g_Timer.GetAbsoluteTime();
+	double beginStartTime = g_Timer.GetAbsoluteTime();
 	// Enable run-time memory check for debug builds.
 #if defined(DEBUG) | defined(_DEBUG)
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
@@ -283,10 +291,12 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 	ParseFile();
 	DXUTCreateDevice(D3D_FEATURE_LEVEL_10_0, true, g_width, g_height);
 
+	
+	double endStartTime = g_Timer.GetAbsoluteTime();
+	g_startUpTime = endStartTime - beginStartTime;
+
 	wchar_t buffer[256];
-	double endTime = g_Timer.GetAbsoluteTime();
-	g_difference = endTime - startTime;
-	swprintf(buffer, sizeof(buffer), L"Absolute Time: %f\n", g_difference);
+	swprintf(buffer, sizeof(buffer), L"Absolute Time: %f\n", g_startUpTime);
 	::OutputDebugString(buffer);
 
 	DXUTMainLoop(); // Enter into the DXUT render loop
@@ -1087,7 +1097,10 @@ void CALLBACK OnMouseEvent(bool bLeftButtonDown, bool bRightButtonDown, bool bMi
 		g_xMouse = (float)xPos;
 		g_yMouse = (float)yPos;
 		g_relevantMouse = true;
+		g_pTextBox->SetEnabled(false); //prevents accidental alteration of editbox
+		g_hitTestStart = g_Timer.GetAbsoluteTime();
 	}
+
 }
 
 wstring concatenateObjInfo(int index) {
@@ -1096,7 +1109,7 @@ wstring concatenateObjInfo(int index) {
 		L"\nPosition:\nx: " + to_wstring(g_pParticleArray[index].pos.x) + L"\ny: " + to_wstring(g_pParticleArray[index].pos.y) +
 		L"\nz: " + to_wstring(g_pParticleArray[index].pos.z) +
 		L"\nVelocity:\nx: " + to_wstring(g_pParticleArray[index].velo.x) + L"\ny: " + to_wstring(g_pParticleArray[index].velo.y) +
-		L"\nz: " + to_wstring(g_pParticleArray[index].velo.z) + L"\nTime: " + to_wstring(g_difference));
+		L"\nz: " + to_wstring(g_pParticleArray[index].velo.z));
 	
 	return objectInfo;
 }
@@ -1240,6 +1253,11 @@ void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 			g_pTextBox->SetText(objectInfo.c_str());
 		}
 		foundIndex = -1;
+		double hitTestEnd = g_Timer.GetAbsoluteTime();
+		g_hitTestTime = hitTestEnd - g_hitTestStart;
+		wchar_t buffer[256];
+		swprintf(buffer, sizeof(buffer), L"Hit Test: %f\n", g_hitTestTime);
+		::OutputDebugString(buffer);
 	}
 
 
@@ -1285,6 +1303,16 @@ LRESULT CALLBACK MsgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, boo
 }
 
 void pauseControl() {
+	double pauseStart;
+	double unPauseStart;
+
+	if (!g_isPaused) {
+		pauseStart = g_Timer.GetAbsoluteTime();
+	}
+	else {
+		unPauseStart = g_Timer.GetAbsoluteTime();
+	}
+	
 	if (g_hasDisplay) {
 		g_pTextBox->SetVisible(false);
 		g_hasDisplay = false;
@@ -1315,6 +1343,18 @@ void pauseControl() {
 		g_pTextBox->SetVisible(false);
 		g_hasDisplay = false;
 	}
+
+	if (g_isPaused) {
+		double pauseEnd = g_Timer.GetAbsoluteTime();
+		g_pauseTime = pauseEnd - pauseStart;
+	}
+	else {
+		double unPauseEnd = g_Timer.GetAbsoluteTime();
+		g_unPauseTime = unPauseEnd - unPauseStart;
+	}
+	
+
+
 }
 
 
@@ -1326,7 +1366,31 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 	switch (nControlID)
 	{
 	case IDC_TOGGLEFULLSCREEN:
-		DXUTToggleFullScreen(); break;
+	{
+		double winToFullStart;
+		double winToFullEnd;
+		double fullToWinStart;
+		double fullToWinEnd;
+		if (DXUTIsWindowed()) {
+			winToFullStart = g_Timer.GetAbsoluteTime();
+		}
+		else {
+			fullToWinStart = g_Timer.GetAbsoluteTime();
+		}
+
+		DXUTToggleFullScreen();
+
+		if (!DXUTIsWindowed()) {
+			winToFullEnd = g_Timer.GetAbsoluteTime();
+			g_winToFullTime = winToFullEnd - winToFullStart;
+		}
+		else {
+			fullToWinEnd = g_Timer.GetAbsoluteTime();
+			g_fullToWinTime = fullToWinEnd - fullToWinStart;
+		
+		}
+		break;
+	}
 	case IDC_TOGGLEREF:
 	{
 		DXUTPause(false, false);
@@ -1584,7 +1648,7 @@ bool RenderParticles(ID3D11DeviceContext* pd3dImmediateContext, CXMMATRIX mView,
 	pd3dImmediateContext->IASetVertexBuffers(0, 1, pBuffers, stride, offset);
 	pd3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
 
-	ID3D11ShaderResourceView* aRViews[1] = { g_pParticlePosVeloRV0 };
+	ID3D11ShaderResourceView* aRViews[1] = { g_pParticlePosVeloRV1 };
 	pd3dImmediateContext->VSSetShaderResources(0, 1, aRViews);
 
 	D3D11_MAPPED_SUBRESOURCE MappedResource;
