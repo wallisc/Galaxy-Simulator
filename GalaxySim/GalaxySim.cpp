@@ -830,27 +830,38 @@ void displayObjectInfo(){
 //--------------------------------------------------------------------------------------
 
 //input a WCHAR string and a float, assigns value of float to the WCHAR string
+//if the conversion fails in some way, the string is set to NULL
 void GetWCharFromFloat(WCHAR *string, float inputFloat){
 	if (string == NULL || inputFloat == NULL){
 		return;
 	}
 
 	HRESULT hr = StringCbPrintfW(string, g_cFloatStringLength*sizeof(WCHAR), L"%f", inputFloat);
+
+	if (hr != S_OK){
+		string = NULL;
+	}
 }
 
 //input a WCHAR string and an int, assigns value of int to the WCHAR string
+//if the conversion fails in some way, the string is set to NULL
 void GetWCharFromInt(WCHAR *string, int inputInt){
 	if (string == NULL || inputInt == NULL){
 		return;
 	}
 
 	HRESULT hr = StringCbPrintfW(string, g_cIntStringLength*sizeof(WCHAR), L"%i", inputInt);
+
+	if (hr != S_OK){
+		string = NULL;
+	}
 }
 
 //--------------------------------------------------------------------------------------
 // Functions related to motion of objects according to physical laws
 //--------------------------------------------------------------------------------------
 
+//takes an increment of time in system time. This time is later converted to real time
 //moves the objects by timeIncrement according to gravitational physical laws
 void GravityMotionIteration(float timeIncrement){
 	for (int i = 0; i < NUM_PARTICLES; i++)
@@ -897,7 +908,7 @@ void halfSpeed(){
 // Functions that allow user to jump in time in the simulation
 //--------------------------------------------------------------------------------------
 
-
+//this function takes real time in days, within the function it converts it to hours and later iterates based on the systemTime increment units
 //this method calculates and updates new position and velocity for jumping in time
 void jumpTime(float newTime){
 
