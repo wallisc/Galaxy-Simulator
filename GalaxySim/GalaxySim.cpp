@@ -38,6 +38,7 @@
 #include <sstream>
 #include <string>
 
+
 #include "atlbase.h"
 #include "atlstr.h"
 #include "comutil.h"
@@ -47,6 +48,7 @@
 
 using namespace DirectX;
 using namespace std;
+
 
 //--------------------------------------------------------------------------------------
 // Global variables
@@ -197,7 +199,14 @@ double g_systemTime = 0; //sets the inital system time to 0
 LPWSTR g_timeString; //used later for the Jump Time In button user uses to input time to jump to.
 
 //testing constants
+CDXUTButton *g_pFS;
+bool g_isTest = true;
+int g_step = 1;
+double g_beginStartTime;
 double g_startUpTime;
+double g_endStartTime;
+double g_timeTest;
+double g_timeTestEnd;
 double g_pauseTime;
 double g_unPauseTime;
 double g_winToFullTime;
@@ -262,7 +271,7 @@ void jumpTime(float newTime);
 //--------------------------------------------------------------------------------------
 int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR lpCmdLine, _In_ int nCmdShow)
 {
-	double beginStartTime = g_Timer.GetAbsoluteTime();
+	g_beginStartTime = g_Timer.GetAbsoluteTime();
 	// Enable run-time memory check for debug builds.
 #if defined(DEBUG) | defined(_DEBUG)
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
@@ -292,16 +301,12 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 	DXUTCreateDevice(D3D_FEATURE_LEVEL_10_0, true, g_width, g_height);
 
 	
-	double endStartTime = g_Timer.GetAbsoluteTime();
-	g_startUpTime = endStartTime - beginStartTime;
-
-	wchar_t buffer[256];
-	swprintf(buffer, sizeof(buffer), L"Absolute Time: %f\n", g_startUpTime);
-	::OutputDebugString(buffer);
-
-	DXUTMainLoop(); // Enter into the DXUT render loop
+	g_endStartTime = g_Timer.GetAbsoluteTime();
+	g_startUpTime = g_endStartTime - g_beginStartTime;
 
 	
+
+	DXUTMainLoop(); // Enter into the DXUT render loop
 
 	g_objects.clear();
 
@@ -323,6 +328,7 @@ void InitApp()
 
 	g_HUD.SetCallback(OnGUIEvent); int iY = 10;
 	g_HUD.AddButton(IDC_TOGGLEFULLSCREEN, L"Full screen (F6)", 0, iY, 170, 23, VK_F6);
+	g_pFS = g_HUD.GetButton(IDC_TOGGLEFULLSCREEN);
 	g_HUD.AddButton(IDC_TOGGLEREF, L"Toggle REF (F3)", 0, iY += 26, 170, 23, VK_F3);
 	g_HUD.AddButton(IDC_CHANGEDEVICE, L"Change device (F2)", 0, iY += 26, 170, 23, VK_F2);
 	g_HUD.AddButton(IDC_RESETPARTICLES, L"Reset particles (F4)", 0, iY += 26, 170, 22, VK_F4);
@@ -1255,15 +1261,18 @@ void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 		foundIndex = -1;
 		double hitTestEnd = g_Timer.GetAbsoluteTime();
 		g_hitTestTime = hitTestEnd - g_hitTestStart;
-		wchar_t buffer[256];
-		swprintf(buffer, sizeof(buffer), L"Hit Test: %f\n", g_hitTestTime);
-		::OutputDebugString(buffer);
+		
 	}
 
 
 	g_relevantMouse = false;
 
-
+	if (g_systemTime >= 1.000000)
+	{
+		g_timeTestEnd = g_Timer.GetAbsoluteTime();
+		g_timeTest = g_timeTestEnd - g_endStartTime; //pre-loop to time ten
+	}
+		
 }
 
 
@@ -1389,6 +1398,9 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 			g_fullToWinTime = fullToWinEnd - fullToWinStart;
 		
 		}
+		wchar_t buffer[256];
+		swprintf(buffer, sizeof(buffer), L"Hit Test: %f\n", g_winToFullTime);
+		::OutputDebugString(buffer);
 		break;
 	}
 	case IDC_TOGGLEREF:
@@ -1683,6 +1695,62 @@ bool RenderParticles(ID3D11DeviceContext* pd3dImmediateContext, CXMMATRIX mView,
 }
 
 
+void automatedTest() {
+	//start up time and constant iteration time data has been gathered by this point
+	switch (g_step)
+	{
+	case 1: {
+		jumpTime(10);
+		//Q: Is calling jumpTime directly valid? Unsure how else to do this since it requires user input
+		//time not implemented in this branch
+		//include an accuracy validation here
+		break;
+	}
+	case 2: {
+		//My sandbox doesn't have iterations, but I would call it here
+		//g_iterationsPerFrame = 20.0
+		//accuracy validation here
+		break;
+	}
+	case 3: {
+		//camera??
+		break;
+	}
+	case 4: {
+		//OnGUIEvent(257, IDC_TOGGLEFULLSCREEN, g_pFS, NULL);
+		break;
+	}
+	case 5: {
+		break;
+	}
+	case 6: {
+		//OnGUIEvent(0, IDC_TOGGLEFULLSCREEN, NULL, NULL);
+		break;
+	}
+	case 7: {
+		OnGUIEvent(0, IDC_PAUSE, NULL, NULL);
+		break;
+	}
+	case 8: {
+		//mouse click test 1: center of Mars
+		break;
+	}
+	case 9: {
+		//mouse click test 2: side of Mars. Or another planet?
+		break;
+	}
+	case 10: {
+		OnGUIEvent(0, IDC_PAUSE, NULL, NULL);
+		break;
+	}
+	default: {
+
+	}
+
+	}
+	g_step++;
+}
+
 //--------------------------------------------------------------------------------------
 void CALLBACK OnD3D11FrameRender(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImmediateContext, double fTime,
 	float fElapsedTime, void* pUserContext)
@@ -1721,7 +1789,14 @@ void CALLBACK OnD3D11FrameRender(ID3D11Device* pd3dDevice, ID3D11DeviceContext* 
 	OutputDebugString( L"\n" );
 	dwTimefirst = GetTickCount();
 	}*/
+
+	if (g_isTest && g_timeTest != NULL) {
+		automatedTest();
+	}
 }
+
+
+
 
 
 //--------------------------------------------------------------------------------------
