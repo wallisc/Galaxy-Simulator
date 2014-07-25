@@ -23,6 +23,16 @@ int g_leftarrowpressed = 37;
 int g_rightarrowpressed = 37;
 XMFLOAT3 g_PanDeltaVector(0, 0, 0);
 
+CDXUTTimer				g_timerUp;
+CDXUTTimer				g_timerDown;
+CDXUTTimer				g_timerLeft;
+CDXUTTimer				g_timerRight;
+
+bool g_panUp;
+bool g_panDown;
+bool g_panLeft;
+bool g_panRight;
+
 //======================================================================================
 // CD3DArcBall
 //======================================================================================
@@ -1039,40 +1049,34 @@ LRESULT CModelViewerCamera::HandleMessages(HWND hWnd, UINT uMsg, WPARAM wParam, 
 
 	if ((uMsg == WM_KEYDOWN) && (wParam == VK_UP))
 	{
+		double tstartUp = g_timerUp.GetAbsoluteTime();
+		g_uparrowpressed = 42;
 		int iMouseX = (short)LOWORD(lParam);
 		int iMouseY = (short)HIWORD(lParam);
-
-		g_uparrowpressed = 42;
-
-		/*m_ptLastMouse.x = iMouseX;
-		m_ptLastMouse.y = iMouseY;
-		float fDeltaX = (m_ptLastMouse.x - iMouseX) * m_fRadiusTranslation / m_nWidth;
-		float fDeltaY = (m_ptLastMouse.y - iMouseY) * m_fRadiusTranslation / m_nHeight;*/
-		::OutputDebugString(L"hi");
 	}
 
 	if ((uMsg == WM_KEYDOWN) && (wParam == VK_DOWN))
 	{
+		double tstartDown = g_timerDown.GetAbsoluteTime();
+		g_downarrowpressed = 42;
 		int iMouseX = (short)LOWORD(lParam);
 		int iMouseY = (short)HIWORD(lParam);
-		g_downarrowpressed = 42;
-		::OutputDebugString(L"hi");
 	}
 
 	if ((uMsg == WM_KEYDOWN) && (wParam == VK_LEFT))
 	{
+		double tstartLeft = g_timerLeft.GetAbsoluteTime();
+		g_leftarrowpressed = 42;
 		int iMouseX = (short)LOWORD(lParam);
 		int iMouseY = (short)HIWORD(lParam);
-		g_leftarrowpressed = 42;
-		::OutputDebugString(L"hi");
 	}
 
 	if ((uMsg == WM_KEYDOWN) && (wParam == VK_RIGHT))
 	{
+		double tstartRight = g_timerRight.GetAbsoluteTime();
+		g_rightarrowpressed = 42;
 		int iMouseX = (short)LOWORD(lParam);
 		int iMouseY = (short)HIWORD(lParam);
-		g_rightarrowpressed = 42;
-		::OutputDebugString(L"hi");
 	}
 
 	if (uMsg == WM_KEYUP && (wParam == VK_RIGHT))
