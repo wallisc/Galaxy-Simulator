@@ -83,6 +83,8 @@ const float                         g_fSpread = 400.0f;
 CDXUTEditBox						*g_JumpTimeInputBox = nullptr;
 CDXUTEditBox						*g_IterationsPerFrameInBox = nullptr;
 
+CDXUTTimer							g_timer;
+
 struct PARTICLE_VERTEX
 {
 	XMFLOAT4 Color;
@@ -1220,6 +1222,8 @@ LRESULT CALLBACK MsgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, boo
 //--------------------------------------------------------------------------------------
 void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, void* pUserContext)
 {
+	double tstart;
+	double tend;
 	switch (nControlID)
 	{
 	case IDC_TOGGLEFULLSCREEN:
@@ -1235,12 +1239,20 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 
 	case IDC_RESETPARTICLES:
 	{
+		tstart = g_timer.GetAbsoluteTime();
 		SAFE_RELEASE(g_pParticlePosVelo0);
 		SAFE_RELEASE(g_pParticlePosVelo1);
 		SAFE_RELEASE(g_pParticlePosVeloRV0);
 		SAFE_RELEASE(g_pParticlePosVeloRV1);
 		CreateParticlePosVeloBuffers(DXUTGetD3D11Device());
+		tend = g_timer.GetAbsoluteTime();
 		g_systemTime = 0;
+
+		double deltat = tend - tstart;
+
+		wchar_t buffer[256];
+		swprintf(buffer, sizeof(buffer), L"%f\n", deltat);
+		::OutputDebugString(buffer);
 		break;
 	}
 	case IDC_PAUSE:
@@ -1310,7 +1322,15 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 	}
 	case IDC_RESETCAMERA:
 	{
+		tstart = g_timer.GetAbsoluteTime();
 		g_Camera.Reset();
+		tend = g_timer.GetAbsoluteTime();
+		double deltat = tend - tstart;
+		
+		wchar_t buffer[256];
+		swprintf(buffer, sizeof(buffer), L"%f\n", deltat);
+		::OutputDebugString(buffer);
+
 		break;
 	}
 
