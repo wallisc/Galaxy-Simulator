@@ -957,8 +957,22 @@ void jumpTime(float newTime){
 // Functions that help test the accuracy of the simulation
 //--------------------------------------------------------------------------------------
 
+//unit test tests accuracy of jumpTime feature for time=1 year etc.
+float testJumpTime(float timeInDays){
+	loadKnownValues(timeInDays);
+	jumpTime(timeInDays);
+	DXUTPause(true, false);
+	g_isPaused = true;
+	float avgPercentDiff=compareSimRealVal();
+	return avgPercentDiff;
+}
+
 //fills arrays with hardcoded real values from NASA JPL Database
-void loadKnownValues(){
+void loadKnownValues(float timeInDays){
+
+}
+
+float compareSimRealVal(){
 
 }
 
