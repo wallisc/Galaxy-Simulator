@@ -194,9 +194,13 @@ float g_yMouse;
 bool g_loaded = false;
 
 double g_timeValue = 0.001; //can change this to change speed of simulation, used later to do 2x and 0.5x
-int g_iterationsPerFrame = 1;
+double g_timeValueToHoursConversion = g_timeValue*3800; //number of hours represented by the value of timeValue
+int g_iterationsPerFrame = 10;
 double g_systemTime = 0; //sets the inital system time to 0
 LPWSTR g_timeString; //used later for the Jump Time In button user uses to input time to jump to.
+
+//temporary counter
+int g_counter = 0;
 
 
 //-------------------------------------------------------------------------------------
@@ -310,15 +314,14 @@ void InitApp()
 	g_HUD.AddButton(IDC_TOGGLEREF, L"Toggle REF (F3)", 0, iY += 26, 170, 23, VK_F3);
 	g_HUD.AddButton(IDC_CHANGEDEVICE, L"Change device (F2)", 0, iY += 26, 170, 23, VK_F2);
 	g_HUD.AddButton(IDC_RESETPARTICLES, L"Reset particles (F4)", 0, iY += 26, 170, 22, VK_F4);
-	g_HUD.AddButton(IDC_PAUSE, L"Pause / Unpause", 0, iY += 26, 170, 22);
+	g_HUD.AddButton(IDC_RESETCAMERA, L"Reset Camera Position", 0, iY += 26, 170, 23);
 	//g_HUD.AddButton(IDC_DOUBLESPEED, L"Speed 2x", 0, iY += 26, 170, 23);
 	//g_HUD.AddButton(IDC_HALFSPEED, L"Speed 0.5x", 0, iY += 26, 170, 23);
 	g_HUD.AddEditBox(IDC_ITERATEPERFRAMEIN, L"", 0, iY += 26, 170, 40, false, &g_IterationsPerFrameInBox);
 	g_HUD.AddButton(IDC_SUBMITITERATEIN, L"Enter Iterations/Frame", 0, iY += 40, 170, 23);
 	g_HUD.AddEditBox(IDC_JUMPTIMEIN, L"", 0, iY += 26, 170, 40, false, &g_JumpTimeInputBox);
 	g_HUD.AddButton(IDC_SUBMITTIMEIN, L"Jump!", 0, iY += 40, 170, 23);
-	g_HUD.AddButton(IDC_RESETCAMERA, L"Reset Camera Position", 0, iY += 26, 170, 23);
-
+	g_HUD.AddButton(IDC_PAUSE, L"Pause / Unpause", 0, iY += 26, 170, 22);
 	g_SampleUI.SetCallback(OnGUIEvent);
 }
 
@@ -650,7 +653,7 @@ HRESULT CreateParticleBuffer(ID3D11Device* pd3dDevice)
 		g_isFirst = false;
 	}
 	else {
-		for (UINT i = 0; i < MAX_PARTICLES; i++) {
+		for (UINT i = 0; i < g_objects.size(); i++) {
 			pVertices[i].Color = XMFLOAT4(g_objects[i].m_red, g_objects[i].m_green, g_objects[i].m_blue, 1.000000);
 		}
 	}
@@ -829,27 +832,38 @@ void displayObjectInfo(){
 //--------------------------------------------------------------------------------------
 
 //input a WCHAR string and a float, assigns value of float to the WCHAR string
+//if the conversion fails in some way, the string is set to NULL
 void GetWCharFromFloat(WCHAR *string, float inputFloat){
 	if (string == NULL || inputFloat == NULL){
 		return;
 	}
 
 	HRESULT hr = StringCbPrintfW(string, g_cFloatStringLength*sizeof(WCHAR), L"%f", inputFloat);
+
+	if (hr != S_OK){
+		string = NULL;
+	}
 }
 
 //input a WCHAR string and an int, assigns value of int to the WCHAR string
+//if the conversion fails in some way, the string is set to NULL
 void GetWCharFromInt(WCHAR *string, int inputInt){
 	if (string == NULL || inputInt == NULL){
 		return;
 	}
 
 	HRESULT hr = StringCbPrintfW(string, g_cIntStringLength*sizeof(WCHAR), L"%i", inputInt);
+
+	if (hr != S_OK){
+		string = NULL;
+	}
 }
 
 //--------------------------------------------------------------------------------------
 // Functions related to motion of objects according to physical laws
 //--------------------------------------------------------------------------------------
 
+//takes an increment of time in system time. This time is later converted to real time
 //moves the objects by timeIncrement according to gravitational physical laws
 void GravityMotionIteration(float timeIncrement){
 	for (int i = 0; i < NUM_PARTICLES; i++)
@@ -896,10 +910,59 @@ void halfSpeed(){
 // Functions that allow user to jump in time in the simulation
 //--------------------------------------------------------------------------------------
 
+//this function takes real time in days, within the function it converts it to hours and later iterates based on the systemTime increment units
+//this method calculates and updates new position and velocity for jumping in time
+void jumpTime(float newTime){
 
+	//convert back to hours
+	newTime = newTime * 24;
 
+	//iterate through time by increments of time Value
 
+	//move forward to a time
+	if (newTime > g_systemTime){
+		for (float k = g_systemTime; k < newTime; k = k + g_timeValueToHoursConversion){
 
+			GravityMotionIteration(g_timeValue);
+
+		}
+
+	}
+	//move backward to a time
+	else if (newTime < g_systemTime){
+		for (float k = g_systemTime; k > newTime; k = k - g_timeValueToHoursConversion){
+
+			GravityMotionIteration(-g_timeValue);
+
+		}
+
+	}
+
+	//to test where the particle is when you jump to a time
+	//put a breakpoint at float acoord=1.0 and see values of x, y, and zcoord
+	for (int i = 0; i < NUM_PARTICLES; i++){
+		wstring name = g_pParticleArrayTWO[i].name;
+		float xcoord = g_pParticleArray[i].pos.x;
+		float ycoord = g_pParticleArray[i].pos.y;
+		float zcoord = g_pParticleArray[i].pos.z;
+		float xvelo = g_pParticleArray[i].velo.x;
+		float yvelo = g_pParticleArray[i].velo.y;
+		float zvelo = g_pParticleArray[i].velo.z;
+		float acoord=1.0;
+	}
+	
+	g_systemTime = newTime;
+
+}
+
+//--------------------------------------------------------------------------------------
+// Functions that help test the accuracy of the simulation
+//--------------------------------------------------------------------------------------
+
+//fills arrays with hardcoded real values from NASA JPL Database
+void loadKnownValues(){
+
+}
 
 //--------------------------------------------------------------------------------------
 HRESULT CreateParticlePosVeloBuffers(ID3D11Device* pd3dDevice)
@@ -1085,16 +1148,37 @@ void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 
 	if (!g_isPaused)
 	{
+
+
 		for (int i = 0; i < g_iterationsPerFrame; i++){
+
+
+
 			auto pd3dImmediateContext = DXUTGetD3D11DeviceContext();
 
 			D3D11_MAPPED_SUBRESOURCE ms;
 			pd3dImmediateContext->Map(g_pParticlePosVelo0, 0, D3D11_MAP_WRITE_DISCARD, 0, &ms);
 
-			g_systemTime = g_systemTime + 3.8;
+			g_systemTime = g_systemTime + g_timeValueToHoursConversion;
 			
 			GravityMotionIteration(g_timeValue);
 
+			//temporary counter iteration
+			g_counter++;
+
+			//just for getting values at a particlular time
+			if (g_counter==322){
+				for (int i = 0; i < NUM_PARTICLES; i++){
+					wstring name = g_pParticleArrayTWO[i].name;
+					float xcoord = g_pParticleArray[i].pos.x;
+					float ycoord = g_pParticleArray[i].pos.y;
+					float zcoord = g_pParticleArray[i].pos.z;
+					float xvelo = g_pParticleArray[i].velo.x;
+					float yvelo = g_pParticleArray[i].velo.y;
+					float zvelo = g_pParticleArray[i].velo.z;
+					float acoord = 1.0;
+				}
+			}
 
 			memcpy(ms.pData, g_pParticleArray, sizeof(PARTICLE) * NUM_PARTICLES);
 
@@ -1132,7 +1216,7 @@ void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 
 			//inverse view matrix comes from RenderParticles
 			//screen space radius
-			radius = 2500.0f; //TODO: Get this value from hlsl; hlsl value should in turn come from the diameter
+			radius = 8000.0f; //TODO: Get this value from hlsl; hlsl value should in turn come from the diameter
 			XMVECTOR offset = { radius, 0.0f, 0.0f, 0.0f };
 			convertTo3x3(g_pCBGS->m_InvView);
 
@@ -1337,46 +1421,7 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 	}
 }
 
-//this method calculates and updates new position and velocity for jumping in time
-void jumpTime(float newTime){
 
-	//convert back to hours
-	newTime = newTime * 24;
-
-	//iterate through time by increments of time Value
-
-	//move forward to a time
-	if (newTime > g_systemTime){
-		for (float k = g_systemTime; k < newTime; k = k + 3.8){
-
-			GravityMotionIteration(g_timeValue);
-
-		}
-
-	}
-	//move backward to a time
-	else if (newTime < g_systemTime){
-		for (float k = g_systemTime; k > newTime; k = k - 3.8){
-
-			GravityMotionIteration(-g_timeValue);
-
-		}
-
-	}
-
-	//to test where the particle is when you jump to a time
-	for (int i = 0; i < NUM_PARTICLES; i++){
-		if (g_pParticleArrayTWO[i].name == L"Earth"){
-			float xcoord = g_pParticleArray[i].pos.x;
-			float ycoord = g_pParticleArray[i].pos.y;
-			float zcoord = g_pParticleArray[i].pos.z;
-			float acoord=1.0;
-		}
-	}
-
-	g_systemTime = newTime;	
-
-}
 //--------------------------------------------------------------------------------------
 bool CALLBACK IsD3D11DeviceAcceptable(const CD3D11EnumAdapterInfo *AdapterInfo, UINT Output, const CD3D11EnumDeviceInfo *DeviceInfo,
 	DXGI_FORMAT BackBufferFormat, bool bWindowed, void* pUserContext)
@@ -1559,7 +1604,7 @@ void RenderText()
 	WCHAR iterations[g_cIntStringLength];
 	GetWCharFromInt(iterations, g_iterationsPerFrame);
 	g_pTxtHelper->DrawTextLine(iterations);
-	g_pTxtHelper->DrawTextLine(L"Time:");
+	g_pTxtHelper->DrawTextLine(L"Days:");
 	WCHAR currentTime[g_cFloatStringLength];
 	GetWCharFromFloat(currentTime, g_systemTime/24);
 	g_pTxtHelper->DrawTextLine(currentTime);
