@@ -289,7 +289,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 	DXUTSetCallbackD3D11DeviceDestroyed(OnD3D11DestroyDevice);
 	DXUTSetCallbackMouse(OnMouseEvent);
 
-	
+
 
 	InitApp();
 
@@ -1116,7 +1116,7 @@ wstring concatenateObjInfo(int index) {
 		L"\nz: " + to_wstring(g_pParticleArray[index].pos.z) +
 		L"\nVelocity:\nx: " + to_wstring(g_pParticleArray[index].velo.x) + L"\ny: " + to_wstring(g_pParticleArray[index].velo.y) +
 		L"\nz: " + to_wstring(g_pParticleArray[index].velo.z));
-	
+
 	return objectInfo;
 }
 
@@ -1135,7 +1135,7 @@ void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 	{
 		Sleep(static_cast<DWORD>((SECONDS_PER_FRAME - fElapsedTime) * 1000.0f));
 	}
-	
+
 	// Update the camera's position based on user input 
 	g_Camera.FrameMove(fElapsedTime);
 
@@ -1272,7 +1272,7 @@ void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 		g_timeTestEnd = g_Timer.GetAbsoluteTime();
 		g_timeTest = g_timeTestEnd - g_endStartTime; //pre-loop to time ten
 	}
-		
+
 }
 
 
@@ -1335,7 +1335,7 @@ void pauseControl() {
 		g_isPaused = false;
 	}
 
-	LPCWSTR welcomeMessage = L"Select an object\nto see information\ndisplayed";
+		LPCWSTR welcomeMessage = L"Select an object\nto see information\ndisplayed\n";
 	if (g_isPaused && !g_hasDisplay && g_firstTextBox) { //always the first case; text box pointer gets assignment here
 		g_HUD.AddEditBox(11, welcomeMessage, 0, 295, 160, 300);
 		g_pTextBox = g_HUD.GetEditBox(11);
@@ -1356,12 +1356,12 @@ void pauseControl() {
 	if (g_isPaused) {
 		double pauseEnd = g_Timer.GetAbsoluteTime();
 		g_pauseTime = pauseEnd - pauseStart;
-	}
+}
 	else {
 		double unPauseEnd = g_Timer.GetAbsoluteTime();
 		g_unPauseTime = unPauseEnd - unPauseStart;
 	}
-	
+
 
 
 }
@@ -1660,6 +1660,7 @@ bool RenderParticles(ID3D11DeviceContext* pd3dImmediateContext, CXMMATRIX mView,
 	pd3dImmediateContext->IASetVertexBuffers(0, 1, pBuffers, stride, offset);
 	pd3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
 
+    // Use the back buffer of the 2 particle PosVelo buffers
 	ID3D11ShaderResourceView* aRViews[1] = { g_pParticlePosVeloRV1 };
 	pd3dImmediateContext->VSSetShaderResources(0, 1, aRViews);
 
