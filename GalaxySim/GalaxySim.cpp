@@ -200,7 +200,7 @@ LPWSTR g_timeString; //used later for the Jump Time In button user uses to input
 
 //testing constants
 CDXUTButton *g_pFS;
-bool g_isTest = true;
+bool g_isTest = false;
 int g_step = 1;
 double g_beginStartTime;
 double g_startUpTime;
@@ -1718,7 +1718,7 @@ void automatedTest() {
 		break;
 	}
 	case 4: {
-		//OnGUIEvent(257, IDC_TOGGLEFULLSCREEN, g_pFS, NULL);
+		OnGUIEvent(0, IDC_TOGGLEFULLSCREEN, NULL, NULL);
 		break;
 	}
 	case 5: {
@@ -1729,7 +1729,7 @@ void automatedTest() {
 		break;
 	}
 	case 7: {
-		OnGUIEvent(0, IDC_PAUSE, NULL, NULL);
+		//OnGUIEvent(0, IDC_PAUSE, NULL, NULL);
 		break;
 	}
 	case 8: {
@@ -1741,7 +1741,7 @@ void automatedTest() {
 		break;
 	}
 	case 10: {
-		OnGUIEvent(0, IDC_PAUSE, NULL, NULL);
+		//OnGUIEvent(0, IDC_PAUSE, NULL, NULL);
 		break;
 	}
 	default: {
