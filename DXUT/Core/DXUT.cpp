@@ -2771,6 +2771,14 @@ void WINAPI DXUTRender3DEnvironment()
             pd3dDevice = DXUTGetD3D11Device();
             if( !pd3dDevice ) // Handle DXUTShutdown from inside callback
                 return;
+
+			pd3dImmediateContext = DXUTGetD3D11DeviceContext();
+			if (!pd3dImmediateContext)
+				return;
+
+			pSwapChain = DXUTGetDXGISwapChain();
+			if (!pSwapChain)
+				return;
         }
 
 #if defined(DEBUG) || defined(_DEBUG)
