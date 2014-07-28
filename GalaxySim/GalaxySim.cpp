@@ -202,6 +202,10 @@ int g_iterationsPerFrame = 10;
 double g_systemTime = 0; //sets the inital system time to 0
 LPWSTR g_timeString; //used later for the Jump Time In button user uses to input time to jump to.
 
+//testing constants
+bool g_isTest = true; //true means test mode is on
+int g_step = 0; //determines which test from automated test suite is run
+
 //temporary counter
 int g_counter = 0;
 
@@ -1321,12 +1325,12 @@ void loadKnownValues(float timeInDays){
 //expects that order of planets in XML is real order starting from Sun
 float comparePosVal(vector<ObjectData> &realValues){
 	float avgPosDiff = 0;
-	for (int i = 0; i < 9; i++){
+	for (int i = 1; i < 9; i++){
 		float xDiff = ((realValues[i].m_xcoord - g_pParticleArray[i].pos.x) / realValues[i].m_xcoord) * 100;
 		float yDiff = ((realValues[i].m_ycoord - g_pParticleArray[i].pos.y) / realValues[i].m_ycoord) * 100;
 		float zDiff = ((realValues[i].m_zcoord - g_pParticleArray[i].pos.z) / realValues[i].m_zcoord) * 100;
 		float posDiff = (xDiff + yDiff + zDiff) / 3;
-		avgPosDiff = (avgPosDiff*i + posDiff) / (i + 1);
+		avgPosDiff = (avgPosDiff*(i-1) + posDiff) / (i);
 	}
 	return avgPosDiff;
 }
@@ -1335,12 +1339,12 @@ float comparePosVal(vector<ObjectData> &realValues){
 //expects that order of planets in XML is real order starting from Sun
 float compareVeloVal(vector<ObjectData> &realValues){
 	float avgVeloDiff = 0;
-	for (int i = 0; i < 9; i++){
+	for (int i = 1; i < 9; i++){
 		float xvDiff = ((realValues[i].m_xvelo - g_pParticleArray[i].velo.x) / realValues[i].m_xvelo) * 100;
 		float yvDiff = ((realValues[i].m_yvelo - g_pParticleArray[i].velo.y) / realValues[i].m_yvelo) * 100;
 		float zvDiff = ((realValues[i].m_zvelo - g_pParticleArray[i].velo.z) / realValues[i].m_zvelo) * 100;
 		float veloDiff = (xvDiff + yvDiff + zvDiff) / 3;
-		avgVeloDiff = (avgVeloDiff*i + veloDiff) / (i + 1);
+		avgVeloDiff = (avgVeloDiff*(i-1) + veloDiff) / (i);
 	}
 	return avgVeloDiff;
 }
@@ -1353,38 +1357,47 @@ void testJumpTime(){
 	//test for time=50 days
 	loadKnownValues(50);
 	jumpTime(50);
-	DXUTPause(true, false);
+	DXUTPause(false, false);
 	g_isPaused = true;
 	float posDiff50 = comparePosVal(g_knownValues50);
 	float veloDiff50 = compareVeloVal(g_knownValues50);
-	DXUTPause(false, false);
-	g_isPaused = false;
+	//DXUTPause(true, false);
+	//g_isPaused = false;
 
-	//test for time=365 days
-	loadKnownValues(365);
-	jumpTime(365);
-	DXUTPause(true, false);
-	g_isPaused = true;
-	float posDiff365 = comparePosVal(g_knownValues365);
-	float veloDiff365 = compareVeloVal(g_knownValues365);
-	DXUTPause(false, false);
-	g_isPaused = false;
+	////test for time=365 days
+	//loadKnownValues(365);
+	//jumpTime(365);
+	//DXUTPause(true, false);
+	//g_isPaused = true;
+	//float posDiff365 = comparePosVal(g_knownValues365);
+	//float veloDiff365 = compareVeloVal(g_knownValues365);
+	//DXUTPause(false, false);
+	//g_isPaused = false;
 
-	//test for time=730 days
-	loadKnownValues(730);
-	jumpTime(730);
-	DXUTPause(true, false);
-	g_isPaused = true;
-	float posDiff730 = comparePosVal(g_knownValues730);
-	float veloDiff730 = compareVeloVal(g_knownValues730);
-	DXUTPause(false, false);
-	g_isPaused = false;
+	////test for time=730 days
+	//loadKnownValues(730);
+	//jumpTime(730);
+	//DXUTPause(true, false);
+	//g_isPaused = true;
+	//float posDiff730 = comparePosVal(g_knownValues730);
+	//float veloDiff730 = compareVeloVal(g_knownValues730);
+	//DXUTPause(false, false);
+	//g_isPaused = false;
 
 	//average the different tests
-	avgPosDiff = (posDiff50 + posDiff365 + posDiff730) / 3; //add in other tests as they get added
-	avgVeloDiff = (veloDiff50 + veloDiff365 + veloDiff730) / 3; //add in other tests as they get added
-	printf("Avg Position % Difference %f", avgPosDiff);
-	printf("Avg Velocity % Difference %f", avgVeloDiff);
+	//avgPosDiff = (posDiff50 + posDiff365 + posDiff730) / 3; //add in other tests as they get added
+	//avgVeloDiff = (veloDiff50 + veloDiff365 + veloDiff730) / 3; //add in other tests as they get added
+	avgPosDiff = posDiff50;
+	avgVeloDiff = veloDiff50;
+	//printf("Avg Position % Difference %f", avgPosDiff);
+	//printf("Avg Velocity % Difference %f", avgVeloDiff);
+	char buffer[256];
+	sprintf_s(buffer, sizeof(buffer), "Avg Position Percent Difference %f\n", avgPosDiff);
+	::OutputDebugStringA(buffer);
+
+	sprintf_s(buffer, sizeof(buffer), "Avg Velocity Percent Difference %f\n", avgVeloDiff);
+	::OutputDebugStringA(buffer);
+	
 }
 
 //test the fast forward
@@ -2098,6 +2111,19 @@ bool RenderParticles(ID3D11DeviceContext* pd3dImmediateContext, CXMMATRIX mView,
 	return true;
 }
 
+//--------------------------------------------------------------------------------------
+void automatedTest(){
+	switch (g_step){
+		case 1:{
+			testJumpTime();
+			break;
+		}
+		default:{
+
+		}
+	}
+	g_step++;
+}
 
 //--------------------------------------------------------------------------------------
 void CALLBACK OnD3D11FrameRender(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImmediateContext, double fTime,
@@ -2137,6 +2163,11 @@ void CALLBACK OnD3D11FrameRender(ID3D11Device* pd3dDevice, ID3D11DeviceContext* 
 	OutputDebugString( L"\n" );
 	dwTimefirst = GetTickCount();
 	}*/
+
+	if (g_isTest) {
+		automatedTest();
+	}
+
 }
 
 
