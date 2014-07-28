@@ -199,8 +199,7 @@ double g_systemTime = 0; //sets the inital system time to 0
 LPWSTR g_timeString; //used later for the Jump Time In button user uses to input time to jump to.
 
 //testing constants
-CDXUTButton *g_pFS;
-bool g_isTest = false;
+bool g_isTest = true;
 int g_step = 1;
 double g_beginStartTime;
 double g_startUpTime;
@@ -328,7 +327,6 @@ void InitApp()
 
 	g_HUD.SetCallback(OnGUIEvent); int iY = 10;
 	g_HUD.AddButton(IDC_TOGGLEFULLSCREEN, L"Full screen (F6)", 0, iY, 170, 23, VK_F6);
-	g_pFS = g_HUD.GetButton(IDC_TOGGLEFULLSCREEN);
 	g_HUD.AddButton(IDC_TOGGLEREF, L"Toggle REF (F3)", 0, iY += 26, 170, 23, VK_F3);
 	g_HUD.AddButton(IDC_CHANGEDEVICE, L"Change device (F2)", 0, iY += 26, 170, 23, VK_F2);
 	g_HUD.AddButton(IDC_RESETPARTICLES, L"Reset particles (F4)", 0, iY += 26, 170, 22, VK_F4);
@@ -1718,30 +1716,27 @@ void automatedTest() {
 		break;
 	}
 	case 4: {
-		OnGUIEvent(0, IDC_TOGGLEFULLSCREEN, NULL, NULL);
-		break;
-	}
-	case 5: {
-		break;
-	}
-	case 6: {
 		//OnGUIEvent(0, IDC_TOGGLEFULLSCREEN, NULL, NULL);
 		break;
 	}
+	case 5: {
+		//OnGUIEvent(0, IDC_TOGGLEFULLSCREEN, NULL, NULL);
+		break;
+	}
+	case 6: {
+		OnGUIEvent(0, IDC_PAUSE, NULL, NULL);
+		break;
+	}
 	case 7: {
-		//OnGUIEvent(0, IDC_PAUSE, NULL, NULL);
+		OnMouseEvent(true, false, false, false, false, 0, 400.000000, 298.000000, NULL);
 		break;
 	}
 	case 8: {
-		//mouse click test 1: center of Mars
-		break;
-	}
-	case 9: {
 		//mouse click test 2: side of Mars. Or another planet?
 		break;
 	}
-	case 10: {
-		//OnGUIEvent(0, IDC_PAUSE, NULL, NULL);
+	case 9: {
+	//	OnGUIEvent(0, IDC_PAUSE, NULL, NULL);
 		break;
 	}
 	default: {
