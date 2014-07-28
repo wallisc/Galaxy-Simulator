@@ -1374,10 +1374,7 @@ void pauseControl() {
 		unPauseStart = g_Timer.GetAbsoluteTime();
 	}
 	
-	if (g_hasDisplay) {
-		g_pTextBox->SetVisible(false);
-		g_hasDisplay = false;
-	}
+	
 	if (!g_isPaused) {
 		DXUTPause(false, false);
 		g_isPaused = true;
