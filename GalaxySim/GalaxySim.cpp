@@ -973,12 +973,12 @@ void loadKnownValues(float timeInDays){
 			if (i == 0){
 				ObjectData object;
 				object.m_name = L"Sun";
-				object.m_xcoord;
-				object.m_ycoord;
-				object.m_zcoord;
-				object.m_xvelo;
-				object.m_yvelo;
-				object.m_zvelo;
+				object.m_xcoord = 0;
+				object.m_ycoord = 0;
+				object.m_zcoord = 0;
+				object.m_xvelo = 0;
+				object.m_yvelo = 0;
+				object.m_zvelo = 0;
 				g_knownValues50.push_back(object);
 			}
 			if (i == 1){
@@ -1385,6 +1385,12 @@ void testJumpTime(){
 	avgVeloDiff = (veloDiff50 + veloDiff365 + veloDiff730) / 3; //add in other tests as they get added
 	printf("Avg Position % Difference %f", avgPosDiff);
 	printf("Avg Velocity % Difference %f", avgVeloDiff);
+}
+
+//test the fast forward
+//fast forward to time=50 then time=365 then time=730 and compare results
+void testFastFwd(){
+
 }
 
 //--------------------------------------------------------------------------------------
