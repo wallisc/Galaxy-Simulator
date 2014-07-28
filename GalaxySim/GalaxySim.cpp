@@ -1343,8 +1343,8 @@ void testJumpTime(){
 	g_isPaused = true;
 	float posDiff50 = comparePosVal(g_knownValues50);
 	float veloDiff50 = compareVeloVal(g_knownValues50);
-	//DXUTPause(true, false);
-	//g_isPaused = false;
+	DXUTPause(true, false);
+	g_isPaused = false;
 
 	////test for time=365 days
 	//loadKnownValues(365);
@@ -1356,23 +1356,23 @@ void testJumpTime(){
 	//DXUTPause(false, false);
 	//g_isPaused = false;
 
-	////test for time=730 days
-	//loadKnownValues(730);
-	//jumpTime(730);
-	//DXUTPause(true, false);
-	//g_isPaused = true;
-	//float posDiff730 = comparePosVal(g_knownValues730);
-	//float veloDiff730 = compareVeloVal(g_knownValues730);
+	//test for time=730 days
+	loadKnownValues(730);
+	jumpTime(730);
+	DXUTPause(true, false);
+	g_isPaused = true;
+	float posDiff730 = comparePosVal(g_knownValues730);
+	float veloDiff730 = compareVeloVal(g_knownValues730);
 	//DXUTPause(false, false);
 	//g_isPaused = false;
 
 	//average the different tests
 	//avgPosDiff = (posDiff50 + posDiff365 + posDiff730) / 3; //add in other tests as they get added
 	//avgVeloDiff = (veloDiff50 + veloDiff365 + veloDiff730) / 3; //add in other tests as they get added
-	avgPosDiff = posDiff50;
-	avgVeloDiff = veloDiff50;
-	//printf("Avg Position % Difference %f", avgPosDiff);
-	//printf("Avg Velocity % Difference %f", avgVeloDiff);
+
+	avgPosDiff = (posDiff50 + posDiff730) / 2; //add in other tests as they get added
+	avgVeloDiff = (veloDiff50 + veloDiff730) / 2; //add in other tests as they get added
+
 	char buffer[256];
 	sprintf_s(buffer, sizeof(buffer), "Avg Position Percent Difference %f\n", avgPosDiff);
 	::OutputDebugStringA(buffer);
