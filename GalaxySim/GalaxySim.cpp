@@ -1077,8 +1077,6 @@ void loadKnownValues(float timeInDays){
 			if (i == 0){
 				ObjectData object;
 				object.m_name = L"Sun";
-				object.m_mass;
-				object.m_diameter;
 				object.m_xcoord;
 				object.m_ycoord;
 				object.m_zcoord;
