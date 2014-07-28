@@ -165,6 +165,9 @@ public:
 };
 
 std::vector<ObjectData> g_objects;
+std::vector<ObjectData> g_knownValues50; //vector that will contain known solar system database values for time=50 
+std::vector<ObjectData> g_knownValues365; //vector that will contain known solar system database values for time=365
+std::vector<ObjectData> g_knownValues730; //vector that will contain known solar system database values for time=730 
 
 //const float g_constant = -8.644 * pow(10, -13);
 const float g_constant = -8.644E-16;
@@ -834,7 +837,7 @@ void displayObjectInfo(){
 //input a WCHAR string and a float, assigns value of float to the WCHAR string
 //if the conversion fails in some way, the string is set to NULL
 void GetWCharFromFloat(WCHAR *string, float inputFloat){
-	if (string == NULL || inputFloat == NULL){
+	if (string == NULL){
 		return;
 	}
 
@@ -848,7 +851,7 @@ void GetWCharFromFloat(WCHAR *string, float inputFloat){
 //input a WCHAR string and an int, assigns value of int to the WCHAR string
 //if the conversion fails in some way, the string is set to NULL
 void GetWCharFromInt(WCHAR *string, int inputInt){
-	if (string == NULL || inputInt == NULL){
+	if (string == NULL){
 		return;
 	}
 
@@ -959,8 +962,434 @@ void jumpTime(float newTime){
 // Functions that help test the accuracy of the simulation
 //--------------------------------------------------------------------------------------
 
-//fills arrays with hardcoded real values from NASA JPL Database
-void loadKnownValues(){
+
+
+//fills arrays with hardcoded real values from NASA JPL Database 
+//position in km, velocity in km/hr
+//depending on the input parameter timeInDays it can input time=50, 365, or 730 values
+void loadKnownValues(float timeInDays){
+	if (timeInDays == 50){
+		for (int i = 0; i < 9; i++){
+			if (i == 0){
+				ObjectData object;
+				object.m_name = L"Sun";
+				object.m_xcoord = 0;
+				object.m_ycoord = 0;
+				object.m_zcoord = 0;
+				object.m_xvelo = 0;
+				object.m_yvelo = 0;
+				object.m_zvelo = 0;
+				g_knownValues50.push_back(object);
+			}
+			if (i == 1){
+				ObjectData object;
+				object.m_name = L"Mercury";
+				object.m_xcoord = -41474483.07;
+				object.m_ycoord = - 54103558.57;
+				object.m_zcoord = -615489.7885;
+				object.m_xvelo = 103666.4762;
+				object.m_yvelo = -98496.68804;
+				object.m_zvelo = -17559.11238;
+				g_knownValues50.push_back(object);
+			}
+			if (i == 2){
+				ObjectData object;
+				object.m_name = L"Venus";
+				object.m_xcoord = -64449331.34;
+				object.m_ycoord = 85873531.11;
+				object.m_zcoord = 4896238.182;
+				object.m_xvelo = -101273.7503;
+				object.m_yvelo = -76361.15814;
+				object.m_zvelo = 4797.897862;
+				g_knownValues50.push_back(object);
+			}
+			if (i == 3){
+				ObjectData object;
+				object.m_name = L"Earth";
+				object.m_xcoord = 142026764.7;
+				object.m_ycoord = -51038184.77;
+				object.m_zcoord = 949.4655597;
+				object.m_xvelo = 34483.13481;
+				object.m_yvelo = 100524.2038;
+				object.m_zvelo = -5.366305188;
+				g_knownValues50.push_back(object);
+			}
+			if (i == 4){
+				ObjectData object;
+				object.m_name = L"Mars";
+				object.m_xcoord = 16377975.27;
+				object.m_ycoord = -215684754.5;
+				object.m_zcoord = -4921153.108;
+				object.m_xvelo = 90280.36324;
+				object.m_yvelo = 14107.55284;
+				object.m_zvelo = -1920.324435;
+				g_knownValues50.push_back(object);
+			}
+			if (i == 5){
+				ObjectData object;
+				object.m_name = L"Jupiter";
+				object.m_xcoord = -452147786;
+				object.m_ycoord = 647743728;
+				object.m_zcoord = 7427418.211;
+				object.m_xvelo = -39170.87777;
+				object.m_yvelo = -24722.02667;
+				object.m_zvelo = 979.2257568;
+				g_knownValues50.push_back(object);
+			}
+			if (i == 6){
+				ObjectData object;
+				object.m_name = L"Saturn";
+				object.m_xcoord = -885761459.9;
+				object.m_ycoord = -1191572769;
+				object.m_zcoord = 55978831.8;
+				object.m_xvelo = 25987.33133;
+				object.m_yvelo = -20856.51129;
+				object.m_zvelo = -674.5191272;
+				g_knownValues50.push_back(object);
+			}
+			if (i == 7){
+				ObjectData object;
+				object.m_name = L"Uranus";
+				object.m_xcoord = 2906149695;
+				object.m_ycoord = 720636051.6;
+				object.m_zcoord = -34960348.43;
+				object.m_xvelo = -6107.200651;
+				object.m_yvelo = 22625.66929;
+				object.m_zvelo = 163.5649798;
+				g_knownValues50.push_back(object);
+			}
+			if (i == 8){
+				ObjectData object;
+				object.m_name = L"Neptune";
+				object.m_xcoord = 4095814959;
+				object.m_ycoord = -1823544579;
+				object.m_zcoord = -56824695.64;
+				object.m_xvelo = 7799.867938;
+				object.m_yvelo = 17962.08121;
+				object.m_zvelo = -552.7257902;
+				g_knownValues50.push_back(object);
+			}
+		}
+	}
+
+	if (timeInDays == 365){
+		for (int i = 0; i < 9; i++){
+			if (i == 0){
+				ObjectData object;
+				object.m_name = L"Sun";
+				object.m_mass;
+				object.m_diameter;
+				object.m_xcoord;
+				object.m_ycoord;
+				object.m_zcoord;
+				object.m_xvelo;
+				object.m_yvelo;
+				object.m_zvelo;
+				g_knownValues365.push_back(object);
+			}
+			if (i == 1){
+				ObjectData object;
+				object.m_name = L"Mercury";
+				object.m_mass;
+				object.m_diameter;
+				object.m_xcoord;
+				object.m_ycoord;
+				object.m_zcoord;
+				object.m_xvelo;
+				object.m_yvelo;
+				object.m_zvelo;
+				g_knownValues365.push_back(object);
+			}
+			if (i == 2){
+				ObjectData object;
+				object.m_name = L"Venus";
+				object.m_mass;
+				object.m_diameter;
+				object.m_xcoord;
+				object.m_ycoord;
+				object.m_zcoord;
+				object.m_xvelo;
+				object.m_yvelo;
+				object.m_zvelo;
+				g_knownValues365.push_back(object);
+			}
+			if (i == 3){
+				ObjectData object;
+				object.m_name = L"Earth";
+				object.m_mass;
+				object.m_diameter;
+				object.m_xcoord;
+				object.m_ycoord;
+				object.m_zcoord;
+				object.m_xvelo;
+				object.m_yvelo;
+				object.m_zvelo;
+				g_knownValues365.push_back(object);
+			}
+			if (i == 4){
+				ObjectData object;
+				object.m_name = L"Mars";
+				object.m_mass;
+				object.m_diameter;
+				object.m_xcoord;
+				object.m_ycoord;
+				object.m_zcoord;
+				object.m_xvelo;
+				object.m_yvelo;
+				object.m_zvelo;
+				g_knownValues365.push_back(object);
+			}
+			if (i == 5){
+				ObjectData object;
+				object.m_name = L"Jupiter";
+				object.m_mass;
+				object.m_diameter;
+				object.m_xcoord;
+				object.m_ycoord;
+				object.m_zcoord;
+				object.m_xvelo;
+				object.m_yvelo;
+				object.m_zvelo;
+				g_knownValues365.push_back(object);
+			}
+			if (i == 6){
+				ObjectData object;
+				object.m_name = L"Saturn";
+				object.m_mass;
+				object.m_diameter;
+				object.m_xcoord;
+				object.m_ycoord;
+				object.m_zcoord;
+				object.m_xvelo;
+				object.m_yvelo;
+				object.m_zvelo;
+				g_knownValues365.push_back(object);
+			}
+			if (i == 7){
+				ObjectData object;
+				object.m_name = L"Uranus";
+				object.m_mass;
+				object.m_diameter;
+				object.m_xcoord;
+				object.m_ycoord;
+				object.m_zcoord;
+				object.m_xvelo;
+				object.m_yvelo;
+				object.m_zvelo;
+				g_knownValues365.push_back(object);
+			}
+			if (i == 8){
+				ObjectData object;
+				object.m_name = L"Neptune";
+				object.m_mass;
+				object.m_diameter;
+				object.m_xcoord;
+				object.m_ycoord;
+				object.m_zcoord;
+				object.m_xvelo;
+				object.m_yvelo;
+				object.m_zvelo;
+				g_knownValues365.push_back(object);
+			}
+		}
+	}
+
+	if (timeInDays == 730){
+		for (int i = 0; i < 9; i++){
+			if (i == 0){
+				ObjectData object;
+				object.m_name = L"Sun";
+				object.m_mass;
+				object.m_diameter;
+				object.m_xcoord;
+				object.m_ycoord;
+				object.m_zcoord;
+				object.m_xvelo;
+				object.m_yvelo;
+				object.m_zvelo;
+				g_knownValues730.push_back(object);
+			}
+			if (i == 1){
+				ObjectData object;
+				object.m_name = L"Mercury";
+				object.m_mass;
+				object.m_diameter;
+				object.m_xcoord;
+				object.m_ycoord;
+				object.m_zcoord;
+				object.m_xvelo;
+				object.m_yvelo;
+				object.m_zvelo;
+				g_knownValues730.push_back(object);
+			}
+			if (i == 2){
+				ObjectData object;
+				object.m_name = L"Venus";
+				object.m_mass;
+				object.m_diameter;
+				object.m_xcoord;
+				object.m_ycoord;
+				object.m_zcoord;
+				object.m_xvelo;
+				object.m_yvelo;
+				object.m_zvelo;
+				g_knownValues730.push_back(object);
+			}
+			if (i == 3){
+				ObjectData object;
+				object.m_name = L"Earth";
+				object.m_mass;
+				object.m_diameter;
+				object.m_xcoord;
+				object.m_ycoord;
+				object.m_zcoord;
+				object.m_xvelo;
+				object.m_yvelo;
+				object.m_zvelo;
+				g_knownValues730.push_back(object);
+			}
+			if (i == 4){
+				ObjectData object;
+				object.m_name = L"Mars";
+				object.m_mass;
+				object.m_diameter;
+				object.m_xcoord;
+				object.m_ycoord;
+				object.m_zcoord;
+				object.m_xvelo;
+				object.m_yvelo;
+				object.m_zvelo;
+				g_knownValues730.push_back(object);
+			}
+			if (i == 5){
+				ObjectData object;
+				object.m_name = L"Jupiter";
+				object.m_mass;
+				object.m_diameter;
+				object.m_xcoord;
+				object.m_ycoord;
+				object.m_zcoord;
+				object.m_xvelo;
+				object.m_yvelo;
+				object.m_zvelo;
+				g_knownValues730.push_back(object);
+			}
+			if (i == 6){
+				ObjectData object;
+				object.m_name = L"Saturn";
+				object.m_mass;
+				object.m_diameter;
+				object.m_xcoord;
+				object.m_ycoord;
+				object.m_zcoord;
+				object.m_xvelo;
+				object.m_yvelo;
+				object.m_zvelo;
+				g_knownValues730.push_back(object);
+			}
+			if (i == 7){
+				ObjectData object;
+				object.m_name = L"Uranus";
+				object.m_mass;
+				object.m_diameter;
+				object.m_xcoord;
+				object.m_ycoord;
+				object.m_zcoord;
+				object.m_xvelo;
+				object.m_yvelo;
+				object.m_zvelo;
+				g_knownValues730.push_back(object);
+			}
+			if (i == 8){
+				ObjectData object;
+				object.m_name = L"Neptune";
+				object.m_mass;
+				object.m_diameter;
+				object.m_xcoord;
+				object.m_ycoord;
+				object.m_zcoord;
+				object.m_xvelo;
+				object.m_yvelo;
+				object.m_zvelo;
+				g_knownValues730.push_back(object);
+			}
+		}
+	}
+}
+
+//compares positions of real and simulated values
+//expects that order of planets in XML is real order starting from Sun
+float comparePosVal(vector<ObjectData> &realValues){
+	float avgPosDiff = 0;
+	for (int i = 0; i < 9; i++){
+		float xDiff = ((realValues[i].m_xcoord - g_pParticleArray[i].pos.x) / realValues[i].m_xcoord) * 100;
+		float yDiff = ((realValues[i].m_ycoord - g_pParticleArray[i].pos.y) / realValues[i].m_ycoord) * 100;
+		float zDiff = ((realValues[i].m_zcoord - g_pParticleArray[i].pos.z) / realValues[i].m_zcoord) * 100;
+		float posDiff = (xDiff + yDiff + zDiff) / 3;
+		avgPosDiff = (avgPosDiff*i + posDiff) / (i + 1);
+	}
+	return avgPosDiff;
+}
+
+//compares velocities of real and simulated values
+//expects that order of planets in XML is real order starting from Sun
+float compareVeloVal(vector<ObjectData> &realValues){
+	float avgVeloDiff = 0;
+	for (int i = 0; i < 9; i++){
+		float xvDiff = ((realValues[i].m_xvelo - g_pParticleArray[i].velo.x) / realValues[i].m_xvelo) * 100;
+		float yvDiff = ((realValues[i].m_yvelo - g_pParticleArray[i].velo.y) / realValues[i].m_yvelo) * 100;
+		float zvDiff = ((realValues[i].m_zvelo - g_pParticleArray[i].velo.z) / realValues[i].m_zvelo) * 100;
+		float veloDiff = (xvDiff + yvDiff + zvDiff) / 3;
+		avgVeloDiff = (avgVeloDiff*i + veloDiff) / (i + 1);
+	}
+	return avgVeloDiff;
+}
+
+//unit test tests accuracy of jumpTime feature for time=1 year etc.
+void testJumpTime(){
+	float avgPosDiff;
+	float avgVeloDiff;
+
+	//test for time=50 days
+	loadKnownValues(50);
+	jumpTime(50);
+	DXUTPause(true, false);
+	g_isPaused = true;
+	float posDiff50 = comparePosVal(g_knownValues50);
+	float veloDiff50 = compareVeloVal(g_knownValues50);
+	DXUTPause(false, false);
+	g_isPaused = false;
+
+	//test for time=365 days
+	loadKnownValues(365);
+	jumpTime(365);
+	DXUTPause(true, false);
+	g_isPaused = true;
+	float posDiff365 = comparePosVal(g_knownValues365);
+	float veloDiff365 = compareVeloVal(g_knownValues365);
+	DXUTPause(false, false);
+	g_isPaused = false;
+
+	//test for time=730 days
+	loadKnownValues(730);
+	jumpTime(730);
+	DXUTPause(true, false);
+	g_isPaused = true;
+	float posDiff730 = comparePosVal(g_knownValues730);
+	float veloDiff730 = compareVeloVal(g_knownValues730);
+	DXUTPause(false, false);
+	g_isPaused = false;
+
+	//average the different tests
+	avgPosDiff = (posDiff50 + posDiff365 + posDiff730) / 3; //add in other tests as they get added
+	avgVeloDiff = (veloDiff50 + veloDiff365 + veloDiff730) / 3; //add in other tests as they get added
+	printf("Avg Position % Difference %f", avgPosDiff);
+	printf("Avg Velocity % Difference %f", avgVeloDiff);
+}
+
+//test the fast forward
+//fast forward to time=50 then time=365 then time=730 and compare results
+void testFastFwd(){
 
 }
 
