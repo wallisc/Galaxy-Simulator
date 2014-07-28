@@ -199,20 +199,31 @@ double g_systemTime = 0; //sets the inital system time to 0
 LPWSTR g_timeString; //used later for the Jump Time In button user uses to input time to jump to.
 
 //testing constants
-bool g_isTest = true;
+bool g_isTest = false;
 int g_step = 1;
+const int g_lastStep = 12;
 double g_beginStartTime;
 double g_startUpTime;
 double g_endStartTime;
+
 double g_timeTest;
+double g_startTimeTest;
 double g_timeTestEnd;
+
 double g_pauseTime;
 double g_unPauseTime;
+double g_pauseFullTime;
+double g_unPauseFullTime;
+
 double g_winToFullTime;
 double g_fullToWinTime;
-double g_hitTestTime;
 
+double g_hitTestTime;
 double g_hitTestStart;
+
+float g_averageFPS = 0;
+int g_averageFPSCounter = 0;
+int g_frameCounter = 0;
 
 //-------------------------------------------------------------------------------------
 // UI control IDs
@@ -308,6 +319,31 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 	DXUTMainLoop(); // Enter into the DXUT render loop
 
 	g_objects.clear();
+
+	wchar_t buffer[256];
+	if (g_averageFPSCounter != 0) {
+		g_averageFPS = g_averageFPS / g_averageFPSCounter;
+		swprintf(buffer, sizeof(buffer), L"Average: %f\n", g_averageFPS);
+		::OutputDebugString(buffer);
+	}
+	swprintf(buffer, sizeof(buffer), L"Win to Full: %f\n", g_winToFullTime);
+	::OutputDebugString(buffer);
+	swprintf(buffer, sizeof(buffer), L"Full to Win: %f\n", g_fullToWinTime);
+	::OutputDebugString(buffer);
+	swprintf(buffer, sizeof(buffer), L"Hit Test: %f\n", g_hitTestTime);
+	::OutputDebugString(buffer);
+	swprintf(buffer, sizeof(buffer), L"Pause: %f\n", g_pauseTime);
+	::OutputDebugString(buffer);
+	swprintf(buffer, sizeof(buffer), L"Unpause: %f\n", g_unPauseTime);
+	::OutputDebugString(buffer);
+	swprintf(buffer, sizeof(buffer), L"Pause Full: %f\n", g_pauseFullTime);
+	::OutputDebugString(buffer);
+	swprintf(buffer, sizeof(buffer), L"Unpause Full: %f\n", g_unPauseFullTime);
+	::OutputDebugString(buffer);
+	swprintf(buffer, sizeof(buffer), L"Start up: %f\n", g_startUpTime);
+	::OutputDebugString(buffer);
+	swprintf(buffer, sizeof(buffer), L"Time test: %f\n", g_timeTest);
+	::OutputDebugString(buffer);
 
 	return DXUTGetExitCode();
 }
@@ -1118,6 +1154,7 @@ wstring concatenateObjInfo(int index) {
 	return objectInfo;
 }
 
+
 //--------------------------------------------------------------------------------------
 // This callback function will be called once at the beginning of every frame. This is the
 // best location for your application to handle updates to the scene, but is not 
@@ -1133,6 +1170,18 @@ void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 	{
 		Sleep(static_cast<DWORD>((SECONDS_PER_FRAME - fElapsedTime) * 1000.0f));
 	}
+	
+	if (g_frameCounter % 100 == 0) {
+		g_averageFPS += DXUTGetFPS();
+		g_averageFPSCounter++;
+		wchar_t buffer[256];
+		swprintf(buffer, sizeof(buffer), L"FPS: %f\n", DXUTGetFPS());
+		::OutputDebugString(buffer);
+	}
+	
+	
+	g_frameCounter++;
+
 
 	// Update the camera's position based on user input 
 	g_Camera.FrameMove(fElapsedTime);
@@ -1265,10 +1314,15 @@ void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 
 	g_relevantMouse = false;
 
-	if (g_systemTime >= 1.000000)
+	if (g_systemTime >= 1.000000 && g_systemTime <= 1 + g_timeValue)
+	{
+		g_startTimeTest = g_Timer.GetAbsoluteTime();
+	}
+
+	if (g_systemTime >= 2.000000 && g_systemTime <= 2 + g_timeValue)
 	{
 		g_timeTestEnd = g_Timer.GetAbsoluteTime();
-		g_timeTest = g_timeTestEnd - g_endStartTime; //pre-loop to time ten
+		g_timeTest = g_timeTestEnd - g_startTimeTest; //pre-loop to time one
 	}
 
 }
@@ -1353,11 +1407,23 @@ void pauseControl() {
 
 	if (g_isPaused) {
 		double pauseEnd = g_Timer.GetAbsoluteTime();
-		g_pauseTime = pauseEnd - pauseStart;
+		if (DXUTIsWindowed()) {
+			g_pauseTime = pauseEnd - pauseStart;
+		}
+		else {
+			g_pauseFullTime = pauseEnd - pauseStart;
+		}
+		
 }
 	else {
 		double unPauseEnd = g_Timer.GetAbsoluteTime();
 		g_unPauseTime = unPauseEnd - unPauseStart;
+		if (DXUTIsWindowed()) {
+			g_unPauseTime = unPauseEnd - unPauseStart;
+		}
+		else {
+			g_unPauseFullTime = unPauseEnd - unPauseStart;
+		}
 	}
 
 
@@ -1396,9 +1462,7 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 			g_fullToWinTime = fullToWinEnd - fullToWinStart;
 		
 		}
-		wchar_t buffer[256];
-		swprintf(buffer, sizeof(buffer), L"Hit Test: %f\n", g_winToFullTime);
-		::OutputDebugString(buffer);
+		
 		break;
 	}
 	case IDC_TOGGLEREF:
@@ -1716,11 +1780,11 @@ void automatedTest() {
 		break;
 	}
 	case 4: {
-		//OnGUIEvent(0, IDC_TOGGLEFULLSCREEN, NULL, NULL);
+		OnGUIEvent(0, IDC_TOGGLEFULLSCREEN, NULL, NULL);
 		break;
 	}
 	case 5: {
-		//OnGUIEvent(0, IDC_TOGGLEFULLSCREEN, NULL, NULL);
+		OnGUIEvent(0, IDC_PAUSE, NULL, NULL);
 		break;
 	}
 	case 6: {
@@ -1728,16 +1792,32 @@ void automatedTest() {
 		break;
 	}
 	case 7: {
-		OnMouseEvent(true, false, false, false, false, 0, 400.000000, 298.000000, NULL);
+		OnGUIEvent(0, IDC_TOGGLEFULLSCREEN, NULL, NULL);
 		break;
 	}
 	case 8: {
-		//mouse click test 2: side of Mars. Or another planet?
+		OnGUIEvent(0, IDC_PAUSE, NULL, NULL);
 		break;
 	}
 	case 9: {
-	//	OnGUIEvent(0, IDC_PAUSE, NULL, NULL);
+		OnMouseEvent(true, false, false, false, false, 0, 400.000000, 298.000000, NULL);
 		break;
+	}
+	case 10: {
+		//mouse click test 2: side of Mars. Or another planet?
+		break;
+	}
+	case 11: {
+		OnGUIEvent(0, IDC_PAUSE, NULL, NULL);
+		break;
+	}
+	case g_lastStep: {
+		if (g_averageFPSCounter != 0) {
+			g_averageFPS = g_averageFPS / g_averageFPSCounter;
+			wchar_t buffer[256];
+			swprintf(buffer, sizeof(buffer), L"Average: %f\n", g_averageFPS);
+			::OutputDebugString(buffer);
+		}
 	}
 	default: {
 
@@ -1786,8 +1866,32 @@ void CALLBACK OnD3D11FrameRender(ID3D11Device* pd3dDevice, ID3D11DeviceContext* 
 	dwTimefirst = GetTickCount();
 	}*/
 
-	if (g_isTest && g_timeTest != NULL) {
+	if (g_isTest && g_timeTest != NULL && g_step <= g_lastStep) {
 		automatedTest();
+	}
+	else if(g_isTest && g_timeTest != NULL && g_step > g_lastStep) {
+		wchar_t buffer[256];
+		swprintf(buffer, sizeof(buffer), L"Win to Full: %f\n", g_winToFullTime);
+		::OutputDebugString(buffer);
+		swprintf(buffer, sizeof(buffer), L"Full to Win: %f\n", g_fullToWinTime);
+		::OutputDebugString(buffer);
+		swprintf(buffer, sizeof(buffer), L"Hit Test: %f\n", g_hitTestTime);
+		::OutputDebugString(buffer);
+		swprintf(buffer, sizeof(buffer), L"Pause: %f\n", g_pauseTime);
+		::OutputDebugString(buffer);
+		swprintf(buffer, sizeof(buffer), L"Unpause: %f\n", g_unPauseTime);
+		::OutputDebugString(buffer);
+		swprintf(buffer, sizeof(buffer), L"Pause Full: %f\n", g_pauseFullTime);
+		::OutputDebugString(buffer);
+		swprintf(buffer, sizeof(buffer), L"Unpause Full: %f\n", g_unPauseFullTime);
+		::OutputDebugString(buffer);
+		swprintf(buffer, sizeof(buffer), L"Start up: %f\n", g_startUpTime);
+		::OutputDebugString(buffer);
+		swprintf(buffer, sizeof(buffer), L"Time test: %f\n", g_timeTest);
+		::OutputDebugString(buffer);
+		//probably call output file stuff here
+		//terminate program
+		exit(0);
 	}
 }
 
