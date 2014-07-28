@@ -1199,118 +1199,100 @@ void loadKnownValues(float timeInDays){
 			if (i == 0){
 				ObjectData object;
 				object.m_name = L"Sun";
-				object.m_mass;
-				object.m_diameter;
-				object.m_xcoord;
-				object.m_ycoord;
-				object.m_zcoord;
-				object.m_xvelo;
-				object.m_yvelo;
-				object.m_zvelo;
+				object.m_xcoord = 0;
+				object.m_ycoord = 0;
+				object.m_zcoord = 0;
+				object.m_xvelo = 0;
+				object.m_yvelo = 0;
+				object.m_zvelo = 0;
 				g_knownValues730.push_back(object);
 			}
 			if (i == 1){
 				ObjectData object;
 				object.m_name = L"Mercury";
-				object.m_mass;
-				object.m_diameter;
-				object.m_xcoord;
-				object.m_ycoord;
-				object.m_zcoord;
-				object.m_xvelo;
-				object.m_yvelo;
-				object.m_zvelo;
+				object.m_xcoord = -44417188.49;
+				object.m_ycoord = 26479749.56;
+				object.m_zcoord = 6240000;
+				object.m_xvelo = -125744.561;
+				object.m_yvelo = -143282.4045;
+				object.m_zvelo = -171.736307;
 				g_knownValues730.push_back(object);
 			}
 			if (i == 2){
 				ObjectData object;
 				object.m_name = L"Venus";
-				object.m_mass;
-				object.m_diameter;
-				object.m_xcoord;
-				object.m_ycoord;
-				object.m_zcoord;
-				object.m_xvelo;
-				object.m_yvelo;
-				object.m_zvelo;
+				object.m_xcoord = -79882107.38;
+				object.m_ycoord = 71696040.49;
+				object.m_zcoord = 5592730.546;
+				object.m_xvelo = -84674.20188;
+				object.m_yvelo = -94480.81107;
+				object.m_zvelo = 3590.777918;
 				g_knownValues730.push_back(object);
 			}
 			if (i == 3){
 				ObjectData object;
 				object.m_name = L"Earth";
-				object.m_mass;
-				object.m_diameter;
-				object.m_xcoord;
-				object.m_ycoord;
-				object.m_zcoord;
-				object.m_xvelo;
-				object.m_yvelo;
-				object.m_zvelo;
+				object.m_xcoord = 58728268.08;
+				object.m_ycoord = -140259837.9;
+				object.m_zcoord = 4525.505711;
+				object.m_xvelo = 97135.72709;
+				object.m_yvelo = 41039.16657;
+				object.m_zvelo = -3.099869692;
 				g_knownValues730.push_back(object);
 			}
 			if (i == 4){
 				ObjectData object;
 				object.m_name = L"Mars";
-				object.m_mass;
-				object.m_diameter;
-				object.m_xcoord;
-				object.m_ycoord;
-				object.m_zcoord;
-				object.m_xvelo;
-				object.m_yvelo;
-				object.m_zvelo;
+				object.m_xcoord = 3374109.437;
+				object.m_ycoord = -217370516.2;
+				object.m_zcoord = -4637944.001;
+				object.m_xvelo = 90504.56687;
+				object.m_yvelo = 8858.20124;
+				object.m_zvelo = -2035.550651;
 				g_knownValues730.push_back(object);
 			}
 			if (i == 5){
 				ObjectData object;
 				object.m_name = L"Jupiter";
-				object.m_mass;
-				object.m_diameter;
-				object.m_xcoord;
-				object.m_ycoord;
-				object.m_zcoord;
-				object.m_xvelo;
-				object.m_yvelo;
-				object.m_zvelo;
+				object.m_xcoord = -813800809.4;
+				object.m_ycoord = 30590499.83;
+				object.m_zcoord = 18082783.82;
+				object.m_xvelo = -2334.424351;
+				object.m_yvelo = -44828.00906;
+				object.m_zvelo = 238.1777941;
 				g_knownValues730.push_back(object);
 			}
 			if (i == 6){
 				ObjectData object;
 				object.m_name = L"Saturn";
-				object.m_mass;
-				object.m_diameter;
-				object.m_xcoord;
-				object.m_ycoord;
-				object.m_zcoord;
-				object.m_xvelo;
-				object.m_yvelo;
-				object.m_zvelo;
+				object.m_xcoord = -409839199.6;
+				object.m_ycoord = -1443313913;
+				object.m_zcoord = 41401603.8;
+				object.m_xvelo = 31559.59078;
+				object.m_yvelo = -9643.498461;
+				object.m_zvelo = -1087.899625;
 				g_knownValues730.push_back(object);
 			}
 			if (i == 7){
 				ObjectData object;
 				object.m_name = L"Uranus";
-				object.m_mass;
-				object.m_diameter;
-				object.m_xcoord;
-				object.m_ycoord;
-				object.m_zcoord;
-				object.m_xvelo;
-				object.m_yvelo;
-				object.m_zvelo;
+				object.m_xcoord = 2781978360;
+				object.m_ycoord = 1083012788;
+				object.m_zcoord = -32000122.47;
+				object.m_xvelo = -9067.271116;
+				object.m_yvelo = 21658.78742;
+				object.m_zvelo = 198.6202743;
 				g_knownValues730.push_back(object);
 			}
 			if (i == 8){
 				ObjectData object;
 				object.m_name = L"Neptune";
-				object.m_mass;
-				object.m_diameter;
-				object.m_xcoord;
-				object.m_ycoord;
-				object.m_zcoord;
-				object.m_xvelo;
-				object.m_yvelo;
-				object.m_zvelo;
+				object.m_xcoord = 4212998727;
+				object.m_ycoord = -1525719745;
+				object.m_zcoord = -65670512.68;
+				object.m_xvelo = 6539.544931;
+				object.m_yvelo = 18471.16251;
+				object.m_zvelo = -533.8532016;
 				g_knownValues730.push_back(object);
 			}
 		}
