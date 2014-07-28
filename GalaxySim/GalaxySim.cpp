@@ -122,7 +122,7 @@ struct PARTICLE_DETAILS
 	wstring name;
 	float mass;
 	float diameter;
-	int brightness;
+	float brightness;
 	float red;
 	float green;
 	float blue;
@@ -139,11 +139,13 @@ class ObjectData
 public:
 
 	ObjectData() :
-		m_name(L"unknown"), m_mass(0.0f), m_diameter(0.0f), m_brightness(0), m_xcoord(0.0f), m_ycoord(0.0f), m_zcoord(0.0f)
+		m_name(L"unknown"), m_mass(0.0f), m_diameter(0.0f), m_brightness(0.0f), m_xcoord(0.0f), m_ycoord(0.0f), m_zcoord(0.0f), m_xvelo(0.0f), m_yvelo(0.0f), 
+		m_zvelo(0.0f), m_red(0.0f), m_green(0.0f), m_blue(0.0f)
 	{}
 
-	ObjectData(const wstring & name, float mass, float diameter, int brightness, float x, float y, float z) :
-		m_name(name), m_mass(mass), m_diameter(diameter), m_brightness(brightness), m_xcoord(x), m_ycoord(y), m_zcoord(z)
+	ObjectData(const wstring & name, float mass, float diameter, int brightness, float x, float y, float z, float xv, float yv, float zv, float r, float g, float b) :
+		m_name(name), m_mass(mass), m_diameter(diameter), m_brightness(brightness), m_xcoord(x), m_ycoord(y), m_zcoord(z), 
+		m_xvelo(xv), m_yvelo(yv), m_zvelo(zv), m_red(r), m_green(g), m_blue(b)
 	{
 		// Could assert on the various properties to ensure they are within range
 	}
@@ -151,7 +153,7 @@ public:
 	wstring   m_name;
 	float     m_mass;
 	float     m_diameter;
-	int       m_brightness;
+	float     m_brightness;
 	float     m_xcoord;
 	float     m_ycoord;
 	float     m_zcoord;
@@ -213,7 +215,6 @@ int g_counter = 0;
 #define IDC_TOGGLEREF           3
 #define IDC_CHANGEDEVICE        4
 #define IDC_RESETPARTICLES      5
-#define IDC_DISPLAYINFO			6
 #define IDC_PAUSE               7
 #define IDC_DOUBLESPEED			8
 #define IDC_HALFSPEED			9
@@ -461,7 +462,7 @@ int ParseFile(){
 			}
 
 			else if (elementName != NULL && wcscmp(elementName, L"brightness") == 0){
-				objectData.m_brightness = (int)wcstof(pwszValue, NULL);
+				objectData.m_brightness = wcstof(pwszValue, NULL);
 			}
 
 			else if (elementName != NULL && wcscmp(elementName, L"xcoord") == 0){
@@ -650,14 +651,17 @@ HRESULT CreateParticleBuffer(ID3D11Device* pd3dDevice)
 			if (g_objects[i].m_blue < 0) {
 				g_objects[i].m_blue = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
 			}
+			if (g_objects[i].m_brightness < 0) {
+				g_objects[i].m_brightness = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+			}
 
-			pVertices[i].Color = XMFLOAT4(g_objects[i].m_red, g_objects[i].m_green, g_objects[i].m_blue, 1.000000);
+			pVertices[i].Color = XMFLOAT4(g_objects[i].m_red, g_objects[i].m_green, g_objects[i].m_blue, g_objects[i].m_brightness);
 		}
 		g_isFirst = false;
 	}
 	else {
 		for (UINT i = 0; i < g_objects.size(); i++) {
-			pVertices[i].Color = XMFLOAT4(g_objects[i].m_red, g_objects[i].m_green, g_objects[i].m_blue, 1.000000);
+			pVertices[i].Color = XMFLOAT4(g_objects[i].m_red, g_objects[i].m_green, g_objects[i].m_blue, g_objects[i].m_brightness);
 		}
 	}
 
@@ -845,7 +849,7 @@ void GetWCharFromFloat(WCHAR *string, float inputFloat){
 
 	if (hr != S_OK){
 		string = NULL;
-	}
+}
 }
 
 //input a WCHAR string and an int, assigns value of int to the WCHAR string
@@ -939,7 +943,7 @@ void jumpTime(float newTime){
 
 		}
 
-	}
+				}
 
 	//to test where the particle is when you jump to a time
 	//put a breakpoint at float acoord=1.0 and see values of x, y, and zcoord
@@ -952,8 +956,8 @@ void jumpTime(float newTime){
 		float yvelo = g_pParticleArray[i].velo.y;
 		float zvelo = g_pParticleArray[i].velo.z;
 		float acoord=1.0;
-	}
-	
+			}
+
 	g_systemTime = newTime;
 
 }
@@ -1138,7 +1142,7 @@ void loadKnownValues(float timeInDays){
 				object.m_yvelo;
 				object.m_zvelo;
 				g_knownValues365.push_back(object);
-			}
+		}
 			if (i == 5){
 				ObjectData object;
 				object.m_name = L"Jupiter";
@@ -1329,7 +1333,7 @@ float comparePosVal(vector<ObjectData> &realValues){
 		avgPosDiff = (avgPosDiff*i + posDiff) / (i + 1);
 	}
 	return avgPosDiff;
-}
+	}
 
 //compares velocities of real and simulated values
 //expects that order of planets in XML is real order starting from Sun
@@ -1577,13 +1581,13 @@ void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 
 
 
-			auto pd3dImmediateContext = DXUTGetD3D11DeviceContext();
+		auto pd3dImmediateContext = DXUTGetD3D11DeviceContext();
 
-			D3D11_MAPPED_SUBRESOURCE ms;
-			pd3dImmediateContext->Map(g_pParticlePosVelo0, 0, D3D11_MAP_WRITE_DISCARD, 0, &ms);
+		D3D11_MAPPED_SUBRESOURCE ms;
+		pd3dImmediateContext->Map(g_pParticlePosVelo0, 0, D3D11_MAP_WRITE_DISCARD, 0, &ms);
 
 			g_systemTime = g_systemTime + g_timeValueToHoursConversion;
-			
+
 			GravityMotionIteration(g_timeValue);
 
 			//temporary counter iteration
@@ -1600,16 +1604,16 @@ void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 					float yvelo = g_pParticleArray[i].velo.y;
 					float zvelo = g_pParticleArray[i].velo.z;
 					float acoord = 1.0;
-				}
 			}
-
-			memcpy(ms.pData, g_pParticleArray, sizeof(PARTICLE) * NUM_PARTICLES);
-
-			pd3dImmediateContext->Unmap(g_pParticlePosVelo0, NULL);
-
-			std::swap(g_pParticlePosVelo0, g_pParticlePosVelo1);
-			std::swap(g_pParticlePosVeloRV0, g_pParticlePosVeloRV1);
 		}
+
+		memcpy(ms.pData, g_pParticleArray, sizeof(PARTICLE) * NUM_PARTICLES);
+
+		pd3dImmediateContext->Unmap(g_pParticlePosVelo0, NULL);
+
+		std::swap(g_pParticlePosVelo0, g_pParticlePosVelo1);
+		std::swap(g_pParticlePosVeloRV0, g_pParticlePosVeloRV1);
+	}
 
 	}
 	else if (g_isPaused && g_hasDisplay && g_relevantMouse) {
@@ -1723,6 +1727,39 @@ LRESULT CALLBACK MsgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, boo
 	return 0;
 }
 
+void pauseControl() {
+		if (g_hasDisplay) {
+			g_pTextBox->SetVisible(false);
+			g_hasDisplay = false;
+		}
+		if (!g_isPaused) {
+			DXUTPause(false, false);
+			g_isPaused = true;
+		}
+		else {
+			DXUTPause(true, false);
+			g_isPaused = false;
+		}
+
+		LPCWSTR welcomeMessage = L"Select an object\nto see information\ndisplayed\n";
+		if (g_isPaused && !g_hasDisplay && g_firstTextBox) { //always the first case; text box pointer gets assignment here
+			g_HUD.AddEditBox(11, welcomeMessage, 0, 295, 160, 300);
+			g_pTextBox = g_HUD.GetEditBox(11);
+			g_hasDisplay = true;
+			g_firstTextBox = false;
+		}
+		else if (g_isPaused && !g_hasDisplay)
+		{
+			g_pTextBox->SetText(welcomeMessage);
+			g_pTextBox->SetVisible(true);
+			g_hasDisplay = true;
+		}
+		else if (g_hasDisplay) {
+			g_pTextBox->SetVisible(false);
+			g_hasDisplay = false;
+		}
+}
+
 
 //--------------------------------------------------------------------------------------
 // Handles the GUI events
@@ -1764,39 +1801,7 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 	}
 	case IDC_PAUSE:
 	{
-		if (g_hasDisplay) {
-			g_pTextBox->SetVisible(false);
-			g_hasDisplay = false;
-		}
-		if (!g_isPaused) {
-			DXUTPause(false, false);
-			g_isPaused = true;
-		}
-		else {
-			DXUTPause(true, false);
-			g_isPaused = false;
-		}
-
-	}
-	case IDC_DISPLAYINFO: //this occurs every time the feature is paused
-	{
-		LPCWSTR welcomeMessage = L"Select an object\nto see information\ndisplayed\n(but actually press\nthe button)";
-		if (g_isPaused && !g_hasDisplay && g_firstTextBox) { //always the first case; text box pointer gets assignment here
-			g_HUD.AddEditBox(11, welcomeMessage, 0, 295, 160, 300);
-			g_pTextBox = g_HUD.GetEditBox(11);
-			g_hasDisplay = true;
-			g_firstTextBox = false;
-		}
-		else if (g_isPaused && !g_hasDisplay)
-		{
-			g_pTextBox->SetText(welcomeMessage);
-			g_pTextBox->SetVisible(true);
-			g_hasDisplay = true;
-		}
-		else if (g_hasDisplay) {
-			g_pTextBox->SetVisible(false);
-			g_hasDisplay = false;
-		}
+		pauseControl();
 		break;
 	}
 	case IDC_SUBMITITERATEIN:
@@ -2058,7 +2063,8 @@ bool RenderParticles(ID3D11DeviceContext* pd3dImmediateContext, CXMMATRIX mView,
 	pd3dImmediateContext->IASetVertexBuffers(0, 1, pBuffers, stride, offset);
 	pd3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
 
-	ID3D11ShaderResourceView* aRViews[1] = { g_pParticlePosVeloRV0 };
+    // Use the back buffer of the 2 particle PosVelo buffers
+	ID3D11ShaderResourceView* aRViews[1] = { g_pParticlePosVeloRV1 };
 	pd3dImmediateContext->VSSetShaderResources(0, 1, aRViews);
 
 	D3D11_MAPPED_SUBRESOURCE MappedResource;
@@ -2166,4 +2172,5 @@ void CALLBACK OnD3D11DestroyDevice(void* pUserContext)
 	SAFE_RELEASE(g_pBlendingStateParticle);
 	SAFE_RELEASE(g_pDepthStencilState);
 }
+
 
