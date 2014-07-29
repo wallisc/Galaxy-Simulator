@@ -37,6 +37,7 @@
 #include <strsafe.h>
 #include <sstream>
 #include <string>
+#include <fstream>
 
 
 #include "atlbase.h"
@@ -199,31 +200,33 @@ double g_systemTime = 0; //sets the inital system time to 0
 LPWSTR g_timeString; //used later for the Jump Time In button user uses to input time to jump to.
 
 //testing constants
-bool g_isTest = false;
+bool g_isTest = true;
 int g_step = 1;
-const int g_lastStep = 12;
+ofstream g_dataFile;
+
+//testing variable helpers
 double g_beginStartTime;
-double g_startUpTime;
 double g_endStartTime;
 
-double g_timeTest;
-double g_startTimeTest;
-double g_timeTestEnd;
+double g_startIntervalTest;
+double g_endIntervalTest;
 
-double g_pauseTime;
-double g_unPauseTime;
-double g_pauseFullTime;
-double g_unPauseFullTime;
-
-double g_winToFullTime;
-double g_fullToWinTime;
-
-double g_hitTestTime;
 double g_hitTestStart;
 
-float g_averageFPS = 0;
 int g_averageFPSCounter = 0;
 int g_frameCounter = 0;
+
+//printed testing variables
+double g_startUpTime;
+double g_timeIntervalTest;
+double g_pauseTime;
+double g_unPauseTime;
+double g_pauseFullScreenTime;
+double g_unPauseFullScreenTime;
+double g_winToFullTime;
+double g_fullToWinTime;
+double g_hitTestTime; // will need to be an average, or there will be a lot of these
+float g_averageFPS = 0;
 
 //-------------------------------------------------------------------------------------
 // UI control IDs
@@ -320,7 +323,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 
 	g_objects.clear();
 
-	wchar_t buffer[256];
+	/*wchar_t buffer[256];
 	if (g_averageFPSCounter != 0) {
 		g_averageFPS = g_averageFPS / g_averageFPSCounter;
 		swprintf(buffer, sizeof(buffer), L"Average: %f\n", g_averageFPS);
@@ -336,14 +339,14 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 	::OutputDebugString(buffer);
 	swprintf(buffer, sizeof(buffer), L"Unpause: %f\n", g_unPauseTime);
 	::OutputDebugString(buffer);
-	swprintf(buffer, sizeof(buffer), L"Pause Full: %f\n", g_pauseFullTime);
+	swprintf(buffer, sizeof(buffer), L"Pause Full: %f\n", g_pauseFullScreenTime);
 	::OutputDebugString(buffer);
-	swprintf(buffer, sizeof(buffer), L"Unpause Full: %f\n", g_unPauseFullTime);
+	swprintf(buffer, sizeof(buffer), L"Unpause Full: %f\n", g_unPauseFullScreenTime);
 	::OutputDebugString(buffer);
 	swprintf(buffer, sizeof(buffer), L"Start up: %f\n", g_startUpTime);
 	::OutputDebugString(buffer);
-	swprintf(buffer, sizeof(buffer), L"Time test: %f\n", g_timeTest);
-	::OutputDebugString(buffer);
+	swprintf(buffer, sizeof(buffer), L"Time test: %f\n", g_timeIntervalTest);
+	::OutputDebugString(buffer);*/
 
 	return DXUTGetExitCode();
 }
@@ -1174,11 +1177,10 @@ void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 	if (g_frameCounter % 100 == 0) {
 		g_averageFPS += DXUTGetFPS();
 		g_averageFPSCounter++;
-		wchar_t buffer[256];
+		/*wchar_t buffer[256];
 		swprintf(buffer, sizeof(buffer), L"FPS: %f\n", DXUTGetFPS());
-		::OutputDebugString(buffer);
+		::OutputDebugString(buffer);*/
 	}
-	
 	
 	g_frameCounter++;
 
@@ -1316,13 +1318,13 @@ void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 
 	if (g_systemTime >= 1.000000 && g_systemTime <= 1 + g_timeValue)
 	{
-		g_startTimeTest = g_Timer.GetAbsoluteTime();
+		g_startIntervalTest = g_Timer.GetAbsoluteTime();
 	}
 
-	if (g_systemTime >= 2.000000 && g_systemTime <= 2 + g_timeValue)
+	if (g_systemTime >= 10.000000 && g_systemTime <= 10 + g_timeValue)
 	{
-		g_timeTestEnd = g_Timer.GetAbsoluteTime();
-		g_timeTest = g_timeTestEnd - g_startTimeTest; //pre-loop to time one
+		g_endIntervalTest = g_Timer.GetAbsoluteTime();
+		g_timeIntervalTest = g_endIntervalTest - g_startIntervalTest; //pre-loop to time one
 	}
 
 }
@@ -1375,12 +1377,24 @@ void pauseControl() {
 	}
 	
 	
+	//if (!g_isPaused) {
+	//	DXUTPause(false, false);
+	//	g_isPaused = true;
+	//}
+	//else {
+	//	DXUTPause(true, false);
+	//	g_isPaused = false;
+	//}
+	//The above statement works whether or not the timer is commented, although it has the FPS freeze issue if timer isn't commented
+	//The below statement only works if the timer is commented, and does not have the FPS freeze issue (w/ timer, it doesn't render the edit box)
+	//This is likely because the edit box uses the global timer (DXUTgui.cpp 6116)
+	//Below statement's call logic makes more sense considering variable names; preferred use
 	if (!g_isPaused) {
-		DXUTPause(false, false);
+		DXUTPause(true, false);
 		g_isPaused = true;
 	}
 	else {
-		DXUTPause(true, false);
+		DXUTPause(false, false);
 		g_isPaused = false;
 	}
 
@@ -1408,7 +1422,7 @@ void pauseControl() {
 			g_pauseTime = pauseEnd - pauseStart;
 		}
 		else {
-			g_pauseFullTime = pauseEnd - pauseStart;
+			g_pauseFullScreenTime = pauseEnd - pauseStart;
 		}
 		
 }
@@ -1419,7 +1433,7 @@ void pauseControl() {
 			g_unPauseTime = unPauseEnd - unPauseStart;
 		}
 		else {
-			g_unPauseFullTime = unPauseEnd - unPauseStart;
+			g_unPauseFullScreenTime = unPauseEnd - unPauseStart;
 		}
 	}
 
@@ -1754,67 +1768,152 @@ bool RenderParticles(ID3D11DeviceContext* pd3dImmediateContext, CXMMATRIX mView,
 	return true;
 }
 
+double getStartTime() {
+	return g_startUpTime;
+}
+
+double getTimeIntervalTest() {
+	return g_timeIntervalTest;
+}
+
+double getPauseTime() {
+	return g_pauseTime;
+}
+
+double getUnPauseTime() {
+	return g_unPauseTime;
+}
+
+double getPauseFullScreenTime() {
+	return g_pauseFullScreenTime;
+}
+
+double getUnPauseFullScreenTime() {
+	return g_unPauseFullScreenTime;
+}
+
+double getWinToFullTime() {
+	return g_winToFullTime;
+}
+
+double getFullToWinTime() {
+	return g_fullToWinTime;
+}
+
+double getHitTestTime() {
+	return g_hitTestTime;
+}
+
+float getAverageFPS() {
+	return g_averageFPS / g_averageFPSCounter;
+}
+
+void initializeFile() {
+	srand(time(NULL));
+	int num = rand();
+	ostringstream oss;
+	string randomNum;
+	oss << randomNum << num;
+	string outputDataFileName = "telemetrydata" + oss.str() + ".csv";
+	g_dataFile.open(outputDataFileName);
+}
 
 void automatedTest() {
-	//start up time and constant iteration time data has been gathered by this point
+	
 	switch (g_step)
 	{
 	case 1: {
+		//start up time and time interval test data has been gathered by this point
+		double startUpTime = getStartTime();
+		double timeIntervalTest = getTimeIntervalTest();
+
+		initializeFile();
+		g_dataFile << "Start Time" << "," << startUpTime << endl;
+		g_dataFile << "Time Interval Test" << "," << timeIntervalTest << endl;
+	}
+	case 2: {
 		jumpTime(10);
 		//Q: Is calling jumpTime directly valid? Unsure how else to do this since it requires user input
 		//time not implemented in this branch
 		//include an accuracy validation here
 		break;
 	}
-	case 2: {
+	case 3: {
 		//My sandbox doesn't have iterations, but I would call it here
 		//g_iterationsPerFrame = 20.0
 		//accuracy validation here
 		break;
 	}
-	case 3: {
+	case 4: {
 		//camera??
 		break;
 	}
-	case 4: {
-		OnGUIEvent(0, IDC_TOGGLEFULLSCREEN, NULL, NULL);
-		break;
-	}
 	case 5: {
-		OnGUIEvent(0, IDC_PAUSE, NULL, NULL);
+		OnGUIEvent(0, IDC_TOGGLEFULLSCREEN, NULL, NULL);
+		double winToFullTime;
+		winToFullTime = getWinToFullTime();
+		g_dataFile << "Win to FullScreen" << "," << winToFullTime << endl;
 		break;
 	}
 	case 6: {
 		OnGUIEvent(0, IDC_PAUSE, NULL, NULL);
+		double pauseFullScreenTime;
+		pauseFullScreenTime = getPauseFullScreenTime();
+		g_dataFile << "Pause Fullscreen" << "," << pauseFullScreenTime << endl;
 		break;
 	}
 	case 7: {
-		OnGUIEvent(0, IDC_TOGGLEFULLSCREEN, NULL, NULL);
+		OnGUIEvent(0, IDC_PAUSE, NULL, NULL);
+		double unPauseFullScreenTime;
+		unPauseFullScreenTime = getUnPauseFullScreenTime();
+		g_dataFile << "Unpause Fullscreen" << "," << unPauseFullScreenTime << endl;
 		break;
 	}
 	case 8: {
-		OnGUIEvent(0, IDC_PAUSE, NULL, NULL);
+		OnGUIEvent(0, IDC_TOGGLEFULLSCREEN, NULL, NULL);
+		double fullToWinTime;
+		fullToWinTime = getFullToWinTime();
+		g_dataFile << "Full to Windowed" << "," << fullToWinTime << endl;
 		break;
 	}
 	case 9: {
-		OnMouseEvent(true, false, false, false, false, 0, 400.000000, 298.000000, NULL);
+		OnGUIEvent(0, IDC_PAUSE, NULL, NULL);
+		double pauseTime;
+		pauseTime = getPauseTime();
+		g_dataFile << "Pause" << "," << pauseTime << endl;
 		break;
 	}
 	case 10: {
-		//mouse click test 2: side of Mars. Or another planet?
+		OnMouseEvent(true, false, false, false, false, 0, 400.000000, 298.000000, NULL);
+		
 		break;
 	}
 	case 11: {
-		OnGUIEvent(0, IDC_PAUSE, NULL, NULL);
+		//needs to be collected after the call so method can go through onframemove
+		double hitTestTime;
+		hitTestTime = getHitTestTime();
+		g_dataFile << "Mouse Click Hit Test" << "," << hitTestTime << endl;
 		break;
 	}
-	case g_lastStep: {
+	case 12: {
+		OnGUIEvent(0, IDC_PAUSE, NULL, NULL);
+		double unPauseTime;
+		unPauseTime = getUnPauseTime();
+		g_dataFile << "Unpause" << "," << unPauseTime << endl;
+		break;
+	}
+	case 13: {
+		double averageFPS;
 		if (g_averageFPSCounter != 0) {
-			g_averageFPS = g_averageFPS / g_averageFPSCounter;
-			wchar_t buffer[256];
-			swprintf(buffer, sizeof(buffer), L"Average: %f\n", g_averageFPS);
-			::OutputDebugString(buffer);
+			averageFPS = getAverageFPS();
 		}
+		
+		g_dataFile << "Average FPS" << "," << averageFPS << endl;
+			
+		g_dataFile.close();
+
+		exit(0);
+		
 	}
 	default: {
 
@@ -1863,33 +1962,14 @@ void CALLBACK OnD3D11FrameRender(ID3D11Device* pd3dDevice, ID3D11DeviceContext* 
 	dwTimefirst = GetTickCount();
 	}*/
 
-	if (g_isTest && g_timeTest != NULL && g_step <= g_lastStep) {
+
+	//runs during telemetry collection versions of application
+	//method is called after the time interval test is completed
+	if (g_isTest && g_timeIntervalTest != NULL) {
 		automatedTest();
 	}
-	else if(g_isTest && g_timeTest != NULL && g_step > g_lastStep) {
-		wchar_t buffer[256];
-		swprintf(buffer, sizeof(buffer), L"Win to Full: %f\n", g_winToFullTime);
-		::OutputDebugString(buffer);
-		swprintf(buffer, sizeof(buffer), L"Full to Win: %f\n", g_fullToWinTime);
-		::OutputDebugString(buffer);
-		swprintf(buffer, sizeof(buffer), L"Hit Test: %f\n", g_hitTestTime);
-		::OutputDebugString(buffer);
-		swprintf(buffer, sizeof(buffer), L"Pause: %f\n", g_pauseTime);
-		::OutputDebugString(buffer);
-		swprintf(buffer, sizeof(buffer), L"Unpause: %f\n", g_unPauseTime);
-		::OutputDebugString(buffer);
-		swprintf(buffer, sizeof(buffer), L"Pause Full: %f\n", g_pauseFullTime);
-		::OutputDebugString(buffer);
-		swprintf(buffer, sizeof(buffer), L"Unpause Full: %f\n", g_unPauseFullTime);
-		::OutputDebugString(buffer);
-		swprintf(buffer, sizeof(buffer), L"Start up: %f\n", g_startUpTime);
-		::OutputDebugString(buffer);
-		swprintf(buffer, sizeof(buffer), L"Time test: %f\n", g_timeTest);
-		::OutputDebugString(buffer);
-		//probably call output file stuff here
-		//terminate program
-		exit(0);
-	}
+	
+	
 }
 
 
