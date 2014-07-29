@@ -202,7 +202,7 @@ LPWSTR g_timeString; //used later for the Jump Time In button user uses to input
 //testing constants
 bool g_isTest = true;
 int g_step = 1;
-ofstream g_dataFile;
+wofstream g_dataFile;
 
 //testing variable helpers
 double g_beginStartTime;
@@ -1321,7 +1321,7 @@ void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 		g_startIntervalTest = g_Timer.GetAbsoluteTime();
 	}
 
-	if (g_systemTime >= 10.000000 && g_systemTime <= 10 + g_timeValue)
+	if (g_systemTime >= 2.000000 && g_systemTime <= 2 + g_timeValue)
 	{
 		g_endIntervalTest = g_Timer.GetAbsoluteTime();
 		g_timeIntervalTest = g_endIntervalTest - g_startIntervalTest; //pre-loop to time one
@@ -1814,7 +1814,7 @@ void initializeFile() {
 	ostringstream oss;
 	string randomNum;
 	oss << randomNum << num;
-	string outputDataFileName = "telemetrydata" + oss.str() + ".csv";
+	string outputDataFileName = "\\\\davis\\public\\GRFXExplorerInternship\\Telemetry\\telemetrydata" + oss.str() + ".csv";
 	g_dataFile.open(outputDataFileName);
 }
 
@@ -1908,8 +1908,13 @@ void automatedTest() {
 			averageFPS = getAverageFPS();
 		}
 		
+		LPCWSTR deviceStats = DXUTGetDeviceStats();
+		wstringstream wss;
+		wstring test;
+		wss << deviceStats;
+
 		g_dataFile << "Average FPS" << "," << averageFPS << endl;
-			
+		g_dataFile << wss.str().c_str() << endl;
 		g_dataFile.close();
 
 		exit(0);
