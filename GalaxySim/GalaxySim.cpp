@@ -211,7 +211,7 @@ LPWSTR g_timeString; //used later for the Jump Time In button user uses to input
 
 //testing constants
 bool g_isTest = true; //true means test mode is on
-int g_step = 0; //determines which test from automated test suite is run
+int g_step = 1; //determines which test from automated test suite is run
 double g_jumpSpeedTest; //collects speed of jumpTime for automated test
 double g_oneFrameTime; //collects time for one frame
 double g_elapsedTimeAt100Days;
@@ -1712,7 +1712,7 @@ void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 		swprintf(buffer, sizeof(buffer), L"FPS: %f\n", DXUTGetFPS());
 		::OutputDebugString(buffer);*/
 	}
-
+	
 	g_frameCounter++;
 
 
@@ -1742,7 +1742,7 @@ void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 			GravityMotionIteration(g_timeValue);
 
 			//this section helps with the testRegularSpeed() function
-			int systemTimeAt100 = round(100 * 24);
+			int systemTimeAt100 = round(1000 * 24);
 
 			if (g_systemTime > systemTimeAt100 + 1 || g_systemTime > systemTimeAt100 - 1){
 				g_elapsedTimeAt100Days = g_timer.GetAbsoluteTime();
@@ -1953,7 +1953,6 @@ void pauseControl() {
 	}
 	else {
 		double unPauseEnd = g_Timer.GetAbsoluteTime();
-		g_unPauseTime = unPauseEnd - unPauseStart;
 		if (DXUTIsWindowed()) {
 			g_unPauseTime = unPauseEnd - unPauseStart;
 		}
@@ -2334,20 +2333,25 @@ bool RenderParticles(ID3D11DeviceContext* pd3dImmediateContext, CXMMATRIX mView,
 //--------------------------------------------------------------------------------------
 void automatedTelemetry(){
 
-	switch (g_step){
+	if (g_frameCounter % 100 != 0) {
+		return;
+	}
 
+	switch (g_step){
 	case 1: {
 		//start up time and time interval test data has been gathered by this point
 		double startUpTime = getStartTime();
 
 		initializeFile();
 		g_dataFile << "Start Time" << "," << startUpTime << endl;
+		break;
 	}
 	case 2:{
 		double timeAt100;
 		//gets time for regular simulation run from time=0 to time=100
 		timeAt100 = testRegularSpeed() - getStartTime();
 		g_dataFile << "Time to run normally to 100 days " << "," << timeAt100 << endl;
+		break;
 	}
 	case 3:{
 		double jumpSpeedTime;
@@ -2357,9 +2361,9 @@ void automatedTelemetry(){
 		g_dataFile << "Time to jump to 365 days:" << "," << jumpSpeedTime << endl;
 
 		//temporary print statements (need to be changed to print to file statements)
-		char buffer[256];
+		/*char buffer[256];
 		sprintf_s(buffer, sizeof(buffer), "Time to jump to 365 days: %f\n", jumpSpeedTime);
-		::OutputDebugStringA(buffer);
+		::OutputDebugStringA(buffer);*/
 
 		break;
 	}
@@ -2377,12 +2381,13 @@ void automatedTelemetry(){
 		g_dataFile << "1 Frame @ 100 iteration/frame" << "," << hundredIterationPerFrame << endl;
 
 		//temporary print statements (need to be changed to print to file statements)
-		char buffer[256];
+	/*	char buffer[256];
 		sprintf_s(buffer, sizeof(buffer), "Time for 1 Frame (1 Iteration/Frame): %f\n", oneIterationPerFrame);
 		::OutputDebugStringA(buffer);
 
 		sprintf_s(buffer, sizeof(buffer), "Time for 1 frame: (1000 Iterations/Frame): %f", hundredIterationPerFrame);
-		::OutputDebugStringA(buffer);
+		::OutputDebugStringA(buffer);*/
+		break;
 
 	}
 
@@ -2457,7 +2462,10 @@ void automatedTelemetry(){
 
 	}
 	}
+
 	g_step++;
+	
+		
 }
 
 
