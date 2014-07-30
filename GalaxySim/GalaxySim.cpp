@@ -1367,32 +1367,26 @@ void testJumpTimeAccuracy(){
 	//test for time=50 days
 	loadKnownValues(50);
 	jumpTime(50);
-	DXUTPause(false, false);
-	g_isPaused = true;
+	pauseControl();
 	float posDiff50 = comparePosVal(g_knownValues50);
 	float veloDiff50 = compareVeloVal(g_knownValues50);
-	DXUTPause(true, false);
-	g_isPaused = false;
+	pauseControl();
 
 	//test for time=365 days
 	loadKnownValues(365);
 	jumpTime(365);
-	DXUTPause(true, false);
-	g_isPaused = true;
+	pauseControl();
 	float posDiff365 = comparePosVal(g_knownValues365);
 	float veloDiff365 = compareVeloVal(g_knownValues365);
-	DXUTPause(false, false);
-	g_isPaused = false;
+	pauseControl();
 
 	//test for time=730 days
 	loadKnownValues(730);
 	jumpTime(730);
-	DXUTPause(true, false);
-	g_isPaused = true;
+	pauseControl();
 	float posDiff730 = comparePosVal(g_knownValues730);
 	float veloDiff730 = compareVeloVal(g_knownValues730);
-	DXUTPause(false, false);
-	g_isPaused = false;
+	pauseControl();
 
 	//average the different tests
 	//avgPosDiff = (posDiff50 + posDiff365 + posDiff730) / 3; //add in other tests as they get added
@@ -2356,11 +2350,6 @@ void automatedTelemetry(){
 
 		g_dataFile << "Time to jump to 365 days:" << "," << jumpSpeedTime << endl;
 
-		//temporary print statements (need to be changed to print to file statements)
-		char buffer[256];
-		sprintf_s(buffer, sizeof(buffer), "Time to jump to 365 days: %f\n", jumpSpeedTime);
-		::OutputDebugStringA(buffer);
-
 		break;
 	}
 	case 4:{
@@ -2375,14 +2364,6 @@ void automatedTelemetry(){
 
 		g_dataFile << "1 Frame @ 1 iteration/frame" << "," << oneIterationPerFrame << endl;
 		g_dataFile << "1 Frame @ 100 iteration/frame" << "," << hundredIterationPerFrame << endl;
-
-		//temporary print statements (need to be changed to print to file statements)
-		char buffer[256];
-		sprintf_s(buffer, sizeof(buffer), "Time for 1 Frame (1 Iteration/Frame): %f\n", oneIterationPerFrame);
-		::OutputDebugStringA(buffer);
-
-		sprintf_s(buffer, sizeof(buffer), "Time for 1 frame: (1000 Iterations/Frame): %f", hundredIterationPerFrame);
-		::OutputDebugStringA(buffer);
 
 	}
 
