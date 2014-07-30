@@ -222,9 +222,6 @@ const LPCWSTR g_localFileName = L"SkyXTelemetryData.csv";
 double g_beginStartTime;
 double g_endStartTime;
 
-double g_startIntervalTest;
-double g_endIntervalTest;
-
 double g_hitTestStart;
 
 int g_averageFPSCounter = 0;
@@ -232,7 +229,6 @@ int g_frameCounter = 0;
 
 //printed testing variables
 double g_startUpTime;
-double g_timeIntervalTest;
 double g_pauseTime;
 double g_unPauseTime;
 double g_pauseFullScreenTime;
@@ -1467,10 +1463,6 @@ double getStartTime() {
 	return g_startUpTime;
 }
 
-double getTimeIntervalTest() {
-	return g_timeIntervalTest;
-}
-
 double getPauseTime() {
 	OnGUIEvent(0, IDC_PAUSE, NULL, NULL);
 	return g_pauseTime;
@@ -1857,16 +1849,7 @@ void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 
 	g_relevantMouse = false;
 
-	if (g_systemTime >= 1.000000 && g_systemTime <= 1 + g_timeValue)
-	{
-		g_startIntervalTest = g_Timer.GetAbsoluteTime();
-	}
 
-	if (g_systemTime >= 2.000000 && g_systemTime <= 2 + g_timeValue)
-	{
-		g_endIntervalTest = g_Timer.GetAbsoluteTime();
-		g_timeIntervalTest = g_endIntervalTest - g_startIntervalTest; //pre-loop to time one
-	}
 	g_oneFrameTime = g_timer.GetAbsoluteTime() - oneFrameTimeStart;
 
 }
@@ -2356,16 +2339,14 @@ void automatedTelemetry(){
 	case 1: {
 		//start up time and time interval test data has been gathered by this point
 		double startUpTime = getStartTime();
-		double timeIntervalTest = getTimeIntervalTest();
 
 		initializeFile();
 		g_dataFile << "Start Time" << "," << startUpTime << endl;
-		g_dataFile << "Time Interval Test" << "," << timeIntervalTest << endl;
 	}
 	case 2:{
 		double timeAt100;
 		//gets time for regular simulation run from time=0 to time=100
-		timeAt100 = testRegularSpeed();
+		timeAt100 = testRegularSpeed() - getStartTime();
 		g_dataFile << "Time to run normally to 100 days " << "," << timeAt100 << endl;
 	}
 	case 3:{
