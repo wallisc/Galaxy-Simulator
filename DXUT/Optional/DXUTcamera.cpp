@@ -23,6 +23,25 @@ int g_leftarrowpressed = 37;
 int g_rightarrowpressed = 37;
 XMFLOAT3 g_PanDeltaVector(0, 0, 0);
 
+CDXUTTimer				g_timerUp;
+CDXUTTimer				g_timerDown;
+CDXUTTimer				g_timerLeft;
+CDXUTTimer				g_timerRight;
+
+int g_flagPanUp = 0;
+int g_flagPanDown = 0;
+int g_flagPanLeft = 0;
+int g_flagPanRight = 0;
+
+double g_tstartUp;
+double g_tstartDown;
+double g_tstartLeft;
+double g_tstartRight;
+double g_tendUp;
+double g_tendDown;
+double g_tendLeft;
+double g_tendRight;
+
 //======================================================================================
 // CD3DArcBall
 //======================================================================================
@@ -887,21 +906,65 @@ void CModelViewerCamera::FrameMove(_In_ float fElapsedTime)
 	if (g_uparrowpressed == 42)
 	{
 		g_PanDeltaVector.y -= cCameraMoveDist;
+		if (g_flagPanUp == 0)
+		{
+			g_flagPanUp = 1;
+			g_tendUp = g_timerUp.GetAbsoluteTime();
+
+			double deltat = g_tendUp - g_tstartUp;
+
+			wchar_t buffer[256];
+			swprintf(buffer, sizeof(buffer), L"Pan Up Buffer Time %f\n", deltat);
+			::OutputDebugString(buffer);
+		}
 	}
 
 	if (g_downarrowpressed == 42)
 	{
 		g_PanDeltaVector.y += cCameraMoveDist;
+		if (g_flagPanDown == 0)
+		{
+			g_flagPanDown = 1;
+			g_tendDown = g_timerUp.GetAbsoluteTime();
+
+			double deltat = g_tendDown - g_tstartDown;
+
+			wchar_t buffer[256];
+			swprintf(buffer, sizeof(buffer), L"Pan Down Buffer Time %f\n", deltat);
+			::OutputDebugString(buffer);
+		}
 	}
 
 	if (g_leftarrowpressed == 42)
 	{
 		g_PanDeltaVector.x += cCameraMoveDist;
+		if (g_flagPanLeft == 0)
+		{
+			g_flagPanLeft = 1;
+			g_tendLeft = g_timerUp.GetAbsoluteTime();
+
+			double deltat = g_tendLeft - g_tstartLeft;
+
+			wchar_t buffer[256];
+			swprintf(buffer, sizeof(buffer), L"Pan Left Buffer Time %f\n", deltat);
+			::OutputDebugString(buffer);
+		}
 	}
 
 	if (g_rightarrowpressed == 42)
 	{
 		g_PanDeltaVector.x -= cCameraMoveDist;
+		if (g_flagPanRight == 0)
+		{
+			g_flagPanRight = 1;
+			g_tendRight = g_timerUp.GetAbsoluteTime();
+
+			double deltat = g_tendRight - g_tstartRight;
+
+			wchar_t buffer[256];
+			swprintf(buffer, sizeof(buffer), L"Pan Right Buffer Time %f\n", deltat);
+			::OutputDebugString(buffer);
+		}
 	}
 
 	// Update the view matrix
@@ -1039,64 +1102,62 @@ LRESULT CModelViewerCamera::HandleMessages(HWND hWnd, UINT uMsg, WPARAM wParam, 
 
 	if ((uMsg == WM_KEYDOWN) && (wParam == VK_UP))
 	{
+		g_tstartUp = g_timerUp.GetAbsoluteTime();
+		g_uparrowpressed = 42;
 		int iMouseX = (short)LOWORD(lParam);
 		int iMouseY = (short)HIWORD(lParam);
-
-		g_uparrowpressed = 42;
-
-		/*m_ptLastMouse.x = iMouseX;
-		m_ptLastMouse.y = iMouseY;
-		float fDeltaX = (m_ptLastMouse.x - iMouseX) * m_fRadiusTranslation / m_nWidth;
-		float fDeltaY = (m_ptLastMouse.y - iMouseY) * m_fRadiusTranslation / m_nHeight;*/
-		::OutputDebugString(L"hi");
 	}
 
 	if ((uMsg == WM_KEYDOWN) && (wParam == VK_DOWN))
 	{
+		g_tstartDown = g_timerDown.GetAbsoluteTime();
+		g_downarrowpressed = 42;
 		int iMouseX = (short)LOWORD(lParam);
 		int iMouseY = (short)HIWORD(lParam);
-		g_downarrowpressed = 42;
-		::OutputDebugString(L"hi");
 	}
 
 	if ((uMsg == WM_KEYDOWN) && (wParam == VK_LEFT))
 	{
+		g_tstartLeft = g_timerLeft.GetAbsoluteTime();
+		g_leftarrowpressed = 42;
 		int iMouseX = (short)LOWORD(lParam);
 		int iMouseY = (short)HIWORD(lParam);
-		g_leftarrowpressed = 42;
-		::OutputDebugString(L"hi");
 	}
 
 	if ((uMsg == WM_KEYDOWN) && (wParam == VK_RIGHT))
 	{
+		g_tstartRight = g_timerRight.GetAbsoluteTime();
+		g_rightarrowpressed = 42;
 		int iMouseX = (short)LOWORD(lParam);
 		int iMouseY = (short)HIWORD(lParam);
-		g_rightarrowpressed = 42;
-		::OutputDebugString(L"hi");
 	}
 
 	if (uMsg == WM_KEYUP && (wParam == VK_RIGHT))
 	{
 		g_rightarrowpressed = 37;
 		g_PanDeltaVector = XMFLOAT3(0, 0, 0);
+		g_flagPanRight = 0;
 	}
 
 	if (uMsg == WM_KEYUP && (wParam == VK_LEFT))
 	{
 		g_leftarrowpressed = 37;
 		g_PanDeltaVector = XMFLOAT3(0, 0, 0);
+		g_flagPanLeft = 0;
 	}
 
 	if (uMsg == WM_KEYUP && (wParam == VK_UP))
 	{
 		g_uparrowpressed = 37;
 		g_PanDeltaVector = XMFLOAT3(0, 0, 0);
+		g_flagPanUp = 0;
 	}
 
 	if (uMsg == WM_KEYUP && (wParam == VK_DOWN))
 	{
 		g_downarrowpressed = 37;
 		g_PanDeltaVector = XMFLOAT3(0, 0, 0);
+		g_flagPanDown = 0;
 	}
 
 	if (uMsg == WM_MOUSEMOVE)
