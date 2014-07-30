@@ -2771,6 +2771,14 @@ void WINAPI DXUTRender3DEnvironment()
             pd3dDevice = DXUTGetD3D11Device();
             if( !pd3dDevice ) // Handle DXUTShutdown from inside callback
                 return;
+
+			pd3dImmediateContext = DXUTGetD3D11DeviceContext();
+			if (!pd3dImmediateContext)
+				return;
+
+			pSwapChain = DXUTGetDXGISwapChain();
+			if (!pSwapChain)
+				return;
         }
 
 #if defined(DEBUG) || defined(_DEBUG)
@@ -3158,16 +3166,16 @@ void WINAPI DXUTPause( bool bPauseTime, bool bPauseRendering )
     if( nPauseRenderingCount < 0 ) nPauseRenderingCount = 0;
     GetDXUTState().SetPauseRenderingCount( nPauseRenderingCount );
 
-    if( nPauseTimeCount > 0 )
-    {
-        // Stop the scene from animating
-        DXUTGetGlobalTimer()->Stop();
-    }
-    else
-    {
-        // Restart the timer
-        DXUTGetGlobalTimer()->Start();
-    }
+    //if( nPauseTimeCount > 0 )
+    //{
+    //    // Stop the scene from animating
+    //    DXUTGetGlobalTimer()->Stop();
+    //}
+    //else
+    //{
+    //     //Restart the timer
+    //    DXUTGetGlobalTimer()->Start();
+    //}
 
     GetDXUTState().SetRenderingPaused( nPauseRenderingCount > 0 );
     GetDXUTState().SetTimePaused( nPauseTimeCount > 0 );

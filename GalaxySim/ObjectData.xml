@@ -1,7 +1,9 @@
 <?xml version="1.0"?>
 <Universe>
 
-  <MaxParticles>2</MaxParticles>
+
+<MaxParticles>2</MaxParticles>
+
 
   <object>
     <name>Sun</name>
@@ -19,6 +21,7 @@
     <blue>.000000</blue>
   </object>
 
+
   <object>
     <name>Mercury</name>
     <mass>330200000000000000000000</mass>
@@ -34,6 +37,7 @@
     <green>.111111</green>
     <blue>.333333</blue>
   </object>
+
 
   <object>
     <name>Venus</name>
@@ -52,6 +56,8 @@
   </object>
 
 
+
+
   <object>
     <name>Earth</name>
     <mass>5970000000000000000000000</mass>
@@ -67,6 +73,7 @@
     <green>.865423</green>
     <blue>.512365</blue>
   </object>
+
 
   <object>
     <name>Mars</name>
@@ -84,6 +91,7 @@
     <blue>.000000</blue>
   </object>
 
+
   <object>
     <name>Jupiter</name>
     <mass>189813000000000000000000000</mass>
@@ -99,6 +107,8 @@
     <green>.222222</green>
     <blue>.000000</blue>
   </object>
+
+
   
   <object>
     <name>Saturn</name>
@@ -116,6 +126,7 @@
     <blue>.000000</blue>
   </object>
 
+
   <object>
     <name>Uranus</name>
     <mass>86810300000000000000000000</mass>
@@ -131,6 +142,9 @@
     <green>.222222</green>
     <blue>.555555</blue>
   </object>
+
+
+
 
   <object>
     <name>Neptune</name>
@@ -150,4 +164,3 @@
 
 
 </Universe>
-
