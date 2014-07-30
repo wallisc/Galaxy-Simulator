@@ -214,7 +214,7 @@ bool g_isTest = true; //true means test mode is on
 int g_step = 0; //determines which test from automated test suite is run
 double g_jumpSpeedTest; //collects speed of jumpTime for automated test
 double g_oneFrameTime; //collects time for one frame
-double g_elapsedTimeAt365Days;
+double g_elapsedTimeAt100Days;
 wofstream g_dataFile;
 LPCWSTR g_localFileName;
 
@@ -1455,13 +1455,10 @@ double testSpeed100IterationsPerFrame(){
 	return hundredIterationsTime;
 }
 
-//see how long it takes to get to 365 days while running the simulation at 10 iterations/frame
+//see how long it takes to get to 100 days while running the simulation at 10 iterations/frame
 double testRegularSpeed(){
-	g_iterationsPerFrame = 10;
-	OnGUIEvent(0, IDC_RESETPARTICLES, NULL, NULL);
-	double initialTime = g_timer.GetAbsoluteTime();
 
-	double timeElapsed = g_elapsedTimeAt365Days - initialTime;
+	double timeElapsed = g_elapsedTimeAt100Days;
 	return timeElapsed;
 
 }
@@ -1765,10 +1762,10 @@ void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 			GravityMotionIteration(g_timeValue);
 
 			//this section helps with the testRegularSpeed() function
-			int systemTimeAt365 = round((365 * 24) / g_timeValueToHoursConversion);
+			int systemTimeAt100 = round(100 * 24);
 
-			if (g_systemTime == systemTimeAt365){
-				g_elapsedTimeAt365Days = g_timer.GetAbsoluteTime();
+			if (g_systemTime > systemTimeAt100 + 1 || g_systemTime > systemTimeAt100 - 1){
+				g_elapsedTimeAt100Days = g_timer.GetAbsoluteTime();
 			}
 
 			////temporary counter iteration
@@ -2378,6 +2375,12 @@ void automatedTelemetry(){
 		g_dataFile << "Time Interval Test" << "," << timeIntervalTest << endl;
 	}
 	case 2:{
+		double timeAt100;
+		//gets time for regular simulation run from time=0 to time=100
+		timeAt100 = testRegularSpeed();
+		g_dataFile << "Time to run normally to 100 days " << "," << timeAt100 << endl;
+	}
+	case 3:{
 		double jumpSpeedTime;
 		//gets time to jump from time=0 to time=365 days
 		jumpSpeedTime = testJumpTimeSpeed();
@@ -2391,7 +2394,7 @@ void automatedTelemetry(){
 
 		break;
 	}
-	case 3:{
+	case 4:{
 		double oneIterationPerFrame;
 		double hundredIterationPerFrame;
 		int initial = g_iterationsPerFrame;
@@ -2412,10 +2415,6 @@ void automatedTelemetry(){
 		sprintf_s(buffer, sizeof(buffer), "Time for 1 frame: (1000 Iterations/Frame): %f", hundredIterationPerFrame);
 		::OutputDebugStringA(buffer);
 
-	}
-	case 4:{
-		//TODO will have the test for running from time=0 to time=365 days
-		//waiting for Melanie's changes to implement
 	}
 
 	case 5: {
@@ -2539,7 +2538,7 @@ void CALLBACK OnD3D11FrameRender(ID3D11Device* pd3dDevice, ID3D11DeviceContext* 
 
 	//runs during telemetry collection versions of application
 	//method is called after the time interval test is completed
-	if (g_isTest) {
+	if (g_isTest && g_elapsedTimeAt100Days != NULL) {
 		automatedTelemetry();
 	}
 
