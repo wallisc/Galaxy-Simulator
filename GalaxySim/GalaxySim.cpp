@@ -37,6 +37,9 @@
 #include <strsafe.h>
 #include <sstream>
 #include <string>
+#include <fstream>
+#include <iomanip>
+
 
 #include "atlbase.h"
 #include "atlstr.h"
@@ -48,6 +51,7 @@
 using namespace DirectX;
 using namespace std;
 
+
 //--------------------------------------------------------------------------------------
 // Global variables
 //--------------------------------------------------------------------------------------
@@ -57,6 +61,7 @@ CD3DSettingsDlg                     g_D3DSettingsDlg;           // Device settin
 CDXUTDialog                         g_HUD;                      // dialog for standard controls
 CDXUTDialog                         g_SampleUI;                 // dialog for sample specific controls
 CDXUTTextHelper*                    g_pTxtHelper = nullptr;
+CDXUTTimer							g_Timer;
 
 ID3D11VertexShader*                 g_pRenderParticlesVS = nullptr;
 ID3D11GeometryShader*               g_pRenderParticlesGS = nullptr;
@@ -210,10 +215,32 @@ int g_step = 0; //determines which test from automated test suite is run
 double g_jumpSpeedTest; //collects speed of jumpTime for automated test
 double g_oneFrameTime; //collects time for one frame
 double g_elapsedTimeAt365Days;
+wofstream g_dataFile;
+LPCWSTR g_localFileName;
 
-//temporary counter
-int g_counter = 0;
+//testing variable helpers
+double g_beginStartTime;
+double g_endStartTime;
 
+double g_startIntervalTest;
+double g_endIntervalTest;
+
+double g_hitTestStart;
+
+int g_averageFPSCounter = 0;
+int g_frameCounter = 0;
+
+//printed testing variables
+double g_startUpTime;
+double g_timeIntervalTest;
+double g_pauseTime;
+double g_unPauseTime;
+double g_pauseFullScreenTime;
+double g_unPauseFullScreenTime;
+double g_winToFullTime;
+double g_fullToWinTime;
+double g_hitTestTime; // will need to be an average, or there will be a lot of these
+float g_averageFPS = 0;
 
 //-------------------------------------------------------------------------------------
 // UI control IDs
@@ -275,6 +302,7 @@ void GravityMotionIteration(float timeIncrement);
 //--------------------------------------------------------------------------------------
 int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR lpCmdLine, _In_ int nCmdShow)
 {
+	g_beginStartTime = g_Timer.GetAbsoluteTime();
 	// Enable run-time memory check for debug builds.
 #if defined(DEBUG) | defined(_DEBUG)
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
@@ -294,6 +322,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 
 	ParseFile();
 
+
 	InitApp();
 
 	DXUTInit(true, true);                 // Use this line instead to try to create a hardware device
@@ -301,7 +330,14 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 	DXUTSetCursorSettings(true, true); // Show the cursor and clip it when in full screen
 	DXUTCreateWindow(L"SkyX");
 	DXUTCreateDevice(D3D_FEATURE_LEVEL_10_0, true, g_width, g_height);
-	DXUTMainLoop();                      // Enter into the DXUT render loop
+
+	
+	g_endStartTime = g_Timer.GetAbsoluteTime();
+	g_startUpTime = g_endStartTime - g_beginStartTime;
+
+	
+
+	DXUTMainLoop(); // Enter into the DXUT render loop
 
 	g_objects.clear();
 
@@ -857,7 +893,7 @@ void GetWCharFromFloat(WCHAR *string, float inputFloat){
 
 	if (hr != S_OK){
 		string = NULL;
-	}
+}
 }
 
 //input a WCHAR string and an int, assigns value of int to the WCHAR string
@@ -942,7 +978,7 @@ void jumpTime(float newTime){
 
 			GravityMotionIteration(g_timeValue);
 
-		}
+	}
 
 	}
 	//move backward to a time
@@ -967,7 +1003,7 @@ void jumpTime(float newTime){
 		float zvelo = g_pParticleArray[i].velo.z;
 		float acoord=1.0;
 	}
-	
+
 	g_systemTime = newTime;
 
 	g_jumpSpeedTest = g_timer.GetAbsoluteTime() - jumpTimeStart;
@@ -1321,9 +1357,9 @@ float compareVeloVal(vector<ObjectData> &realValues){
 		float zvDiff = ((realValues[i].m_zvelo - g_pParticleArray[i].velo.z) / realValues[i].m_zvelo) * 100;
 		float veloDiff = (xvDiff + yvDiff + zvDiff) / 3;
 		avgVeloDiff = (avgVeloDiff*(i-1) + veloDiff) / (i);
-	}
+				}
 	return avgVeloDiff;
-}
+			}
 
 //unit test tests accuracy of jumpTime feature for time=1 year etc.
 void testJumpTimeAccuracy(){
@@ -1375,7 +1411,7 @@ void testJumpTimeAccuracy(){
 
 	sprintf_s(buffer, sizeof(buffer), "Avg Velocity Percent Difference %f\n", avgVeloDiff);
 	::OutputDebugStringA(buffer);
-	
+
 }
 
 //test the fast forward accuracy
@@ -1397,7 +1433,7 @@ double testJumpTimeSpeed(){
 	jumpTime(365);
 	double testTime = g_jumpSpeedTest;
 	return testTime;
-}
+		}
 
 //see how long it takes for 1 frame at 1 iteration per frame
 double testSpeed1IterationsPerFrame(){
@@ -1407,7 +1443,7 @@ double testSpeed1IterationsPerFrame(){
 	double oneIterationTime = g_oneFrameTime;
 
 	return oneIterationTime;
-}
+	}
 
 //see how long it takes for 1 frame at 100 iterations per frame
 double testSpeed100IterationsPerFrame(){
@@ -1578,17 +1614,23 @@ void CALLBACK OnMouseEvent(bool bLeftButtonDown, bool bRightButtonDown, bool bMi
 		g_xMouse = (float)xPos;
 		g_yMouse = (float)yPos;
 		g_relevantMouse = true;
+		g_pTextBox->SetEnabled(false); //prevents accidental alteration of editbox
+		g_hitTestStart = g_Timer.GetAbsoluteTime();
 	}
+
 }
 
 wstring concatenateObjInfo(int index) {
 	wstring objectInfo(L"Name: " + g_pParticleArrayTWO[index].name + L"\nMass: " + to_wstring(g_pParticleArrayTWO[index].mass) + L"\nDiameter: " +
 		to_wstring(g_pParticleArrayTWO[index].diameter) + L"\nBrightness: " + to_wstring(g_pParticleArrayTWO[index].brightness) +
 		L"\nPosition:\nx: " + to_wstring(g_pParticleArray[index].pos.x) + L"\ny: " + to_wstring(g_pParticleArray[index].pos.y) +
-		L"\nz: " + to_wstring(g_pParticleArray[index].pos.z));
+		L"\nz: " + to_wstring(g_pParticleArray[index].pos.z) +
+		L"\nVelocity:\nx: " + to_wstring(g_pParticleArray[index].velo.x) + L"\ny: " + to_wstring(g_pParticleArray[index].velo.y) +
+		L"\nz: " + to_wstring(g_pParticleArray[index].velo.z));
 
 	return objectInfo;
 }
+
 
 //--------------------------------------------------------------------------------------
 // This callback function will be called once at the beginning of every frame. This is the
@@ -1600,10 +1642,23 @@ void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 {
 	double oneFrameTimeStart = g_timer.GetAbsoluteTime();
 
+	
+
 	if (fElapsedTime < SECONDS_PER_FRAME)
 	{
 		Sleep(static_cast<DWORD>((SECONDS_PER_FRAME - fElapsedTime) * 1000.0f));
 	}
+
+	if (g_frameCounter % 100 == 0) {
+		g_averageFPS += DXUTGetFPS();
+		g_averageFPSCounter++;
+		/*wchar_t buffer[256];
+		swprintf(buffer, sizeof(buffer), L"FPS: %f\n", DXUTGetFPS());
+		::OutputDebugString(buffer);*/
+	}
+	
+	g_frameCounter++;
+
 
 	// Update the camera's position based on user input 
 	g_Camera.FrameMove(fElapsedTime);
@@ -1627,7 +1682,7 @@ void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 			pd3dImmediateContext->Map(g_pParticlePosVelo0, 0, D3D11_MAP_WRITE_DISCARD, 0, &ms);
 
 			g_systemTime = g_systemTime + g_timeValueToHoursConversion;
-			
+
 			GravityMotionIteration(g_timeValue);
 
 			//this section helps with the testRegularSpeed() function
@@ -1635,7 +1690,7 @@ void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 
 			if (g_systemTime == systemTimeAt365){
 				g_elapsedTimeAt365Days = g_timer.GetAbsoluteTime();
-			}
+		}
 
 			////temporary counter iteration
 			//g_counter++;
@@ -1654,13 +1709,13 @@ void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 			//	}
 			//}
 
-			memcpy(ms.pData, g_pParticleArray, sizeof(PARTICLE) * NUM_PARTICLES);
+		memcpy(ms.pData, g_pParticleArray, sizeof(PARTICLE) * NUM_PARTICLES);
 
-			pd3dImmediateContext->Unmap(g_pParticlePosVelo0, NULL);
+		pd3dImmediateContext->Unmap(g_pParticlePosVelo0, NULL);
 
-			std::swap(g_pParticlePosVelo0, g_pParticlePosVelo1);
-			std::swap(g_pParticlePosVeloRV0, g_pParticlePosVeloRV1);
-		}
+		std::swap(g_pParticlePosVelo0, g_pParticlePosVelo1);
+		std::swap(g_pParticlePosVeloRV0, g_pParticlePosVeloRV1);
+	}
 
 	}
 	else if (g_isPaused && g_hasDisplay && g_relevantMouse) {
@@ -1701,9 +1756,9 @@ void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 
 			mouseRadius = distanceCalc(XMVectorGetX(screenObject), XMVectorGetY(screenObject), xScreenMouse, yScreenMouse);
 
-			wchar_t buffer[256];
+		/*	wchar_t buffer[256];
 			swprintf(buffer, sizeof(buffer), L"screen: %f mouse: %f\n centerX: %f centerY %f \n mouseX: %f mouseY: %f\n\n", screenRadius, mouseRadius, XMVectorGetX(screenObject), XMVectorGetY(screenObject), xScreenMouse, yScreenMouse);
-			::OutputDebugString(buffer);
+			::OutputDebugString(buffer);*/
 
 			if (mouseRadius <= screenRadius) { //Checks if click is within radius
 
@@ -1730,11 +1785,24 @@ void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 			g_pTextBox->SetText(objectInfo.c_str());
 		}
 		foundIndex = -1;
+		double hitTestEnd = g_Timer.GetAbsoluteTime();
+		g_hitTestTime = hitTestEnd - g_hitTestStart;
+		
 	}
 
 
 	g_relevantMouse = false;
 
+	if (g_systemTime >= 1.000000 && g_systemTime <= 1 + g_timeValue)
+	{
+		g_startIntervalTest = g_Timer.GetAbsoluteTime();
+	}
+
+	if (g_systemTime >= 2.000000 && g_systemTime <= 2 + g_timeValue)
+	{
+		g_endIntervalTest = g_Timer.GetAbsoluteTime();
+		g_timeIntervalTest = g_endIntervalTest - g_startIntervalTest; //pre-loop to time one
+	}
 		g_oneFrameTime = g_timer.GetAbsoluteTime() - oneFrameTimeStart;
 
 }
@@ -1776,16 +1844,35 @@ LRESULT CALLBACK MsgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, boo
 }
 
 void pauseControl() {
-		if (g_hasDisplay) {
-			g_pTextBox->SetVisible(false);
-			g_hasDisplay = false;
+	double pauseStart;
+	double unPauseStart;
+
+	if (!g_isPaused) {
+		pauseStart = g_Timer.GetAbsoluteTime();
+	}
+	else {
+		unPauseStart = g_Timer.GetAbsoluteTime();
 		}
+	
+	
+	//if (!g_isPaused) {
+	//	DXUTPause(false, false);
+	//	g_isPaused = true;
+	//}
+	//else {
+	//	DXUTPause(true, false);
+	//	g_isPaused = false;
+	//}
+	//The above statement works whether or not the timer is commented, although it has the FPS freeze issue if timer isn't commented
+	//The below statement only works if the timer is commented, and does not have the FPS freeze issue (w/ timer, it doesn't render the edit box)
+	//This is likely because the edit box uses the global timer (DXUTgui.cpp 6116)
+	//Below statement's call logic makes more sense considering variable names; preferred use
 		if (!g_isPaused) {
-			DXUTPause(false, false);
+		DXUTPause(true, false);
 			g_isPaused = true;
 		}
 		else {
-			DXUTPause(true, false);
+		DXUTPause(false, false);
 			g_isPaused = false;
 		}
 
@@ -1806,6 +1893,30 @@ void pauseControl() {
 			g_pTextBox->SetVisible(false);
 			g_hasDisplay = false;
 		}
+
+	if (g_isPaused) {
+		double pauseEnd = g_Timer.GetAbsoluteTime();
+		if (DXUTIsWindowed()) {
+			g_pauseTime = pauseEnd - pauseStart;
+		}
+		else {
+			g_pauseFullScreenTime = pauseEnd - pauseStart;
+		}
+		
+}
+	else {
+		double unPauseEnd = g_Timer.GetAbsoluteTime();
+		g_unPauseTime = unPauseEnd - unPauseStart;
+		if (DXUTIsWindowed()) {
+			g_unPauseTime = unPauseEnd - unPauseStart;
+		}
+		else {
+			g_unPauseFullScreenTime = unPauseEnd - unPauseStart;
+		}
+	}
+
+
+
 }
 
 
@@ -1819,7 +1930,32 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 	switch (nControlID)
 	{
 	case IDC_TOGGLEFULLSCREEN:
-		DXUTToggleFullScreen(); break;
+	{
+		double winToFullStart;
+		double winToFullEnd;
+		double fullToWinStart;
+		double fullToWinEnd;
+		if (DXUTIsWindowed()) {
+			winToFullStart = g_Timer.GetAbsoluteTime();
+		}
+		else {
+			fullToWinStart = g_Timer.GetAbsoluteTime();
+		}
+
+		DXUTToggleFullScreen();
+
+		if (!DXUTIsWindowed()) {
+			winToFullEnd = g_Timer.GetAbsoluteTime();
+			g_winToFullTime = winToFullEnd - winToFullStart;
+		}
+		else {
+			fullToWinEnd = g_Timer.GetAbsoluteTime();
+			g_fullToWinTime = fullToWinEnd - fullToWinStart;
+		
+		}
+		
+		break;
+	}
 	case IDC_TOGGLEREF:
 	{
 		DXUTPause(false, false);
@@ -1859,7 +1995,7 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 		iterateStr = g_IterationsPerFrameInBox->GetText();
 		if (iterateStr == NULL){
 			break;
-		}
+	}
 		iterateFloat = wcstof(iterateStr, NULL);
 		int iterateInt = (int)(iterateFloat+0.5);
 		g_iterationsPerFrame = iterateInt; break;
@@ -2146,6 +2282,85 @@ bool RenderParticles(ID3D11DeviceContext* pd3dImmediateContext, CXMMATRIX mView,
 	return true;
 }
 
+double getStartTime() {
+	return g_startUpTime;
+}
+
+double getTimeIntervalTest() {
+	return g_timeIntervalTest;
+}
+
+double getPauseTime() {
+	OnGUIEvent(0, IDC_PAUSE, NULL, NULL);
+	return g_pauseTime;
+}
+
+double getUnPauseTime() {
+	OnGUIEvent(0, IDC_PAUSE, NULL, NULL);
+	return g_unPauseTime;
+}
+
+double getPauseFullScreenTime() {
+	OnGUIEvent(0, IDC_PAUSE, NULL, NULL);
+	return g_pauseFullScreenTime;
+}
+
+double getUnPauseFullScreenTime() {
+	OnGUIEvent(0, IDC_PAUSE, NULL, NULL);
+	return g_unPauseFullScreenTime;
+}
+
+double getWinToFullTime() {
+	OnGUIEvent(0, IDC_TOGGLEFULLSCREEN, NULL, NULL);
+	return g_winToFullTime;
+}
+
+double getFullToWinTime() {
+	OnGUIEvent(0, IDC_TOGGLEFULLSCREEN, NULL, NULL);
+	return g_fullToWinTime;
+}
+
+double getHitTestTime() {
+	return g_hitTestTime;
+}
+
+float getAverageFPS() {
+	return g_averageFPS / g_averageFPSCounter;
+}
+
+//attempt to have local file that is then copied to davis
+//void initializeFile() {
+//	srand(time(NULL));
+//	int num = rand();
+//	wostringstream wss;
+//	wss << L"telemetrydata" << num << L".csv";
+//	const wstring& wstr = wss.str();
+//	const LPCWSTR temp = wstr.c_str();
+//	g_localFileName = temp;
+//	g_dataFile.open(g_localFileName);
+//}
+//
+//
+//void copyFile() {
+//	wostringstream wss;
+//	wss << L"\\\\davis\\public\\GRFXExplorerInternship\\Telemetry\\" << g_localFileName;
+//	const wstring& wstr = wss.str();
+//	const LPCWSTR copyName = wstr.c_str();
+//	bool copied = CopyFileW(g_localFileName, copyName, true);
+//}
+
+//file hardcoded to davis
+void initializeFile() {
+	srand(time(NULL));
+	int num = rand();
+	wostringstream wss;
+	wss << L"\\\\davis\\public\\GRFXExplorerInternship\\Telemetry\\telemetrydata" << num << L".csv";
+	const wstring& wstr = wss.str();
+	const LPCWSTR temp = wstr.c_str();
+	g_localFileName = temp;
+	g_dataFile.open(g_localFileName);
+}
+
 //--------------------------------------------------------------------------------------
 void automatedTelemetry(){
 	//variables that store test results locally in this method
@@ -2194,6 +2409,115 @@ void automatedTelemetry(){
 	g_step++;
 }
 
+void automatedTest() {
+	
+	switch (g_step)
+	{
+	case 1: {
+		//start up time and time interval test data has been gathered by this point
+		double startUpTime = getStartTime();
+		double timeIntervalTest = getTimeIntervalTest();
+
+		initializeFile();
+		g_dataFile << "Start Time" << "," << startUpTime << endl;
+		g_dataFile << "Time Interval Test" << "," << timeIntervalTest << endl;
+	}
+	case 2: {
+		jumpTime(10);
+		//Q: Is calling jumpTime directly valid? Unsure how else to do this since it requires user input
+		//time not implemented in this branch
+		//include an accuracy validation here
+		break;
+	}
+	case 3: {
+		//My sandbox doesn't have iterations, but I would call it here
+		//g_iterationsPerFrame = 20.0
+		//accuracy validation here
+		break;
+	}
+	case 4: {
+		//camera??
+		break;
+	}
+	case 5: {
+		double winToFullTime;
+		winToFullTime = getWinToFullTime();
+		g_dataFile << "Win to FullScreen" << "," << winToFullTime << endl;
+		break;
+	}
+	case 6: {
+		double pauseFullScreenTime;
+		pauseFullScreenTime = getPauseFullScreenTime();
+		g_dataFile << "Pause Fullscreen" << "," << pauseFullScreenTime << endl;
+		break;
+	}
+	case 7: {
+		double unPauseFullScreenTime;
+		unPauseFullScreenTime = getUnPauseFullScreenTime();
+		g_dataFile << "Unpause Fullscreen" << "," << unPauseFullScreenTime << endl;
+		break;
+	}
+	case 8: {
+		double fullToWinTime;
+		fullToWinTime = getFullToWinTime();
+		g_dataFile << "Full to Windowed" << "," << fullToWinTime << endl;
+		break;
+	}
+	case 9: {
+		double pauseTime;
+		pauseTime = getPauseTime();
+		g_dataFile << "Pause" << "," << pauseTime << endl;
+		break;
+	}
+	case 10: {
+		OnMouseEvent(true, false, false, false, false, 0, 400.000000, 298.000000, NULL);
+		
+		break;
+	}
+	case 11: {
+		//needs to be collected after the call so method can go through onframemove
+		double hitTestTime;
+		hitTestTime = getHitTestTime();
+		g_dataFile << "Mouse Click Hit Test" << "," << hitTestTime << endl;
+		break;
+	}
+	case 12: {
+		double unPauseTime;
+		unPauseTime = getUnPauseTime();
+		g_dataFile << "Unpause" << "," << unPauseTime << endl;
+		break;
+	}
+	case 13: {
+		double averageFPS;
+		if (g_averageFPSCounter != 0) {
+			averageFPS = getAverageFPS();
+		}
+		
+		LPCWSTR deviceStats = DXUTGetDeviceStats();
+		wostringstream wss;
+		wss << deviceStats;
+
+		g_dataFile << "Average FPS" << "," << averageFPS << endl;
+		g_dataFile << wss.str().c_str() << endl;
+		g_dataFile.close();
+
+		//copyFile();
+		
+		//copies file if it does not already exist
+		
+
+		
+		exit(0);
+		
+	}
+	default: {
+
+	}
+
+	}
+	g_step++;
+}
+
 //--------------------------------------------------------------------------------------
 void CALLBACK OnD3D11FrameRender(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImmediateContext, double fTime,
 	float fElapsedTime, void* pUserContext)
@@ -2233,11 +2557,18 @@ void CALLBACK OnD3D11FrameRender(ID3D11Device* pd3dDevice, ID3D11DeviceContext* 
 	dwTimefirst = GetTickCount();
 	}*/
 
-	if (g_isTest) {
-		automatedTelemetry();
-	}
 
+	//runs during telemetry collection versions of application
+	//method is called after the time interval test is completed
+	if (g_isTest && g_timeIntervalTest != NULL) {
+		automatedTest();
+	}
+	
+	
 }
+
+
+
 
 
 //--------------------------------------------------------------------------------------

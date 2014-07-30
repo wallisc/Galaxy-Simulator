@@ -1,23 +1,43 @@
 <?xml version="1.0"?>
 <Universe>
 
-  <MaxParticles>2</MaxParticles>
+
+<MaxParticles>2</MaxParticles>
+
 
   <object>
     <name>Sun</name>
     <mass>1988500000000000000000000000000</mass>
     <diameter>1392000</diameter>
-    <brightness>.999999</brightness>
+    <brightness>.555555</brightness>
     <xcoord>0</xcoord>
     <ycoord>0</ycoord>
     <zcoord>0</zcoord>
     <xvelo>0</xvelo>
     <yvelo>0</yvelo>
     <zvelo>0</zvelo>
-    <red>.689523</red>
-    <green>.398564</green>
+    <red>.555555</red>
+    <green>.433333</green>
     <blue>.000000</blue>
   </object>
+
+
+  <object>
+    <name>Mercury</name>
+    <mass>330200000000000000000000</mass>
+    <diameter>4880</diameter>
+    <brightness>.555555</brightness>
+    <xcoord>31000</xcoord>
+    <ycoord>-3400</ycoord>
+    <zcoord>-3120</zcoord>
+    <xvelo>-14781.21296</xvelo>
+    <yvelo>182172.6583</yvelo>
+    <zvelo>16241.05052</zvelo>
+    <red>.555555</red>
+    <green>.111111</green>
+    <blue>.333333</blue>
+  </object>
+
 
   <object>
     <name>Mercury</name>
@@ -39,7 +59,7 @@
     <name>Venus</name>
     <mass>4868500000000000000000000</mass>
     <diameter>12103.6</diameter>
-    <brightness>-.569842</brightness>
+    <brightness>.555555</brightness>
     <xcoord>43200</xcoord>
     <ycoord>45030.9</ycoord>
     <zcoord>-1878.157</zcoord>
@@ -52,11 +72,13 @@
   </object>
 
 
+
+
   <object>
     <name>Earth</name>
     <mass>5970000000000000000000000</mass>
     <diameter>12756</diameter>
-    <brightness>.785641</brightness>
+    <brightness>.555555</brightness>
     <xcoord>33263.09995</xcoord>
     <ycoord>-81276.1315</ycoord>
     <zcoord>2.36678</zcoord>
@@ -68,11 +90,12 @@
     <blue>.512365</blue>
   </object>
 
+
   <object>
     <name>Mars</name>
     <mass>641850000000000000000000</mass>
     <diameter>6779.8</diameter>
-    <brightness>-1.0</brightness>
+    <brightness>.555555</brightness>
     <xcoord>-51400</xcoord>
     <ycoord>-120000</ycoord>
     <zcoord>-1230</zcoord>
@@ -81,6 +104,23 @@
     <zvelo>-2615.148049</zvelo>
     <red>.999999</red>
     <green>.111111</green>
+    <blue>.000000</blue>
+  </object>
+
+
+  <object>
+    <name>Jupiter</name>
+    <mass>189813000000000000000000000</mass>
+    <diameter>142984</diameter>
+    <brightness>.555555</brightness>
+    <xcoord>-233000</xcoord>
+    <ycoord>390280.5655</ycoord>
+    <zcoord>3600.821823</zcoord>
+    <xvelo>-40975.0686</xvelo>
+    <yvelo>-21929.69551</yvelo>
+    <zvelo>1008.146577</zvelo>
+    <red>.999999</red>
+    <green>.222222</green>
     <blue>.000000</blue>
   </object>
 
@@ -104,7 +144,7 @@
     <name>Saturn</name>
     <mass>568319000000000000000000000</mass>
     <diameter>120536</diameter>
-    <brightness>-1.0</brightness>
+    <brightness>.555555</brightness>
     <xcoord>-529383.4376</xcoord>
     <ycoord>-673476</ycoord>
     <zcoord>32784.23</zcoord>
@@ -115,6 +155,24 @@
     <green>.222222</green>
     <blue>.000000</blue>
   </object>
+
+
+  <object>
+    <name>Uranus</name>
+    <mass>86810300000000000000000000</mass>
+    <diameter>51118</diameter>
+    <brightness>.555555</brightness>
+    <xcoord>1680000</xcoord>
+    <ycoord>401000</ycoord>
+    <zcoord>-20300</zcoord>
+    <xvelo>-5884.866865</xvelo>
+    <yvelo>22682.79017</yvelo>
+    <zvelo>161.6233897</zvelo>
+    <red>.777777</red>
+    <green>.222222</green>
+    <blue>.555555</blue>
+  </object>
+
 
   <object>
     <name>Uranus</name>
@@ -136,7 +194,7 @@
     <name>Neptune</name>
     <mass>102410000000000000000000000</mass>
     <diameter>49532</diameter>
-    <brightness>-1.0</brightness>
+    <brightness>.555555</brightness>
     <xcoord>2360994</xcoord>
     <ycoord>-1065621.561</ycoord>
     <zcoord>-32437.26</zcoord>
@@ -150,4 +208,3 @@
 
 
 </Universe>
-
