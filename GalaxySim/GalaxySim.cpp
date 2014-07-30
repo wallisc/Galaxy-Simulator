@@ -1337,15 +1337,15 @@ void testJumpTimeAccuracy(){
 	DXUTPause(true, false);
 	g_isPaused = false;
 
-	////test for time=365 days
-	//loadKnownValues(365);
-	//jumpTime(365);
-	//DXUTPause(true, false);
-	//g_isPaused = true;
-	//float posDiff365 = comparePosVal(g_knownValues365);
-	//float veloDiff365 = compareVeloVal(g_knownValues365);
-	//DXUTPause(false, false);
-	//g_isPaused = false;
+	//test for time=365 days
+	loadKnownValues(365);
+	jumpTime(365);
+	DXUTPause(true, false);
+	g_isPaused = true;
+	float posDiff365 = comparePosVal(g_knownValues365);
+	float veloDiff365 = compareVeloVal(g_knownValues365);
+	DXUTPause(false, false);
+	g_isPaused = false;
 
 	//test for time=730 days
 	loadKnownValues(730);
