@@ -217,6 +217,9 @@ double g_oneFrameTime; //collects time for one frame
 double g_elapsedTimeAt100Days;
 wofstream g_dataFile;
 const LPCWSTR g_localFileName = L"SkyXTelemetryData.csv";
+double g_elapsedTimeAt365Days;
+double g_deltatResetParticles;
+double g_deltatResetCamera;
 
 //testing variable helpers
 double g_beginStartTime;
@@ -1477,6 +1480,18 @@ double getUnPauseFullScreenTime() {
 	return g_unPauseFullScreenTime;
 }
 
+//see how long it takes to reset particles to their initial position
+double testResetParticles(){
+	OnGUIEvent(0, IDC_RESETPARTICLES, NULL, NULL);
+	return g_deltatResetParticles;
+}
+
+//see how long it takes to Reset the Camera to its initial position
+double testResetCamera(){
+	OnGUIEvent(0, IDC_RESETCAMERA, NULL, NULL);
+	return g_deltatResetCamera;
+}
+
 double getWinToFullTime() {
 	OnGUIEvent(0, IDC_TOGGLEFULLSCREEN, NULL, NULL);
 	return g_winToFullTime;
@@ -2017,10 +2032,10 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 		tend = g_timer.GetAbsoluteTime();
 		g_systemTime = 0;
 
-		double deltat = tend - tstart;
+		double g_deltatResetParticles = tend - tstart;
 
 		wchar_t buffer[256];
-		swprintf(buffer, sizeof(buffer), L"%f\n", deltat);
+		swprintf(buffer, sizeof(buffer), L"%f\n", g_deltatResetParticles);
 		::OutputDebugString(buffer);
 		break;
 	}
@@ -2062,10 +2077,10 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 		tstart = g_timer.GetAbsoluteTime();
 		g_Camera.Reset();
 		tend = g_timer.GetAbsoluteTime();
-		double deltat = tend - tstart;
+		g_deltatResetCamera = tend - tstart;
 
 		wchar_t buffer[256];
-		swprintf(buffer, sizeof(buffer), L"%f\n", deltat);
+		swprintf(buffer, sizeof(buffer), L"%f\n", g_deltatResetCamera);
 		::OutputDebugString(buffer);
 
 		break;
@@ -2416,6 +2431,16 @@ void automatedTelemetry(){
 		break;
 	}
 	case 13: {
+		double ResetParticlesTime = testResetParticles();
+		g_dataFile << "Time taken to reset particles: " << ResetParticlesTime << endl;
+		break;
+	}
+	case 14: {
+		double ResetCameraTime = testResetCamera();
+		g_dataFile << "Time taken to reset camera: " << ResetCameraTime << endl;
+		break;
+	}
+	case 15: {
 		double averageFPS;
 		if (g_averageFPSCounter != 0) {
 			averageFPS = getAverageFPS();
