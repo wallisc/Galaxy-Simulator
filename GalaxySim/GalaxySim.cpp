@@ -205,6 +205,9 @@ LPWSTR g_timeString; //used later for the Jump Time In button user uses to input
 //testing constants
 bool g_isTest = true; //true means test mode is on
 int g_step = 0; //determines which test from automated test suite is run
+double g_jumpSpeedTest; //collects speed of jumpTime for automated test
+double g_oneFrameTime; //collects time for one frame
+double g_elapsedTimeAt365Days;
 
 //temporary counter
 int g_counter = 0;
@@ -921,6 +924,8 @@ void halfSpeed(){
 //this method calculates and updates new position and velocity for jumping in time
 void jumpTime(float newTime){
 
+	double jumpTimeStart = g_timer.GetAbsoluteTime();
+
 	//convert back to hours
 	newTime = newTime * 24;
 
@@ -959,6 +964,8 @@ void jumpTime(float newTime){
 	}
 	
 	g_systemTime = newTime;
+
+	g_jumpSpeedTest = g_timer.GetAbsoluteTime() - jumpTimeStart;
 
 }
 
@@ -1332,9 +1339,11 @@ float compareVeloVal(vector<ObjectData> &realValues){
 }
 
 //unit test tests accuracy of jumpTime feature for time=1 year etc.
-void testJumpTime(){
+void testJumpTimeAccuracy(){
 	float avgPosDiff;
 	float avgVeloDiff;
+
+	OnGUIEvent(0, IDC_RESETPARTICLES, NULL, NULL);
 
 	//test for time=50 days
 	loadKnownValues(50);
@@ -1363,8 +1372,8 @@ void testJumpTime(){
 	g_isPaused = true;
 	float posDiff730 = comparePosVal(g_knownValues730);
 	float veloDiff730 = compareVeloVal(g_knownValues730);
-	//DXUTPause(false, false);
-	//g_isPaused = false;
+	DXUTPause(false, false);
+	g_isPaused = false;
 
 	//average the different tests
 	//avgPosDiff = (posDiff50 + posDiff365 + posDiff730) / 3; //add in other tests as they get added
@@ -1382,9 +1391,55 @@ void testJumpTime(){
 	
 }
 
-//test the fast forward
+//test the fast forward accuracy
 //fast forward to time=50 then time=365 then time=730 and compare results
-void testFastFwd(){
+//TODO not full finished yet
+void testFastFwdAccuracy(){
+	OnGUIEvent(0, IDC_RESETPARTICLES, NULL, NULL);
+	int initialIterations = g_iterationsPerFrame;
+	g_iterationsPerFrame = 20;
+	//go to certain point and test accuracy
+	g_iterationsPerFrame = initialIterations;
+
+}
+
+//test jump time accuracy
+//see how long it takes to jump in time to 365 days
+double testJumpTimeSpeed(){
+	OnGUIEvent(0, IDC_RESETPARTICLES, NULL, NULL);
+	jumpTime(365);
+	double testTime = g_jumpSpeedTest;
+	return testTime;
+}
+
+//see how long it takes for 1 frame at 1 iteration per frame
+double testSpeed1IterationsPerFrame(){
+
+	g_iterationsPerFrame = 1;
+
+	double oneIterationTime = g_oneFrameTime;
+
+	return oneIterationTime;
+}
+
+//see how long it takes for 1 frame at 100 iterations per frame
+double testSpeed100IterationsPerFrame(){
+
+	g_iterationsPerFrame = 100;
+
+	double hundredIterationsTime = g_oneFrameTime;
+
+	return hundredIterationsTime;
+}
+
+//see how long it takes to get to 365 days while running the simulation at 10 iterations/frame
+double testRegularSpeed(){
+	g_iterationsPerFrame = 10;
+	OnGUIEvent(0, IDC_RESETPARTICLES, NULL, NULL);
+	double initialTime = g_timer.GetAbsoluteTime();
+
+	double timeElapsed = g_elapsedTimeAt365Days - initialTime;
+	return timeElapsed;
 
 }
 
@@ -1556,6 +1611,7 @@ wstring concatenateObjInfo(int index) {
 //--------------------------------------------------------------------------------------
 void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 {
+	double oneFrameTimeStart = g_timer.GetAbsoluteTime();
 
 	if (fElapsedTime < SECONDS_PER_FRAME)
 	{
@@ -1587,22 +1643,29 @@ void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 			
 			GravityMotionIteration(g_timeValue);
 
-			//temporary counter iteration
-			g_counter++;
+			//this section helps with the testRegularSpeed() function
+			int systemTimeAt365 = round((365 * 24) / g_timeValueToHoursConversion);
 
-			//just for getting values at a particlular time
-			if (g_counter==322){
-				for (int i = 0; i < NUM_PARTICLES; i++){
-					wstring name = g_pParticleArrayTWO[i].name;
-					float xcoord = g_pParticleArray[i].pos.x;
-					float ycoord = g_pParticleArray[i].pos.y;
-					float zcoord = g_pParticleArray[i].pos.z;
-					float xvelo = g_pParticleArray[i].velo.x;
-					float yvelo = g_pParticleArray[i].velo.y;
-					float zvelo = g_pParticleArray[i].velo.z;
-					float acoord = 1.0;
-				}
+			if (g_systemTime == systemTimeAt365){
+				g_elapsedTimeAt365Days = g_timer.GetAbsoluteTime();
 			}
+
+			////temporary counter iteration
+			//g_counter++;
+
+			////just for getting values at a particlular time for test purposes
+			//if (g_counter==322){
+			//	for (int i = 0; i < NUM_PARTICLES; i++){
+			//		wstring name = g_pParticleArrayTWO[i].name;
+			//		float xcoord = g_pParticleArray[i].pos.x;
+			//		float ycoord = g_pParticleArray[i].pos.y;
+			//		float zcoord = g_pParticleArray[i].pos.z;
+			//		float xvelo = g_pParticleArray[i].velo.x;
+			//		float yvelo = g_pParticleArray[i].velo.y;
+			//		float zvelo = g_pParticleArray[i].velo.z;
+			//		float acoord = 1.0;
+			//	}
+			//}
 
 			memcpy(ms.pData, g_pParticleArray, sizeof(PARTICLE) * NUM_PARTICLES);
 
@@ -1685,6 +1748,7 @@ void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 
 	g_relevantMouse = false;
 
+		g_oneFrameTime = g_timer.GetAbsoluteTime() - oneFrameTimeStart;
 
 }
 
@@ -2094,11 +2158,45 @@ bool RenderParticles(ID3D11DeviceContext* pd3dImmediateContext, CXMMATRIX mView,
 }
 
 //--------------------------------------------------------------------------------------
-void automatedTest(){
+void automatedTelemetry(){
+	//variables that store test results locally in this method
+	double jumpSpeedTime;
+	double oneIterationPerFrame;
+	double hundredIterationPerFrame;
+
 	switch (g_step){
+
 		case 1:{
-			testJumpTime();
+			//gets time to jump from time=0 to time=365 days
+			jumpSpeedTime = testJumpTimeSpeed();
+
+			//temporary print statements (need to be changed to print to file statements)
+			char buffer[256];
+			sprintf_s(buffer, sizeof(buffer), "Time to jump to 365 days: %f\n", jumpSpeedTime);
+			::OutputDebugStringA(buffer);
+
 			break;
+		}
+		case 2:{
+			int initial = g_iterationsPerFrame;
+			//gets time for one frame at one iteration per frame
+			oneIterationPerFrame = testSpeed1IterationsPerFrame();
+			//gets time for one frame at 100 iterations per frame
+			hundredIterationPerFrame = testSpeed100IterationsPerFrame();
+			g_iterationsPerFrame = initial;
+
+			//temporary print statements (need to be changed to print to file statements)
+			char buffer[256];
+			sprintf_s(buffer, sizeof(buffer), "Time for 1 Frame (1 Iteration/Frame): %f\n", oneIterationPerFrame);
+			::OutputDebugStringA(buffer);
+
+			sprintf_s(buffer, sizeof(buffer), "Time for 1 frame: (1000 Iterations/Frame): %f", hundredIterationPerFrame);
+			::OutputDebugStringA(buffer);
+
+		}
+		case 3:{
+			//TODO will have the test for running from time=0 to time=365 days
+			//waiting for Melanie's changes to implement
 		}
 		default:{
 
@@ -2147,7 +2245,7 @@ void CALLBACK OnD3D11FrameRender(ID3D11Device* pd3dDevice, ID3D11DeviceContext* 
 	}*/
 
 	if (g_isTest) {
-		automatedTest();
+		automatedTelemetry();
 	}
 
 }
