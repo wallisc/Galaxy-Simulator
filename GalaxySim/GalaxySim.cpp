@@ -38,6 +38,7 @@
 #include <sstream>
 #include <string>
 #include <fstream>
+#include <iomanip>
 
 
 #include "atlbase.h"
@@ -203,6 +204,7 @@ LPWSTR g_timeString; //used later for the Jump Time In button user uses to input
 bool g_isTest = true;
 int g_step = 1;
 wofstream g_dataFile;
+LPCWSTR g_localFileName;
 
 //testing variable helpers
 double g_beginStartTime;
@@ -1777,26 +1779,32 @@ double getTimeIntervalTest() {
 }
 
 double getPauseTime() {
+	OnGUIEvent(0, IDC_PAUSE, NULL, NULL);
 	return g_pauseTime;
 }
 
 double getUnPauseTime() {
+	OnGUIEvent(0, IDC_PAUSE, NULL, NULL);
 	return g_unPauseTime;
 }
 
 double getPauseFullScreenTime() {
+	OnGUIEvent(0, IDC_PAUSE, NULL, NULL);
 	return g_pauseFullScreenTime;
 }
 
 double getUnPauseFullScreenTime() {
+	OnGUIEvent(0, IDC_PAUSE, NULL, NULL);
 	return g_unPauseFullScreenTime;
 }
 
 double getWinToFullTime() {
+	OnGUIEvent(0, IDC_TOGGLEFULLSCREEN, NULL, NULL);
 	return g_winToFullTime;
 }
 
 double getFullToWinTime() {
+	OnGUIEvent(0, IDC_TOGGLEFULLSCREEN, NULL, NULL);
 	return g_fullToWinTime;
 }
 
@@ -1808,15 +1816,39 @@ float getAverageFPS() {
 	return g_averageFPS / g_averageFPSCounter;
 }
 
+//attempt to have local file that is then copied to davis
+//void initializeFile() {
+//	srand(time(NULL));
+//	int num = rand();
+//	wostringstream wss;
+//	wss << L"telemetrydata" << num << L".csv";
+//	const wstring& wstr = wss.str();
+//	const LPCWSTR temp = wstr.c_str();
+//	g_localFileName = temp;
+//	g_dataFile.open(g_localFileName);
+//}
+//
+//
+//void copyFile() {
+//	wostringstream wss;
+//	wss << L"\\\\davis\\public\\GRFXExplorerInternship\\Telemetry\\" << g_localFileName;
+//	const wstring& wstr = wss.str();
+//	const LPCWSTR copyName = wstr.c_str();
+//	bool copied = CopyFileW(g_localFileName, copyName, true);
+//}
+
+//file hardcoded to davis
 void initializeFile() {
 	srand(time(NULL));
 	int num = rand();
-	ostringstream oss;
-	string randomNum;
-	oss << randomNum << num;
-	string outputDataFileName = "\\\\davis\\public\\GRFXExplorerInternship\\Telemetry\\telemetrydata" + oss.str() + ".csv";
-	g_dataFile.open(outputDataFileName);
+	wostringstream wss;
+	wss << L"\\\\davis\\public\\GRFXExplorerInternship\\Telemetry\\telemetrydata" << num << L".csv";
+	const wstring& wstr = wss.str();
+	const LPCWSTR temp = wstr.c_str();
+	g_localFileName = temp;
+	g_dataFile.open(g_localFileName);
 }
+
 
 void automatedTest() {
 	
@@ -1849,35 +1881,30 @@ void automatedTest() {
 		break;
 	}
 	case 5: {
-		OnGUIEvent(0, IDC_TOGGLEFULLSCREEN, NULL, NULL);
 		double winToFullTime;
 		winToFullTime = getWinToFullTime();
 		g_dataFile << "Win to FullScreen" << "," << winToFullTime << endl;
 		break;
 	}
 	case 6: {
-		OnGUIEvent(0, IDC_PAUSE, NULL, NULL);
 		double pauseFullScreenTime;
 		pauseFullScreenTime = getPauseFullScreenTime();
 		g_dataFile << "Pause Fullscreen" << "," << pauseFullScreenTime << endl;
 		break;
 	}
 	case 7: {
-		OnGUIEvent(0, IDC_PAUSE, NULL, NULL);
 		double unPauseFullScreenTime;
 		unPauseFullScreenTime = getUnPauseFullScreenTime();
 		g_dataFile << "Unpause Fullscreen" << "," << unPauseFullScreenTime << endl;
 		break;
 	}
 	case 8: {
-		OnGUIEvent(0, IDC_TOGGLEFULLSCREEN, NULL, NULL);
 		double fullToWinTime;
 		fullToWinTime = getFullToWinTime();
 		g_dataFile << "Full to Windowed" << "," << fullToWinTime << endl;
 		break;
 	}
 	case 9: {
-		OnGUIEvent(0, IDC_PAUSE, NULL, NULL);
 		double pauseTime;
 		pauseTime = getPauseTime();
 		g_dataFile << "Pause" << "," << pauseTime << endl;
@@ -1896,7 +1923,6 @@ void automatedTest() {
 		break;
 	}
 	case 12: {
-		OnGUIEvent(0, IDC_PAUSE, NULL, NULL);
 		double unPauseTime;
 		unPauseTime = getUnPauseTime();
 		g_dataFile << "Unpause" << "," << unPauseTime << endl;
@@ -1909,14 +1935,19 @@ void automatedTest() {
 		}
 		
 		LPCWSTR deviceStats = DXUTGetDeviceStats();
-		wstringstream wss;
-		wstring test;
+		wostringstream wss;
 		wss << deviceStats;
 
 		g_dataFile << "Average FPS" << "," << averageFPS << endl;
 		g_dataFile << wss.str().c_str() << endl;
 		g_dataFile.close();
 
+		//copyFile();
+		
+		//copies file if it does not already exist
+		
+
+		
 		exit(0);
 		
 	}
