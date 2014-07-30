@@ -1525,6 +1525,10 @@ void copyFile() {
 	const wstring& wstr = wss.str();
 	const LPCWSTR copyName = wstr.c_str();
 	bool copied = CopyFileW(g_localFileName, copyName, true);
+	if (!copied) {
+		LPCTSTR failureMessage = L"The telemetry data file was not successfully copied to the share. \nPlease email the file (found at FILEPATH) to t-mellop@microsoft.com";
+		MessageBox(NULL, failureMessage, NULL, MB_OK);
+	}
 }
 
 
@@ -2465,10 +2469,6 @@ void automatedTelemetry(){
 		g_dataFile.close();
 
 		copyFile();
-
-		//copies file if it does not already exist
-
-
 
 		exit(0);
 
