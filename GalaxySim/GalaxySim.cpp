@@ -290,6 +290,7 @@ void halfSpeed();
 LPWSTR GetSimTime();
 void jumpTime(float newTime);
 void GravityMotionIteration(float timeIncrement);
+void pauseControl();
 
 
 //--------------------------------------------------------------------------------------
