@@ -204,6 +204,13 @@ int g_iterationsPerFrame = 10;
 double g_systemTime = 0; //sets the inital system time to 0
 LPWSTR g_timeString; //used later for the Jump Time In button user uses to input time to jump to.
 
+//testing constants
+bool g_isTest = true; //true means test mode is on
+int g_step = 0; //determines which test from automated test suite is run
+double g_jumpSpeedTest; //collects speed of jumpTime for automated test
+double g_oneFrameTime; //collects time for one frame
+double g_elapsedTimeAt365Days;
+
 //temporary counter
 int g_counter = 0;
 
@@ -215,6 +222,7 @@ int g_counter = 0;
 #define IDC_TOGGLEREF           3
 #define IDC_CHANGEDEVICE        4
 #define IDC_RESETPARTICLES      5
+#define IDC_DISPLAYINFO			6
 #define IDC_PAUSE               7
 #define IDC_DOUBLESPEED			8
 #define IDC_HALFSPEED			9
@@ -849,7 +857,7 @@ void GetWCharFromFloat(WCHAR *string, float inputFloat){
 
 	if (hr != S_OK){
 		string = NULL;
-}
+	}
 }
 
 //input a WCHAR string and an int, assigns value of int to the WCHAR string
@@ -921,6 +929,8 @@ void halfSpeed(){
 //this method calculates and updates new position and velocity for jumping in time
 void jumpTime(float newTime){
 
+	double jumpTimeStart = g_timer.GetAbsoluteTime();
+
 	//convert back to hours
 	newTime = newTime * 24;
 
@@ -943,7 +953,7 @@ void jumpTime(float newTime){
 
 		}
 
-				}
+	}
 
 	//to test where the particle is when you jump to a time
 	//put a breakpoint at float acoord=1.0 and see values of x, y, and zcoord
@@ -956,9 +966,11 @@ void jumpTime(float newTime){
 		float yvelo = g_pParticleArray[i].velo.y;
 		float zvelo = g_pParticleArray[i].velo.z;
 		float acoord=1.0;
-			}
-
+	}
+	
 	g_systemTime = newTime;
+
+	g_jumpSpeedTest = g_timer.GetAbsoluteTime() - jumpTimeStart;
 
 }
 
@@ -977,12 +989,12 @@ void loadKnownValues(float timeInDays){
 			if (i == 0){
 				ObjectData object;
 				object.m_name = L"Sun";
-				object.m_xcoord;
-				object.m_ycoord;
-				object.m_zcoord;
-				object.m_xvelo;
-				object.m_yvelo;
-				object.m_zvelo;
+				object.m_xcoord = 0;
+				object.m_ycoord = 0;
+				object.m_zcoord = 0;
+				object.m_xvelo = 0;
+				object.m_yvelo = 0;
+				object.m_zvelo = 0;
 				g_knownValues50.push_back(object);
 			}
 			if (i == 1){
@@ -1081,118 +1093,100 @@ void loadKnownValues(float timeInDays){
 			if (i == 0){
 				ObjectData object;
 				object.m_name = L"Sun";
-				object.m_mass;
-				object.m_diameter;
-				object.m_xcoord;
-				object.m_ycoord;
-				object.m_zcoord;
-				object.m_xvelo;
-				object.m_yvelo;
-				object.m_zvelo;
+				object.m_xcoord = 0;
+				object.m_ycoord = 0;
+				object.m_zcoord = 0;
+				object.m_xvelo = 0;
+				object.m_yvelo = 0;
+				object.m_zvelo = 0;
 				g_knownValues365.push_back(object);
 			}
 			if (i == 1){
 				ObjectData object;
 				object.m_name = L"Mercury";
-				object.m_mass;
-				object.m_diameter;
-				object.m_xcoord;
-				object.m_ycoord;
-				object.m_zcoord;
-				object.m_xvelo;
-				object.m_yvelo;
-				object.m_zvelo;
+				object.m_xcoord = 18766692.93;
+				object.m_ycoord = 42132885.04;
+				object.m_zcoord = 1720914.548;
+				object.m_xvelo = -195263.0601;
+				object.m_yvelo = 78163.14287;
+				object.m_zvelo = 24301.05807;
 				g_knownValues365.push_back(object);
 			}
 			if (i == 2){
 				ObjectData object;
 				object.m_name = L"Venus";
-				object.m_mass;
-				object.m_diameter;
-				object.m_xcoord;
-				object.m_ycoord;
-				object.m_zcoord;
-				object.m_xvelo;
-				object.m_yvelo;
-				object.m_zvelo;
+				object.m_xcoord = 4049817.258;
+				object.m_ycoord = -108684566;
+				object.m_zcoord = -1723364.905;
+				object.m_xvelo = 125141.8566;
+				object.m_yvelo = 4238.53855;
+				object.m_zvelo = -7163.653228;
 				g_knownValues365.push_back(object);
 			}
 			if (i == 3){
 				ObjectData object;
 				object.m_name = L"Earth";
-				object.m_mass;
-				object.m_diameter;
-				object.m_xcoord;
-				object.m_ycoord;
-				object.m_zcoord;
-				object.m_xvelo;
-				object.m_yvelo;
-				object.m_zvelo;
+				object.m_xcoord = 56994443.45;
+				object.m_ycoord = -140984104.3;
+				object.m_zcoord = 4927.148079;
+				object.m_xvelo = 97722.13926;
+				object.m_yvelo = 39796.94078;
+				object.m_zvelo = -1.87339952;
 				g_knownValues365.push_back(object);
 			}
 			if (i == 4){
 				ObjectData object;
 				object.m_name = L"Mars";
-				object.m_mass;
-				object.m_diameter;
-				object.m_xcoord;
-				object.m_ycoord;
-				object.m_zcoord;
-				object.m_xvelo;
-				object.m_yvelo;
-				object.m_zvelo;
+				object.m_xcoord = -32940093.43;
+				object.m_ycoord = 235322170.5;
+				object.m_zcoord = 5739286.75;
+				object.m_xvelo = -83070.91655;
+				object.m_yvelo = -4686.335825;
+				object.m_zvelo = 1940.697842;
 				g_knownValues365.push_back(object);
-		}
+			}
 			if (i == 5){
 				ObjectData object;
 				object.m_name = L"Jupiter";
-				object.m_mass;
-				object.m_diameter;
-				object.m_xcoord;
-				object.m_ycoord;
-				object.m_zcoord;
-				object.m_xvelo;
-				object.m_yvelo;
-				object.m_zvelo;
+				object.m_xcoord = -695245821.269348;
+				object.m_ycoord = 404435299.857454;
+				object.m_zcoord = 13877495.7147923;
+				object.m_xvelo = -24233.09268;
+				object.m_yvelo = -38475.33429;
+				object.m_zvelo = 702.0001936;
 				g_knownValues365.push_back(object);
 			}
 			if (i == 6){
 				ObjectData object;
 				object.m_name = L"Saturn";
-				object.m_mass;
-				object.m_diameter;
-				object.m_xcoord;
-				object.m_ycoord;
-				object.m_zcoord;
-				object.m_xvelo;
-				object.m_yvelo;
-				object.m_zvelo;
+				object.m_xcoord = -677061600.325424;
+				object.m_ycoord = -1330824838.97;
+				object.m_zcoord = 50087359.9067295;
+				object.m_xvelo = 29086.44475;
+				object.m_yvelo = -15901.13502;
+				object.m_zvelo = -881.4727019;
 				g_knownValues365.push_back(object);
 			}
 			if (i == 7){
 				ObjectData object;
 				object.m_name = L"Uranus";
-				object.m_mass;
-				object.m_diameter;
-				object.m_xcoord;
-				object.m_ycoord;
-				object.m_zcoord;
-				object.m_xvelo;
-				object.m_yvelo;
-				object.m_zvelo;
+				object.m_xcoord = 2854731950.96709;
+				object.m_ycoord = 890210291.13439;
+				object.m_zcoord = -33661204.0427779;
+				object.m_xvelo = 0.004810591;
+				object.m_yvelo = 124604248.2;
+				object.m_zvelo = -537.4215605;
 				g_knownValues365.push_back(object);
 			}
 			if (i == 8){
 				ObjectData object;
 				object.m_name = L"Neptune";
-				object.m_mass;
-				object.m_diameter;
-				object.m_xcoord;
-				object.m_ycoord;
-				object.m_zcoord;
-				object.m_xvelo;
-				object.m_yvelo;
-				object.m_zvelo;
+				object.m_xcoord = 4152581019;
+				object.m_ycoord = -1686816831;
+				object.m_zcoord = -60953508.09;
+				object.m_xvelo = 7219.25696;
+				object.m_yvelo = 18208.39271;
+				object.m_zvelo = -540.1008551;
 				g_knownValues365.push_back(object);
 			}
 		}
@@ -1203,118 +1197,100 @@ void loadKnownValues(float timeInDays){
 			if (i == 0){
 				ObjectData object;
 				object.m_name = L"Sun";
-				object.m_mass;
-				object.m_diameter;
-				object.m_xcoord;
-				object.m_ycoord;
-				object.m_zcoord;
-				object.m_xvelo;
-				object.m_yvelo;
-				object.m_zvelo;
+				object.m_xcoord = 0;
+				object.m_ycoord = 0;
+				object.m_zcoord = 0;
+				object.m_xvelo = 0;
+				object.m_yvelo = 0;
+				object.m_zvelo = 0;
 				g_knownValues730.push_back(object);
 			}
 			if (i == 1){
 				ObjectData object;
 				object.m_name = L"Mercury";
-				object.m_mass;
-				object.m_diameter;
-				object.m_xcoord;
-				object.m_ycoord;
-				object.m_zcoord;
-				object.m_xvelo;
-				object.m_yvelo;
-				object.m_zvelo;
+				object.m_xcoord = -44417188.49;
+				object.m_ycoord = 26479749.56;
+				object.m_zcoord = 6240000;
+				object.m_xvelo = -125744.561;
+				object.m_yvelo = -143282.4045;
+				object.m_zvelo = -171.736307;
 				g_knownValues730.push_back(object);
 			}
 			if (i == 2){
 				ObjectData object;
 				object.m_name = L"Venus";
-				object.m_mass;
-				object.m_diameter;
-				object.m_xcoord;
-				object.m_ycoord;
-				object.m_zcoord;
-				object.m_xvelo;
-				object.m_yvelo;
-				object.m_zvelo;
+				object.m_xcoord = -79882107.38;
+				object.m_ycoord = 71696040.49;
+				object.m_zcoord = 5592730.546;
+				object.m_xvelo = -84674.20188;
+				object.m_yvelo = -94480.81107;
+				object.m_zvelo = 3590.777918;
 				g_knownValues730.push_back(object);
 			}
 			if (i == 3){
 				ObjectData object;
 				object.m_name = L"Earth";
-				object.m_mass;
-				object.m_diameter;
-				object.m_xcoord;
-				object.m_ycoord;
-				object.m_zcoord;
-				object.m_xvelo;
-				object.m_yvelo;
-				object.m_zvelo;
+				object.m_xcoord = 58728268.08;
+				object.m_ycoord = -140259837.9;
+				object.m_zcoord = 4525.505711;
+				object.m_xvelo = 97135.72709;
+				object.m_yvelo = 41039.16657;
+				object.m_zvelo = -3.099869692;
 				g_knownValues730.push_back(object);
 			}
 			if (i == 4){
 				ObjectData object;
 				object.m_name = L"Mars";
-				object.m_mass;
-				object.m_diameter;
-				object.m_xcoord;
-				object.m_ycoord;
-				object.m_zcoord;
-				object.m_xvelo;
-				object.m_yvelo;
-				object.m_zvelo;
+				object.m_xcoord = 3374109.437;
+				object.m_ycoord = -217370516.2;
+				object.m_zcoord = -4637944.001;
+				object.m_xvelo = 90504.56687;
+				object.m_yvelo = 8858.20124;
+				object.m_zvelo = -2035.550651;
 				g_knownValues730.push_back(object);
 			}
 			if (i == 5){
 				ObjectData object;
 				object.m_name = L"Jupiter";
-				object.m_mass;
-				object.m_diameter;
-				object.m_xcoord;
-				object.m_ycoord;
-				object.m_zcoord;
-				object.m_xvelo;
-				object.m_yvelo;
-				object.m_zvelo;
+				object.m_xcoord = -813800809.4;
+				object.m_ycoord = 30590499.83;
+				object.m_zcoord = 18082783.82;
+				object.m_xvelo = -2334.424351;
+				object.m_yvelo = -44828.00906;
+				object.m_zvelo = 238.1777941;
 				g_knownValues730.push_back(object);
 			}
 			if (i == 6){
 				ObjectData object;
 				object.m_name = L"Saturn";
-				object.m_mass;
-				object.m_diameter;
-				object.m_xcoord;
-				object.m_ycoord;
-				object.m_zcoord;
-				object.m_xvelo;
-				object.m_yvelo;
-				object.m_zvelo;
+				object.m_xcoord = -409839199.6;
+				object.m_ycoord = -1443313913;
+				object.m_zcoord = 41401603.8;
+				object.m_xvelo = 31559.59078;
+				object.m_yvelo = -9643.498461;
+				object.m_zvelo = -1087.899625;
 				g_knownValues730.push_back(object);
 			}
 			if (i == 7){
 				ObjectData object;
 				object.m_name = L"Uranus";
-				object.m_mass;
-				object.m_diameter;
-				object.m_xcoord;
-				object.m_ycoord;
-				object.m_zcoord;
-				object.m_xvelo;
-				object.m_yvelo;
-				object.m_zvelo;
+				object.m_xcoord = 2781978360;
+				object.m_ycoord = 1083012788;
+				object.m_zcoord = -32000122.47;
+				object.m_xvelo = -9067.271116;
+				object.m_yvelo = 21658.78742;
+				object.m_zvelo = 198.6202743;
 				g_knownValues730.push_back(object);
 			}
 			if (i == 8){
 				ObjectData object;
 				object.m_name = L"Neptune";
-				object.m_mass;
-				object.m_diameter;
-				object.m_xcoord;
-				object.m_ycoord;
-				object.m_zcoord;
-				object.m_xvelo;
-				object.m_yvelo;
-				object.m_zvelo;
+				object.m_xcoord = 4212998727;
+				object.m_ycoord = -1525719745;
+				object.m_zcoord = -65670512.68;
+				object.m_xvelo = 6539.544931;
+				object.m_yvelo = 18471.16251;
+				object.m_zvelo = -533.8532016;
 				g_knownValues730.push_back(object);
 			}
 		}
@@ -1325,43 +1301,45 @@ void loadKnownValues(float timeInDays){
 //expects that order of planets in XML is real order starting from Sun
 float comparePosVal(vector<ObjectData> &realValues){
 	float avgPosDiff = 0;
-	for (int i = 0; i < 9; i++){
+	for (int i = 1; i < 9; i++){
 		float xDiff = ((realValues[i].m_xcoord - g_pParticleArray[i].pos.x) / realValues[i].m_xcoord) * 100;
 		float yDiff = ((realValues[i].m_ycoord - g_pParticleArray[i].pos.y) / realValues[i].m_ycoord) * 100;
 		float zDiff = ((realValues[i].m_zcoord - g_pParticleArray[i].pos.z) / realValues[i].m_zcoord) * 100;
 		float posDiff = (xDiff + yDiff + zDiff) / 3;
-		avgPosDiff = (avgPosDiff*i + posDiff) / (i + 1);
+		avgPosDiff = (avgPosDiff*(i-1) + posDiff) / (i);
 	}
 	return avgPosDiff;
-	}
+}
 
 //compares velocities of real and simulated values
 //expects that order of planets in XML is real order starting from Sun
 float compareVeloVal(vector<ObjectData> &realValues){
 	float avgVeloDiff = 0;
-	for (int i = 0; i < 9; i++){
+	for (int i = 1; i < 9; i++){
 		float xvDiff = ((realValues[i].m_xvelo - g_pParticleArray[i].velo.x) / realValues[i].m_xvelo) * 100;
 		float yvDiff = ((realValues[i].m_yvelo - g_pParticleArray[i].velo.y) / realValues[i].m_yvelo) * 100;
 		float zvDiff = ((realValues[i].m_zvelo - g_pParticleArray[i].velo.z) / realValues[i].m_zvelo) * 100;
 		float veloDiff = (xvDiff + yvDiff + zvDiff) / 3;
-		avgVeloDiff = (avgVeloDiff*i + veloDiff) / (i + 1);
+		avgVeloDiff = (avgVeloDiff*(i-1) + veloDiff) / (i);
 	}
 	return avgVeloDiff;
 }
 
 //unit test tests accuracy of jumpTime feature for time=1 year etc.
-void testJumpTime(){
+void testJumpTimeAccuracy(){
 	float avgPosDiff;
 	float avgVeloDiff;
+
+	OnGUIEvent(0, IDC_RESETPARTICLES, NULL, NULL);
 
 	//test for time=50 days
 	loadKnownValues(50);
 	jumpTime(50);
-	DXUTPause(true, false);
+	DXUTPause(false, false);
 	g_isPaused = true;
 	float posDiff50 = comparePosVal(g_knownValues50);
 	float veloDiff50 = compareVeloVal(g_knownValues50);
-	DXUTPause(false, false);
+	DXUTPause(true, false);
 	g_isPaused = false;
 
 	//test for time=365 days
@@ -1385,10 +1363,71 @@ void testJumpTime(){
 	g_isPaused = false;
 
 	//average the different tests
-	avgPosDiff = (posDiff50 + posDiff365 + posDiff730) / 3; //add in other tests as they get added
-	avgVeloDiff = (veloDiff50 + veloDiff365 + veloDiff730) / 3; //add in other tests as they get added
-	printf("Avg Position % Difference %f", avgPosDiff);
-	printf("Avg Velocity % Difference %f", avgVeloDiff);
+	//avgPosDiff = (posDiff50 + posDiff365 + posDiff730) / 3; //add in other tests as they get added
+	//avgVeloDiff = (veloDiff50 + veloDiff365 + veloDiff730) / 3; //add in other tests as they get added
+
+	avgPosDiff = (posDiff50 + posDiff730) / 2; //add in other tests as they get added
+	avgVeloDiff = (veloDiff50 + veloDiff730) / 2; //add in other tests as they get added
+
+	char buffer[256];
+	sprintf_s(buffer, sizeof(buffer), "Avg Position Percent Difference %f\n", avgPosDiff);
+	::OutputDebugStringA(buffer);
+
+	sprintf_s(buffer, sizeof(buffer), "Avg Velocity Percent Difference %f\n", avgVeloDiff);
+	::OutputDebugStringA(buffer);
+	
+}
+
+//test the fast forward accuracy
+//fast forward to time=50 then time=365 then time=730 and compare results
+//TODO not full finished yet
+void testFastFwdAccuracy(){
+	OnGUIEvent(0, IDC_RESETPARTICLES, NULL, NULL);
+	int initialIterations = g_iterationsPerFrame;
+	g_iterationsPerFrame = 20;
+	//go to certain point and test accuracy
+	g_iterationsPerFrame = initialIterations;
+
+}
+
+//test jump time accuracy
+//see how long it takes to jump in time to 365 days
+double testJumpTimeSpeed(){
+	OnGUIEvent(0, IDC_RESETPARTICLES, NULL, NULL);
+	jumpTime(365);
+	double testTime = g_jumpSpeedTest;
+	return testTime;
+}
+
+//see how long it takes for 1 frame at 1 iteration per frame
+double testSpeed1IterationsPerFrame(){
+
+	g_iterationsPerFrame = 1;
+
+	double oneIterationTime = g_oneFrameTime;
+
+	return oneIterationTime;
+}
+
+//see how long it takes for 1 frame at 100 iterations per frame
+double testSpeed100IterationsPerFrame(){
+
+	g_iterationsPerFrame = 100;
+
+	double hundredIterationsTime = g_oneFrameTime;
+
+	return hundredIterationsTime;
+}
+
+//see how long it takes to get to 365 days while running the simulation at 10 iterations/frame
+double testRegularSpeed(){
+	g_iterationsPerFrame = 10;
+	OnGUIEvent(0, IDC_RESETPARTICLES, NULL, NULL);
+	double initialTime = g_timer.GetAbsoluteTime();
+
+	double timeElapsed = g_elapsedTimeAt365Days - initialTime;
+	return timeElapsed;
+
 }
 
 //--------------------------------------------------------------------------------------
@@ -1559,6 +1598,7 @@ wstring concatenateObjInfo(int index) {
 //--------------------------------------------------------------------------------------
 void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 {
+	double oneFrameTimeStart = g_timer.GetAbsoluteTime();
 
 	if (fElapsedTime < SECONDS_PER_FRAME)
 	{
@@ -1581,39 +1621,46 @@ void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 
 
 
-		auto pd3dImmediateContext = DXUTGetD3D11DeviceContext();
+			auto pd3dImmediateContext = DXUTGetD3D11DeviceContext();
 
-		D3D11_MAPPED_SUBRESOURCE ms;
-		pd3dImmediateContext->Map(g_pParticlePosVelo0, 0, D3D11_MAP_WRITE_DISCARD, 0, &ms);
+			D3D11_MAPPED_SUBRESOURCE ms;
+			pd3dImmediateContext->Map(g_pParticlePosVelo0, 0, D3D11_MAP_WRITE_DISCARD, 0, &ms);
 
 			g_systemTime = g_systemTime + g_timeValueToHoursConversion;
-
+			
 			GravityMotionIteration(g_timeValue);
 
-			//temporary counter iteration
-			g_counter++;
+			//this section helps with the testRegularSpeed() function
+			int systemTimeAt365 = round((365 * 24) / g_timeValueToHoursConversion);
 
-			//just for getting values at a particlular time
-			if (g_counter==322){
-				for (int i = 0; i < NUM_PARTICLES; i++){
-					wstring name = g_pParticleArrayTWO[i].name;
-					float xcoord = g_pParticleArray[i].pos.x;
-					float ycoord = g_pParticleArray[i].pos.y;
-					float zcoord = g_pParticleArray[i].pos.z;
-					float xvelo = g_pParticleArray[i].velo.x;
-					float yvelo = g_pParticleArray[i].velo.y;
-					float zvelo = g_pParticleArray[i].velo.z;
-					float acoord = 1.0;
+			if (g_systemTime == systemTimeAt365){
+				g_elapsedTimeAt365Days = g_timer.GetAbsoluteTime();
 			}
+
+			////temporary counter iteration
+			//g_counter++;
+
+			////just for getting values at a particlular time for test purposes
+			//if (g_counter==322){
+			//	for (int i = 0; i < NUM_PARTICLES; i++){
+			//		wstring name = g_pParticleArrayTWO[i].name;
+			//		float xcoord = g_pParticleArray[i].pos.x;
+			//		float ycoord = g_pParticleArray[i].pos.y;
+			//		float zcoord = g_pParticleArray[i].pos.z;
+			//		float xvelo = g_pParticleArray[i].velo.x;
+			//		float yvelo = g_pParticleArray[i].velo.y;
+			//		float zvelo = g_pParticleArray[i].velo.z;
+			//		float acoord = 1.0;
+			//	}
+			//}
+
+			memcpy(ms.pData, g_pParticleArray, sizeof(PARTICLE) * NUM_PARTICLES);
+
+			pd3dImmediateContext->Unmap(g_pParticlePosVelo0, NULL);
+
+			std::swap(g_pParticlePosVelo0, g_pParticlePosVelo1);
+			std::swap(g_pParticlePosVeloRV0, g_pParticlePosVeloRV1);
 		}
-
-		memcpy(ms.pData, g_pParticleArray, sizeof(PARTICLE) * NUM_PARTICLES);
-
-		pd3dImmediateContext->Unmap(g_pParticlePosVelo0, NULL);
-
-		std::swap(g_pParticlePosVelo0, g_pParticlePosVelo1);
-		std::swap(g_pParticlePosVeloRV0, g_pParticlePosVeloRV1);
-	}
 
 	}
 	else if (g_isPaused && g_hasDisplay && g_relevantMouse) {
@@ -1688,6 +1735,7 @@ void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 
 	g_relevantMouse = false;
 
+		g_oneFrameTime = g_timer.GetAbsoluteTime() - oneFrameTimeStart;
 
 }
 
@@ -2098,6 +2146,53 @@ bool RenderParticles(ID3D11DeviceContext* pd3dImmediateContext, CXMMATRIX mView,
 	return true;
 }
 
+//--------------------------------------------------------------------------------------
+void automatedTelemetry(){
+	//variables that store test results locally in this method
+	double jumpSpeedTime;
+	double oneIterationPerFrame;
+	double hundredIterationPerFrame;
+
+	switch (g_step){
+
+		case 1:{
+			//gets time to jump from time=0 to time=365 days
+			jumpSpeedTime = testJumpTimeSpeed();
+
+			//temporary print statements (need to be changed to print to file statements)
+			char buffer[256];
+			sprintf_s(buffer, sizeof(buffer), "Time to jump to 365 days: %f\n", jumpSpeedTime);
+			::OutputDebugStringA(buffer);
+
+			break;
+		}
+		case 2:{
+			int initial = g_iterationsPerFrame;
+			//gets time for one frame at one iteration per frame
+			oneIterationPerFrame = testSpeed1IterationsPerFrame();
+			//gets time for one frame at 100 iterations per frame
+			hundredIterationPerFrame = testSpeed100IterationsPerFrame();
+			g_iterationsPerFrame = initial;
+
+			//temporary print statements (need to be changed to print to file statements)
+			char buffer[256];
+			sprintf_s(buffer, sizeof(buffer), "Time for 1 Frame (1 Iteration/Frame): %f\n", oneIterationPerFrame);
+			::OutputDebugStringA(buffer);
+
+			sprintf_s(buffer, sizeof(buffer), "Time for 1 frame: (1000 Iterations/Frame): %f", hundredIterationPerFrame);
+			::OutputDebugStringA(buffer);
+
+		}
+		case 3:{
+			//TODO will have the test for running from time=0 to time=365 days
+			//waiting for Melanie's changes to implement
+		}
+		default:{
+
+		}
+	}
+	g_step++;
+}
 
 //--------------------------------------------------------------------------------------
 void CALLBACK OnD3D11FrameRender(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImmediateContext, double fTime,
@@ -2137,6 +2232,11 @@ void CALLBACK OnD3D11FrameRender(ID3D11Device* pd3dDevice, ID3D11DeviceContext* 
 	OutputDebugString( L"\n" );
 	dwTimefirst = GetTickCount();
 	}*/
+
+	if (g_isTest) {
+		automatedTelemetry();
+	}
+
 }
 
 
