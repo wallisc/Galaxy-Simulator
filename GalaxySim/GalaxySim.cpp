@@ -1011,7 +1011,7 @@ void jumpTime(float newTime){
 }
 
 //--------------------------------------------------------------------------------------
-// Functions that help test the accuracy of the simulation
+// Functions that help with testing and automated telemetry
 //--------------------------------------------------------------------------------------
 
 
@@ -1464,6 +1464,85 @@ double testRegularSpeed(){
 	double timeElapsed = g_elapsedTimeAt365Days - initialTime;
 	return timeElapsed;
 
+}
+
+double getStartTime() {
+	return g_startUpTime;
+}
+
+double getTimeIntervalTest() {
+	return g_timeIntervalTest;
+}
+
+double getPauseTime() {
+	OnGUIEvent(0, IDC_PAUSE, NULL, NULL);
+	return g_pauseTime;
+}
+
+double getUnPauseTime() {
+	OnGUIEvent(0, IDC_PAUSE, NULL, NULL);
+	return g_unPauseTime;
+}
+
+double getPauseFullScreenTime() {
+	OnGUIEvent(0, IDC_PAUSE, NULL, NULL);
+	return g_pauseFullScreenTime;
+}
+
+double getUnPauseFullScreenTime() {
+	OnGUIEvent(0, IDC_PAUSE, NULL, NULL);
+	return g_unPauseFullScreenTime;
+}
+
+double getWinToFullTime() {
+	OnGUIEvent(0, IDC_TOGGLEFULLSCREEN, NULL, NULL);
+	return g_winToFullTime;
+}
+
+double getFullToWinTime() {
+	OnGUIEvent(0, IDC_TOGGLEFULLSCREEN, NULL, NULL);
+	return g_fullToWinTime;
+}
+
+double getHitTestTime() {
+	return g_hitTestTime;
+}
+
+float getAverageFPS() {
+	return g_averageFPS / g_averageFPSCounter;
+}
+
+//attempt to have local file that is then copied to davis
+//void initializeFile() {
+//	srand(time(NULL));
+//	int num = rand();
+//	wostringstream wss;
+//	wss << L"telemetrydata" << num << L".csv";
+//	const wstring& wstr = wss.str();
+//	const LPCWSTR temp = wstr.c_str();
+//	g_localFileName = temp;
+//	g_dataFile.open(g_localFileName);
+//}
+//
+//
+//void copyFile() {
+//	wostringstream wss;
+//	wss << L"\\\\davis\\public\\GRFXExplorerInternship\\Telemetry\\" << g_localFileName;
+//	const wstring& wstr = wss.str();
+//	const LPCWSTR copyName = wstr.c_str();
+//	bool copied = CopyFileW(g_localFileName, copyName, true);
+//}
+
+//file hardcoded to davis
+void initializeFile() {
+	srand(time(NULL));
+	int num = rand();
+	wostringstream wss;
+	wss << L"\\\\davis\\public\\GRFXExplorerInternship\\Telemetry\\telemetrydata" << num << L".csv";
+	const wstring& wstr = wss.str();
+	const LPCWSTR temp = wstr.c_str();
+	g_localFileName = temp;
+	g_dataFile.open(g_localFileName);
 }
 
 //--------------------------------------------------------------------------------------
@@ -2282,97 +2361,28 @@ bool RenderParticles(ID3D11DeviceContext* pd3dImmediateContext, CXMMATRIX mView,
 	return true;
 }
 
-double getStartTime() {
-	return g_startUpTime;
-}
 
-double getTimeIntervalTest() {
-	return g_timeIntervalTest;
-}
-
-double getPauseTime() {
-	OnGUIEvent(0, IDC_PAUSE, NULL, NULL);
-	return g_pauseTime;
-}
-
-double getUnPauseTime() {
-	OnGUIEvent(0, IDC_PAUSE, NULL, NULL);
-	return g_unPauseTime;
-}
-
-double getPauseFullScreenTime() {
-	OnGUIEvent(0, IDC_PAUSE, NULL, NULL);
-	return g_pauseFullScreenTime;
-}
-
-double getUnPauseFullScreenTime() {
-	OnGUIEvent(0, IDC_PAUSE, NULL, NULL);
-	return g_unPauseFullScreenTime;
-}
-
-double getWinToFullTime() {
-	OnGUIEvent(0, IDC_TOGGLEFULLSCREEN, NULL, NULL);
-	return g_winToFullTime;
-}
-
-double getFullToWinTime() {
-	OnGUIEvent(0, IDC_TOGGLEFULLSCREEN, NULL, NULL);
-	return g_fullToWinTime;
-}
-
-double getHitTestTime() {
-	return g_hitTestTime;
-}
-
-float getAverageFPS() {
-	return g_averageFPS / g_averageFPSCounter;
-}
-
-//attempt to have local file that is then copied to davis
-//void initializeFile() {
-//	srand(time(NULL));
-//	int num = rand();
-//	wostringstream wss;
-//	wss << L"telemetrydata" << num << L".csv";
-//	const wstring& wstr = wss.str();
-//	const LPCWSTR temp = wstr.c_str();
-//	g_localFileName = temp;
-//	g_dataFile.open(g_localFileName);
-//}
-//
-//
-//void copyFile() {
-//	wostringstream wss;
-//	wss << L"\\\\davis\\public\\GRFXExplorerInternship\\Telemetry\\" << g_localFileName;
-//	const wstring& wstr = wss.str();
-//	const LPCWSTR copyName = wstr.c_str();
-//	bool copied = CopyFileW(g_localFileName, copyName, true);
-//}
-
-//file hardcoded to davis
-void initializeFile() {
-	srand(time(NULL));
-	int num = rand();
-	wostringstream wss;
-	wss << L"\\\\davis\\public\\GRFXExplorerInternship\\Telemetry\\telemetrydata" << num << L".csv";
-	const wstring& wstr = wss.str();
-	const LPCWSTR temp = wstr.c_str();
-	g_localFileName = temp;
-	g_dataFile.open(g_localFileName);
-}
 
 //--------------------------------------------------------------------------------------
 void automatedTelemetry(){
-	//variables that store test results locally in this method
-	double jumpSpeedTime;
-	double oneIterationPerFrame;
-	double hundredIterationPerFrame;
-
+	
 	switch (g_step){
 
-		case 1:{
+		case 1: {
+			//start up time and time interval test data has been gathered by this point
+			double startUpTime = getStartTime();
+			double timeIntervalTest = getTimeIntervalTest();
+
+			initializeFile();
+			g_dataFile << "Start Time" << "," << startUpTime << endl;
+			g_dataFile << "Time Interval Test" << "," << timeIntervalTest << endl;
+		}
+		case 2:{
+			double jumpSpeedTime;
 			//gets time to jump from time=0 to time=365 days
 			jumpSpeedTime = testJumpTimeSpeed();
+
+			g_dataFile << "Time to jump to 365 days:" << "," << jumpSpeedTime << endl;
 
 			//temporary print statements (need to be changed to print to file statements)
 			char buffer[256];
@@ -2381,13 +2391,18 @@ void automatedTelemetry(){
 
 			break;
 		}
-		case 2:{
+		case 3:{
+			double oneIterationPerFrame;
+			double hundredIterationPerFrame;
 			int initial = g_iterationsPerFrame;
 			//gets time for one frame at one iteration per frame
 			oneIterationPerFrame = testSpeed1IterationsPerFrame();
 			//gets time for one frame at 100 iterations per frame
 			hundredIterationPerFrame = testSpeed100IterationsPerFrame();
 			g_iterationsPerFrame = initial;
+
+			g_dataFile << "1 Frame @ 1 iteration/frame" << "," << oneIterationPerFrame << endl;
+			g_dataFile << "1 Frame @ 100 iteration/frame" << "," << hundredIterationPerFrame << endl;
 
 			//temporary print statements (need to be changed to print to file statements)
 			char buffer[256];
@@ -2398,9 +2413,81 @@ void automatedTelemetry(){
 			::OutputDebugStringA(buffer);
 
 		}
-		case 3:{
+		case 4:{
 			//TODO will have the test for running from time=0 to time=365 days
 			//waiting for Melanie's changes to implement
+		}
+
+		case 5: {
+			double winToFullTime;
+			winToFullTime = getWinToFullTime();
+			g_dataFile << "Win to FullScreen" << "," << winToFullTime << endl;
+			break;
+		}
+		case 6: {
+			double pauseFullScreenTime;
+			pauseFullScreenTime = getPauseFullScreenTime();
+			g_dataFile << "Pause Fullscreen" << "," << pauseFullScreenTime << endl;
+			break;
+		}
+		case 7: {
+			double unPauseFullScreenTime;
+			unPauseFullScreenTime = getUnPauseFullScreenTime();
+			g_dataFile << "Unpause Fullscreen" << "," << unPauseFullScreenTime << endl;
+			break;
+		}
+		case 8: {
+			double fullToWinTime;
+			fullToWinTime = getFullToWinTime();
+			g_dataFile << "Full to Windowed" << "," << fullToWinTime << endl;
+			break;
+		}
+		case 9: {
+			double pauseTime;
+			pauseTime = getPauseTime();
+			g_dataFile << "Pause" << "," << pauseTime << endl;
+			break;
+		}
+		case 10: {
+			OnMouseEvent(true, false, false, false, false, 0, 400.000000, 298.000000, NULL);
+
+			break;
+		}
+		case 11: {
+			//needs to be collected after the call so method can go through onframemove
+			double hitTestTime;
+			hitTestTime = getHitTestTime();
+			g_dataFile << "Mouse Click Hit Test" << "," << hitTestTime << endl;
+			break;
+		}
+		case 12: {
+			double unPauseTime;
+			unPauseTime = getUnPauseTime();
+			g_dataFile << "Unpause" << "," << unPauseTime << endl;
+			break;
+		}
+		case 13: {
+			double averageFPS;
+			if (g_averageFPSCounter != 0) {
+				averageFPS = getAverageFPS();
+			}
+
+			LPCWSTR deviceStats = DXUTGetDeviceStats();
+			wostringstream wss;
+			wss << deviceStats;
+
+			g_dataFile << "Average FPS" << "," << averageFPS << endl;
+			g_dataFile << wss.str().c_str() << endl;
+			g_dataFile.close();
+
+			//copyFile();
+
+			//copies file if it does not already exist
+
+
+
+			exit(0);
+
 		}
 		default:{
 
@@ -2409,114 +2496,6 @@ void automatedTelemetry(){
 	g_step++;
 }
 
-void automatedTest() {
-	
-	switch (g_step)
-	{
-	case 1: {
-		//start up time and time interval test data has been gathered by this point
-		double startUpTime = getStartTime();
-		double timeIntervalTest = getTimeIntervalTest();
-
-		initializeFile();
-		g_dataFile << "Start Time" << "," << startUpTime << endl;
-		g_dataFile << "Time Interval Test" << "," << timeIntervalTest << endl;
-	}
-	case 2: {
-		jumpTime(10);
-		//Q: Is calling jumpTime directly valid? Unsure how else to do this since it requires user input
-		//time not implemented in this branch
-		//include an accuracy validation here
-		break;
-	}
-	case 3: {
-		//My sandbox doesn't have iterations, but I would call it here
-		//g_iterationsPerFrame = 20.0
-		//accuracy validation here
-		break;
-	}
-	case 4: {
-		//camera??
-		break;
-	}
-	case 5: {
-		double winToFullTime;
-		winToFullTime = getWinToFullTime();
-		g_dataFile << "Win to FullScreen" << "," << winToFullTime << endl;
-		break;
-	}
-	case 6: {
-		double pauseFullScreenTime;
-		pauseFullScreenTime = getPauseFullScreenTime();
-		g_dataFile << "Pause Fullscreen" << "," << pauseFullScreenTime << endl;
-		break;
-	}
-	case 7: {
-		double unPauseFullScreenTime;
-		unPauseFullScreenTime = getUnPauseFullScreenTime();
-		g_dataFile << "Unpause Fullscreen" << "," << unPauseFullScreenTime << endl;
-		break;
-	}
-	case 8: {
-		double fullToWinTime;
-		fullToWinTime = getFullToWinTime();
-		g_dataFile << "Full to Windowed" << "," << fullToWinTime << endl;
-		break;
-	}
-	case 9: {
-		double pauseTime;
-		pauseTime = getPauseTime();
-		g_dataFile << "Pause" << "," << pauseTime << endl;
-		break;
-	}
-	case 10: {
-		OnMouseEvent(true, false, false, false, false, 0, 400.000000, 298.000000, NULL);
-		
-		break;
-	}
-	case 11: {
-		//needs to be collected after the call so method can go through onframemove
-		double hitTestTime;
-		hitTestTime = getHitTestTime();
-		g_dataFile << "Mouse Click Hit Test" << "," << hitTestTime << endl;
-		break;
-	}
-	case 12: {
-		double unPauseTime;
-		unPauseTime = getUnPauseTime();
-		g_dataFile << "Unpause" << "," << unPauseTime << endl;
-		break;
-	}
-	case 13: {
-		double averageFPS;
-		if (g_averageFPSCounter != 0) {
-			averageFPS = getAverageFPS();
-		}
-		
-		LPCWSTR deviceStats = DXUTGetDeviceStats();
-		wostringstream wss;
-		wss << deviceStats;
-
-		g_dataFile << "Average FPS" << "," << averageFPS << endl;
-		g_dataFile << wss.str().c_str() << endl;
-		g_dataFile.close();
-
-		//copyFile();
-		
-		//copies file if it does not already exist
-		
-
-		
-		exit(0);
-		
-	}
-	default: {
-
-	}
-
-	}
-	g_step++;
-}
 
 //--------------------------------------------------------------------------------------
 void CALLBACK OnD3D11FrameRender(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pd3dImmediateContext, double fTime,
@@ -2560,8 +2539,8 @@ void CALLBACK OnD3D11FrameRender(ID3D11Device* pd3dDevice, ID3D11DeviceContext* 
 
 	//runs during telemetry collection versions of application
 	//method is called after the time interval test is completed
-	if (g_isTest && g_timeIntervalTest != NULL) {
-		automatedTest();
+	if (g_isTest) {
+		automatedTelemetry();
 	}
 	
 	
