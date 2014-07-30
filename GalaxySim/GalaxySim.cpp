@@ -208,6 +208,8 @@ int g_step = 0; //determines which test from automated test suite is run
 double g_jumpSpeedTest; //collects speed of jumpTime for automated test
 double g_oneFrameTime; //collects time for one frame
 double g_elapsedTimeAt365Days;
+double g_deltatResetParticles;
+double g_deltatResetCamera;
 
 //temporary counter
 int g_counter = 0;
@@ -1425,6 +1427,18 @@ double testRegularSpeed(){
 
 }
 
+//see how long it takes to reset particles to their initial position
+double testResetParticles(){
+	OnGUIEvent(0, IDC_RESETPARTICLES, NULL, NULL);
+	return g_deltatResetParticles;
+}
+
+//see how long it takes to Reset the Camera to its initial position
+double testResetCamera(){
+	OnGUIEvent(0, IDC_RESETCAMERA, NULL, NULL);
+	return g_deltatResetCamera;
+}
+
 //--------------------------------------------------------------------------------------
 HRESULT CreateParticlePosVeloBuffers(ID3D11Device* pd3dDevice)
 {
@@ -1802,10 +1816,10 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 		tend = g_timer.GetAbsoluteTime();
 		g_systemTime = 0;
 
-		double deltat = tend - tstart;
+		double g_deltatResetParticles = tend - tstart;
 
 		wchar_t buffer[256];
-		swprintf(buffer, sizeof(buffer), L"%f\n", deltat);
+		swprintf(buffer, sizeof(buffer), L"%f\n", g_deltatResetParticles);
 		::OutputDebugString(buffer);
 		break;
 	}
@@ -1879,10 +1893,10 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 		tstart = g_timer.GetAbsoluteTime();
 		g_Camera.Reset();
 		tend = g_timer.GetAbsoluteTime();
-		double deltat = tend - tstart;
+		g_deltatResetCamera = tend - tstart;
 		
 		wchar_t buffer[256];
-		swprintf(buffer, sizeof(buffer), L"%f\n", deltat);
+		swprintf(buffer, sizeof(buffer), L"%f\n", g_deltatResetCamera);
 		::OutputDebugString(buffer);
 
 		break;
