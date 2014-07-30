@@ -216,7 +216,7 @@ double g_jumpSpeedTest; //collects speed of jumpTime for automated test
 double g_oneFrameTime; //collects time for one frame
 double g_elapsedTimeAt365Days;
 wofstream g_dataFile;
-LPCWSTR g_localFileName;
+const LPCWSTR g_localFileName = L"SkyXTelemetryData.csv";
 
 //testing variable helpers
 double g_beginStartTime;
@@ -1512,38 +1512,22 @@ float getAverageFPS() {
 	return g_averageFPS / g_averageFPSCounter;
 }
 
-//attempt to have local file that is then copied to davis
-//void initializeFile() {
-//	srand(time(NULL));
-//	int num = rand();
-//	wostringstream wss;
-//	wss << L"telemetrydata" << num << L".csv";
-//	const wstring& wstr = wss.str();
-//	const LPCWSTR temp = wstr.c_str();
-//	g_localFileName = temp;
-//	g_dataFile.open(g_localFileName);
-//}
-//
-//
-//void copyFile() {
-//	wostringstream wss;
-//	wss << L"\\\\davis\\public\\GRFXExplorerInternship\\Telemetry\\" << g_localFileName;
-//	const wstring& wstr = wss.str();
-//	const LPCWSTR copyName = wstr.c_str();
-//	bool copied = CopyFileW(g_localFileName, copyName, true);
-//}
-
-//file hardcoded to davis
 void initializeFile() {
+	g_dataFile.open(g_localFileName);
+}
+
+
+void copyFile() {
 	srand(time(NULL));
 	int num = rand();
 	wostringstream wss;
-	wss << L"\\\\davis\\public\\GRFXExplorerInternship\\Telemetry\\telemetrydata" << num << L".csv";
+	wss << L"\\\\davis\\public\\GRFXExplorerInternship\\Telemetry\\" << num << g_localFileName;
 	const wstring& wstr = wss.str();
-	const LPCWSTR temp = wstr.c_str();
-	g_localFileName = temp;
-	g_dataFile.open(g_localFileName);
+	const LPCWSTR copyName = wstr.c_str();
+	bool copied = CopyFileW(g_localFileName, copyName, true);
 }
+
+
 
 //--------------------------------------------------------------------------------------
 HRESULT CreateParticlePosVeloBuffers(ID3D11Device* pd3dDevice)
@@ -2480,7 +2464,7 @@ void automatedTelemetry(){
 		g_dataFile << wss.str().c_str() << endl;
 		g_dataFile.close();
 
-		//copyFile();
+		copyFile();
 
 		//copies file if it does not already exist
 
