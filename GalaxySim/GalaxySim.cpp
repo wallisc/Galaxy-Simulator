@@ -217,6 +217,9 @@ double g_oneFrameTime; //collects time for one frame
 double g_elapsedTimeAt100Days;
 wofstream g_dataFile;
 const LPCWSTR g_localFileName = L"SkyXTelemetryData.csv";
+double g_elapsedTimeAt365Days;
+double g_deltatResetParticles;
+double g_deltatResetCamera;
 
 //testing variable helpers
 double g_beginStartTime;
@@ -235,7 +238,8 @@ double g_pauseFullScreenTime;
 double g_unPauseFullScreenTime;
 double g_winToFullTime;
 double g_fullToWinTime;
-double g_hitTestTime; // will need to be an average, or there will be a lot of these
+double g_hitTestTime = 0; // will need to be an average, or there will be a lot of these
+int g_numHitTests = 0;
 float g_averageFPS = 0;
 
 //-------------------------------------------------------------------------------------
@@ -290,6 +294,7 @@ void halfSpeed();
 LPWSTR GetSimTime();
 void jumpTime(float newTime);
 void GravityMotionIteration(float timeIncrement);
+void pauseControl();
 
 
 //--------------------------------------------------------------------------------------
@@ -1367,32 +1372,26 @@ void testJumpTimeAccuracy(){
 	//test for time=50 days
 	loadKnownValues(50);
 	jumpTime(50);
-	DXUTPause(false, false);
-	g_isPaused = true;
+	pauseControl();
 	float posDiff50 = comparePosVal(g_knownValues50);
 	float veloDiff50 = compareVeloVal(g_knownValues50);
-	DXUTPause(true, false);
-	g_isPaused = false;
+	pauseControl();
 
 	//test for time=365 days
 	loadKnownValues(365);
 	jumpTime(365);
-	DXUTPause(true, false);
-	g_isPaused = true;
+	pauseControl();
 	float posDiff365 = comparePosVal(g_knownValues365);
 	float veloDiff365 = compareVeloVal(g_knownValues365);
-	DXUTPause(false, false);
-	g_isPaused = false;
+	pauseControl();
 
 	//test for time=730 days
 	loadKnownValues(730);
 	jumpTime(730);
-	DXUTPause(true, false);
-	g_isPaused = true;
+	pauseControl();
 	float posDiff730 = comparePosVal(g_knownValues730);
 	float veloDiff730 = compareVeloVal(g_knownValues730);
-	DXUTPause(false, false);
-	g_isPaused = false;
+	pauseControl();
 
 	//average the different tests
 	//avgPosDiff = (posDiff50 + posDiff365 + posDiff730) / 3; //add in other tests as they get added
@@ -1483,6 +1482,18 @@ double getUnPauseFullScreenTime() {
 	return g_unPauseFullScreenTime;
 }
 
+//see how long it takes to reset particles to their initial position
+double testResetParticles(){
+	OnGUIEvent(0, IDC_RESETPARTICLES, NULL, NULL);
+	return g_deltatResetParticles;
+}
+
+//see how long it takes to Reset the Camera to its initial position
+double testResetCamera(){
+	OnGUIEvent(0, IDC_RESETCAMERA, NULL, NULL);
+	return g_deltatResetCamera;
+}
+
 double getWinToFullTime() {
 	OnGUIEvent(0, IDC_TOGGLEFULLSCREEN, NULL, NULL);
 	return g_winToFullTime;
@@ -1494,7 +1505,7 @@ double getFullToWinTime() {
 }
 
 double getHitTestTime() {
-	return g_hitTestTime;
+	return g_hitTestTime / g_numHitTests;
 }
 
 float getAverageFPS() {
@@ -1515,8 +1526,13 @@ void copyFile() {
 	const LPCWSTR copyName = wstr.c_str();
 	bool copied = CopyFileW(g_localFileName, copyName, true);
 	if (!copied) {
-		LPCTSTR failureMessage = L"The telemetry data file was not successfully copied to the share. \nPlease email the file (found at FILEPATH) to t-mellop@microsoft.com";
+		LPCTSTR failureMessage = L"The telemetry data file was not successfully copied to the share. \nPlease email the file called SkyXTelemetryData.csv\n(in the same folder as the executable) to t-mellop@microsoft.com";
 		MessageBox(NULL, failureMessage, NULL, MB_OK);
+	}
+	else {
+		LPCTSTR successMessage = L"The telemetry data file was successfully copied to the share! \nThank you so much for your help!";
+		LPCTSTR boxTitle = L"Upload Complete";
+		MessageBox(NULL, successMessage, boxTitle, MB_OK);
 	}
 }
 
@@ -1712,7 +1728,7 @@ void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 		swprintf(buffer, sizeof(buffer), L"FPS: %f\n", DXUTGetFPS());
 		::OutputDebugString(buffer);*/
 	}
-	
+
 	g_frameCounter++;
 
 
@@ -1842,7 +1858,8 @@ void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 		}
 		foundIndex = -1;
 		double hitTestEnd = g_Timer.GetAbsoluteTime();
-		g_hitTestTime = hitTestEnd - g_hitTestStart;
+		g_hitTestTime += hitTestEnd - g_hitTestStart;
+		g_numHitTests++;
 
 	}
 
@@ -2022,10 +2039,10 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 		tend = g_timer.GetAbsoluteTime();
 		g_systemTime = 0;
 
-		double deltat = tend - tstart;
+		g_deltatResetParticles = tend - tstart;
 
 		wchar_t buffer[256];
-		swprintf(buffer, sizeof(buffer), L"%f\n", deltat);
+		swprintf(buffer, sizeof(buffer), L"%f\n", g_deltatResetParticles);
 		::OutputDebugString(buffer);
 		break;
 	}
@@ -2067,10 +2084,10 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 		tstart = g_timer.GetAbsoluteTime();
 		g_Camera.Reset();
 		tend = g_timer.GetAbsoluteTime();
-		double deltat = tend - tstart;
+		g_deltatResetCamera = tend - tstart;
 
 		wchar_t buffer[256];
-		swprintf(buffer, sizeof(buffer), L"%f\n", deltat);
+		swprintf(buffer, sizeof(buffer), L"%f\n", g_deltatResetCamera);
 		::OutputDebugString(buffer);
 
 		break;
@@ -2360,11 +2377,6 @@ void automatedTelemetry(){
 
 		g_dataFile << "Time to jump to 365 days:" << "," << jumpSpeedTime << endl;
 
-		//temporary print statements (need to be changed to print to file statements)
-		/*char buffer[256];
-		sprintf_s(buffer, sizeof(buffer), "Time to jump to 365 days: %f\n", jumpSpeedTime);
-		::OutputDebugStringA(buffer);*/
-
 		break;
 	}
 	case 4:{
@@ -2379,16 +2391,7 @@ void automatedTelemetry(){
 
 		g_dataFile << "1 Frame @ 1 iteration/frame" << "," << oneIterationPerFrame << endl;
 		g_dataFile << "1 Frame @ 100 iteration/frame" << "," << hundredIterationPerFrame << endl;
-
-		//temporary print statements (need to be changed to print to file statements)
-	/*	char buffer[256];
-		sprintf_s(buffer, sizeof(buffer), "Time for 1 Frame (1 Iteration/Frame): %f\n", oneIterationPerFrame);
-		::OutputDebugStringA(buffer);
-
-		sprintf_s(buffer, sizeof(buffer), "Time for 1 frame: (1000 Iterations/Frame): %f", hundredIterationPerFrame);
-		::OutputDebugStringA(buffer);*/
 		break;
-
 	}
 
 	case 5: {
@@ -2426,20 +2429,50 @@ void automatedTelemetry(){
 
 		break;
 	}
-	case 11: {
+	case 12: {
+		OnMouseEvent(true, false, false, false, false, 0, 439.000000, 242.000000, NULL);
+		break;
+	}
+	case 13: {
+		OnMouseEvent(true, false, false, false, false, 0, 487.000000, 313.000000, NULL);
+		break;
+	}
+	case 14: {
+		OnMouseEvent(true, false, false, false, false, 0, 456.000000, 316.000000, NULL);
+		break;
+	}
+	case 15: {
+		OnMouseEvent(true, false, false, false, false, 0, 469.000000, 470.000000, NULL);
+		break;
+	}
+	case 16: {
+		OnMouseEvent(true, false, false, false, false, 0, 262.000000, 332.000000, NULL);
+		break;
+	}
+	case 17: {
 		//needs to be collected after the call so method can go through onframemove
 		double hitTestTime;
 		hitTestTime = getHitTestTime();
-		g_dataFile << "Mouse Click Hit Test" << "," << hitTestTime << endl;
+		g_dataFile << "Mouse Click Hit Test Average" << "," << hitTestTime << endl;
 		break;
 	}
-	case 12: {
+	case 18: {
 		double unPauseTime;
 		unPauseTime = getUnPauseTime();
 		g_dataFile << "Unpause" << "," << unPauseTime << endl;
 		break;
 	}
-	case 13: {
+	case 19: {
+		double ResetParticlesTime = testResetParticles();
+		g_dataFile << "Time taken to reset particles" << "," << ResetParticlesTime << endl;
+		break;
+	}
+	case 20: {
+		double ResetCameraTime = testResetCamera();
+		g_dataFile << "Time taken to reset camera" << "," << ResetCameraTime << endl;
+		break;
+	}
+	case 21: {
 		double averageFPS;
 		if (g_averageFPSCounter != 0) {
 			averageFPS = getAverageFPS();
