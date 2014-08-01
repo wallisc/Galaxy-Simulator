@@ -210,7 +210,7 @@ double g_systemTime = 0; //sets the inital system time to 0
 LPWSTR g_timeString; //used later for the Jump Time In button user uses to input time to jump to.
 
 //testing constants
-bool g_isTest = true; //true means test mode is on
+bool g_isTest = false; //true means test mode is on
 int g_step = 1; //determines which test from automated test suite is run
 double g_jumpSpeedTest; //collects speed of jumpTime for automated test
 double g_oneFrameTime; //collects time for one frame
@@ -1537,15 +1537,15 @@ void copyFile() {
 
 
 	if (!copiedCSV && !copiedDxDiag) {
-		LPCTSTR failureMessageBoth = L"The telemetry data and DXDiag files were not successfully copied to the share. \nPlease email the files called SkyXTelemetryData.csv and dxdiag.txt\n(in the same folder as the executable) to t-mellop@microsoft.com";
+		LPCTSTR failureMessageBoth = L"The telemetry data and DXDiag files were not successfully copied to the share. \nPlease email the files called SkyXTelemetryData.csv and dxdiag.txt\n(in the same folder as the executable) to t-mellop@microsoft.com\nThank you so much for your help!";
 		MessageBox(NULL, failureMessageBoth, NULL, MB_OK);
 	}
 	else if (!copiedCSV && copiedDxDiag) {
-		LPCTSTR failureMessageCSV = L"The telemetry data file was not successfully copied to the share. \nPlease email the file called SkyXTelemetryData.csv\n(in the same folder as the executable) to t-mellop@microsoft.com";
+		LPCTSTR failureMessageCSV = L"The telemetry data file was not successfully copied to the share. \nPlease email the file called SkyXTelemetryData.csv\n(in the same folder as the executable) to t-mellop@microsoft.com\nThank you so much for your help!";
 		MessageBox(NULL, failureMessageCSV, NULL, MB_OK);
 }
 	else if (copiedCSV && !copiedDxDiag) {
-		LPCTSTR failureMessageDiag = L"The DXDiag file was not successfully copied to the share. \nPlease email the file called dxdiag.txt\n(in the same folder as the executable) to t-mellop@microsoft.com";
+		LPCTSTR failureMessageDiag = L"The DXDiag file was not successfully copied to the share. \nPlease email the file called dxdiag.txt\n(in the same folder as the executable) to t-mellop@microsoft.com\nThank you so much for your help!";
 		MessageBox(NULL, failureMessageDiag, NULL, MB_OK);
 	}
 	else {
@@ -2380,7 +2380,7 @@ bool RenderParticles(ID3D11DeviceContext* pd3dImmediateContext, CXMMATRIX mView,
 //--------------------------------------------------------------------------------------
 void automatedTelemetry(){
 
-	if (g_frameCounter % 10 != 0) {
+	if (g_frameCounter % 100 != 0) {
 		return;
 	}
 
@@ -2493,12 +2493,12 @@ void automatedTelemetry(){
 	}
 	case 19: {
 		double ResetParticlesTime = testResetParticles();
-		g_dataFile << "Time to reset particles: " << ResetParticlesTime << endl;
+		g_dataFile << "Time to reset particles: " << "," << ResetParticlesTime << endl;
 		break;
 	}
 	case 20: {
 		double ResetCameraTime = testResetCamera();
-		g_dataFile << "Time to reset camera: " << ResetCameraTime << endl;
+		g_dataFile << "Time to reset camera: " << "," << ResetCameraTime << endl;
 		break;
 	}
 	case 21: {
