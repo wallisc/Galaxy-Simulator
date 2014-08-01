@@ -1543,7 +1543,7 @@ void copyFile() {
 	else if (!copiedCSV && copiedDxDiag) {
 		LPCTSTR failureMessageCSV = L"The telemetry data file was not successfully copied to the share. \nPlease email the file called SkyXTelemetryData.csv\n(in the same folder as the executable) to t-mellop@microsoft.com\nThank you so much for your help!";
 		MessageBox(NULL, failureMessageCSV, NULL, MB_OK);
-}
+	}
 	else if (copiedCSV && !copiedDxDiag) {
 		LPCTSTR failureMessageDiag = L"The DXDiag file was not successfully copied to the share. \nPlease email the file called dxdiag.txt\n(in the same folder as the executable) to t-mellop@microsoft.com\nThank you so much for your help!";
 		MessageBox(NULL, failureMessageDiag, NULL, MB_OK);
@@ -2530,8 +2530,8 @@ void automatedTelemetry(){
 	}
 
 	g_step++;
-	
-		
+
+
 }
 
 
@@ -2620,6 +2620,7 @@ void CALLBACK OnD3D11DestroyDevice(void* pUserContext)
 	SAFE_RELEASE(g_pBlendingStateParticle);
 	SAFE_RELEASE(g_pDepthStencilState);
 }
+
 
 
 
