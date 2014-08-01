@@ -39,8 +39,8 @@
 #include <string>
 #include <fstream>
 #include <iomanip>
-
-
+#include <windows.h>
+#include <Lmcons.h>
 #include "atlbase.h"
 #include "atlstr.h"
 #include "comutil.h"
@@ -211,12 +211,13 @@ LPWSTR g_timeString; //used later for the Jump Time In button user uses to input
 
 //testing constants
 bool g_isTest = true; //true means test mode is on
-int g_step = 0; //determines which test from automated test suite is run
+int g_step = 1; //determines which test from automated test suite is run
 double g_jumpSpeedTest; //collects speed of jumpTime for automated test
 double g_oneFrameTime; //collects time for one frame
 double g_elapsedTimeAt100Days;
 wofstream g_dataFile;
 const LPCWSTR g_localFileName = L"SkyXTelemetryData.csv";
+const LPCWSTR g_currentDxDiagName = L"dxdiag.txt";
 double g_elapsedTimeAt365Days;
 double g_deltatResetParticles;
 double g_deltatResetCamera;
@@ -238,7 +239,8 @@ double g_pauseFullScreenTime;
 double g_unPauseFullScreenTime;
 double g_winToFullTime;
 double g_fullToWinTime;
-double g_hitTestTime; // will need to be an average, or there will be a lot of these
+double g_hitTestTime = 0; // will need to be an average, or there will be a lot of these
+int g_numHitTests = 0;
 float g_averageFPS = 0;
 
 //-------------------------------------------------------------------------------------
@@ -1504,7 +1506,7 @@ double getFullToWinTime() {
 }
 
 double getHitTestTime() {
-	return g_hitTestTime;
+	return g_hitTestTime / g_numHitTests;
 }
 
 float getAverageFPS() {
@@ -1517,20 +1519,54 @@ void initializeFile() {
 
 
 void copyFile() {
+	//copy data csv
 	srand(time(NULL));
 	int num = rand();
 	wostringstream wss;
 	wss << L"\\\\davis\\public\\GRFXExplorerInternship\\Telemetry\\" << num << g_localFileName;
 	const wstring& wstr = wss.str();
 	const LPCWSTR copyName = wstr.c_str();
-	bool copied = CopyFileW(g_localFileName, copyName, true);
-	if (!copied) {
-		LPCTSTR failureMessage = L"The telemetry data file was not successfully copied to the share. \nPlease email the file (found at FILEPATH) to t-mellop@microsoft.com";
-		MessageBox(NULL, failureMessage, NULL, MB_OK);
+	bool copiedCSV = CopyFileW(g_localFileName, copyName, true);
+
+	//copy dxdiag txt
+	wss.clear();
+	wss << L"\\\\davis\\public\\GRFXExplorerInternship\\Telemetry\\" << num << g_currentDxDiagName;
+	const wstring& wstrDiag = wss.str();
+	const LPCWSTR copyDiagName = wstrDiag.c_str();
+	bool copiedDxDiag = CopyFileW(g_currentDxDiagName, copyDiagName, true);
+
+
+	if (!copiedCSV && !copiedDxDiag) {
+		LPCTSTR failureMessageBoth = L"The telemetry data and DXDiag files were not successfully copied to the share. \nPlease email the files called SkyXTelemetryData.csv and dxdiag.txt\n(in the same folder as the executable) to t-mellop@microsoft.com";
+		MessageBox(NULL, failureMessageBoth, NULL, MB_OK);
+	}
+	else if (!copiedCSV && copiedDxDiag) {
+		LPCTSTR failureMessageCSV = L"The telemetry data file was not successfully copied to the share. \nPlease email the file called SkyXTelemetryData.csv\n(in the same folder as the executable) to t-mellop@microsoft.com";
+		MessageBox(NULL, failureMessageCSV, NULL, MB_OK);
+}
+	else if (copiedCSV && !copiedDxDiag) {
+		LPCTSTR failureMessageDiag = L"The DXDiag file was not successfully copied to the share. \nPlease email the file called dxdiag.txt\n(in the same folder as the executable) to t-mellop@microsoft.com";
+		MessageBox(NULL, failureMessageDiag, NULL, MB_OK);
+	}
+	else {
+		LPCTSTR successMessage = L"The telemetry data and DXDiag files were successfully copied to the share! \nThank you so much for your help!";
+		LPCTSTR boxTitle = L"Upload Complete";
+		MessageBox(NULL, successMessage, boxTitle, MB_OK);
 	}
 }
 
-
+//void getDxDiag() {
+//	wchar_t username[UNLEN + 1];
+//	DWORD username_len = UNLEN + 1;
+//	GetUserNameW(username, &username_len);
+//
+//	wostringstream wss;
+//	wss << L"C:\\Users\\" << username << L"\\testing.txt"; 
+//
+//	const wstring& wstr = wss.str();
+//	const LPCWSTR dxDiagLoc = wstr.c_str();
+//
+//}
 
 //--------------------------------------------------------------------------------------
 HRESULT CreateParticlePosVeloBuffers(ID3D11Device* pd3dDevice)
@@ -1752,7 +1788,7 @@ void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 			GravityMotionIteration(g_timeValue);
 
 			//this section helps with the testRegularSpeed() function
-			int systemTimeAt100 = round(100 * 24);
+			int systemTimeAt100 = round(1000 * 24);
 
 			if (g_systemTime > systemTimeAt100 + 1 || g_systemTime > systemTimeAt100 - 1){
 				g_elapsedTimeAt100Days = g_timer.GetAbsoluteTime();
@@ -1852,7 +1888,8 @@ void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 		}
 		foundIndex = -1;
 		double hitTestEnd = g_Timer.GetAbsoluteTime();
-		g_hitTestTime = hitTestEnd - g_hitTestStart;
+		g_hitTestTime += hitTestEnd - g_hitTestStart;
+		g_numHitTests++;
 
 	}
 
@@ -1963,7 +2000,6 @@ void pauseControl() {
 	}
 	else {
 		double unPauseEnd = g_Timer.GetAbsoluteTime();
-		g_unPauseTime = unPauseEnd - unPauseStart;
 		if (DXUTIsWindowed()) {
 			g_unPauseTime = unPauseEnd - unPauseStart;
 		}
@@ -2033,7 +2069,7 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 		tend = g_timer.GetAbsoluteTime();
 		g_systemTime = 0;
 
-		double g_deltatResetParticles = tend - tstart;
+		g_deltatResetParticles = tend - tstart;
 
 		wchar_t buffer[256];
 		swprintf(buffer, sizeof(buffer), L"%f\n", g_deltatResetParticles);
@@ -2344,20 +2380,25 @@ bool RenderParticles(ID3D11DeviceContext* pd3dImmediateContext, CXMMATRIX mView,
 //--------------------------------------------------------------------------------------
 void automatedTelemetry(){
 
-	switch (g_step){
+	if (g_frameCounter % 10 != 0) {
+		return;
+	}
 
+	switch (g_step){
 	case 1: {
 		//start up time and time interval test data has been gathered by this point
 		double startUpTime = getStartTime();
 
 		initializeFile();
 		g_dataFile << "Start Time" << "," << startUpTime << endl;
+		break;
 	}
 	case 2:{
 		double timeAt100;
 		//gets time for regular simulation run from time=0 to time=100
 		timeAt100 = testRegularSpeed() - getStartTime();
 		g_dataFile << "Time to run normally to 100 days " << "," << timeAt100 << endl;
+		break;
 	}
 	case 3:{
 		double jumpSpeedTime;
@@ -2380,9 +2421,8 @@ void automatedTelemetry(){
 
 		g_dataFile << "1 Frame @ 1 iteration/frame" << "," << oneIterationPerFrame << endl;
 		g_dataFile << "1 Frame @ 100 iteration/frame" << "," << hundredIterationPerFrame << endl;
-
+		break;
 	}
-
 	case 5: {
 		double winToFullTime;
 		winToFullTime = getWinToFullTime();
@@ -2418,30 +2458,50 @@ void automatedTelemetry(){
 
 		break;
 	}
-	case 11: {
+	case 12: {
+		OnMouseEvent(true, false, false, false, false, 0, 439.000000, 242.000000, NULL);
+		break;
+	}
+	case 13: {
+		OnMouseEvent(true, false, false, false, false, 0, 487.000000, 313.000000, NULL);
+		break;
+	}
+	case 14: {
+		OnMouseEvent(true, false, false, false, false, 0, 456.000000, 316.000000, NULL);
+		break;
+	}
+	case 15: {
+		OnMouseEvent(true, false, false, false, false, 0, 469.000000, 470.000000, NULL);
+		break;
+	}
+	case 16: {
+		OnMouseEvent(true, false, false, false, false, 0, 262.000000, 332.000000, NULL);
+		break;
+	}
+	case 17: {
 		//needs to be collected after the call so method can go through onframemove
 		double hitTestTime;
 		hitTestTime = getHitTestTime();
-		g_dataFile << "Mouse Click Hit Test" << "," << hitTestTime << endl;
+		g_dataFile << "Mouse Click Hit Test Average" << "," << hitTestTime << endl;
 		break;
 	}
-	case 12: {
+	case 18: {
 		double unPauseTime;
 		unPauseTime = getUnPauseTime();
 		g_dataFile << "Unpause" << "," << unPauseTime << endl;
 		break;
 	}
-	case 13: {
+	case 19: {
 		double ResetParticlesTime = testResetParticles();
 		g_dataFile << "Time to reset particles: " << ResetParticlesTime << endl;
 		break;
 	}
-	case 14: {
+	case 20: {
 		double ResetCameraTime = testResetCamera();
 		g_dataFile << "Time to reset camera: " << ResetCameraTime << endl;
 		break;
 	}
-	case 15: {
+	case 21: {
 		double averageFPS;
 		if (g_averageFPSCounter != 0) {
 			averageFPS = getAverageFPS();
@@ -2453,7 +2513,11 @@ void automatedTelemetry(){
 
 		g_dataFile << "Average FPS" << "," << averageFPS << endl;
 		g_dataFile << wss.str().c_str() << endl;
+
+		//getDxDiag();
+
 		g_dataFile.close();
+
 
 		copyFile();
 
@@ -2464,7 +2528,10 @@ void automatedTelemetry(){
 
 	}
 	}
+
 	g_step++;
+	
+		
 }
 
 
