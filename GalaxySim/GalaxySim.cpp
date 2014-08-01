@@ -1529,9 +1529,9 @@ void copyFile() {
 	bool copiedCSV = CopyFileW(g_localFileName, copyName, true);
 
 	//copy dxdiag txt
-	wss.clear();
-	wss << L"\\\\davis\\public\\GRFXExplorerInternship\\Telemetry\\" << num << g_currentDxDiagName;
-	const wstring& wstrDiag = wss.str();
+	wostringstream wss2;
+	wss2 << L"\\\\davis\\public\\GRFXExplorerInternship\\Telemetry\\" << num << g_currentDxDiagName;
+	const wstring& wstrDiag = wss2.str();
 	const LPCWSTR copyDiagName = wstrDiag.c_str();
 	bool copiedDxDiag = CopyFileW(g_currentDxDiagName, copyDiagName, true);
 
