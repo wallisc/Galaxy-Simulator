@@ -210,7 +210,7 @@ double g_systemTime = 0; //sets the inital system time to 0
 LPWSTR g_timeString; //used later for the Jump Time In button user uses to input time to jump to.
 
 //testing constants
-bool g_isTest = true; //true means test mode is on
+bool g_isTest = false; //true means test mode is on
 int g_step = 0; //determines which test from automated test suite is run
 double g_jumpSpeedTest; //collects speed of jumpTime for automated test
 double g_oneFrameTime; //collects time for one frame
@@ -261,6 +261,7 @@ float g_averageFPS = 0;
 #define IDC_RESETCAMERA			12
 #define IDC_ITERATEPERFRAMEIN   13
 #define	IDC_SUBMITITERATEIN     14
+#define IDC_OUTPUTINFO          15
 
 //--------------------------------------------------------------------------------------
 // Forward declarations 
@@ -373,6 +374,7 @@ void InitApp()
 	g_HUD.AddEditBox(IDC_JUMPTIMEIN, L"", 0, iY += 26, 170, 40, false, &g_JumpTimeInputBox);
 	g_HUD.AddButton(IDC_SUBMITTIMEIN, L"Jump!", 0, iY += 40, 170, 23);
 	g_HUD.AddButton(IDC_PAUSE, L"Pause / Unpause", 0, iY += 26, 170, 22);
+	g_HUD.AddButton(IDC_OUTPUTINFO, L"Output Object Data", 0, iY += 26, 170, 22);
 	g_SampleUI.SetCallback(OnGUIEvent);
 }
 
@@ -2055,7 +2057,7 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 		tend = g_timer.GetAbsoluteTime();
 		g_systemTime = 0;
 
-		double g_deltatResetParticles = tend - tstart;
+		g_deltatResetParticles = tend - tstart;
 
 		wchar_t buffer[256];
 		swprintf(buffer, sizeof(buffer), L"%f\n", g_deltatResetParticles);
@@ -2079,10 +2081,10 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 		int iterateInt = (int)(iterateFloat + 0.5);
 		g_iterationsPerFrame = iterateInt; break;
 	}
-	//case IDC_DOUBLESPEED:
-	//	doubleSpeed(); break;
-	//case IDC_HALFSPEED:
-	//	halfSpeed(); break;
+		//case IDC_DOUBLESPEED:
+		//	doubleSpeed(); break;
+		//case IDC_HALFSPEED:
+		//	halfSpeed(); break;
 	case IDC_SUBMITTIMEIN:
 	{
 		LPCWSTR timeStr;
@@ -2092,7 +2094,7 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 			break;
 		}
 		timeFloat = wcstof(timeStr, NULL);
-		jumpTime(timeFloat); 
+		jumpTime(timeFloat);
 		break;
 	}
 	case IDC_RESETCAMERA:
@@ -2101,7 +2103,7 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 		g_Camera.Reset();
 		tend = g_timer.GetAbsoluteTime();
 		g_deltatResetCamera = tend - tstart;
-		
+
 		wchar_t buffer[256];
 		swprintf(buffer, sizeof(buffer), L"%f\n", g_deltatResetCamera);
 		::OutputDebugString(buffer);
@@ -2109,6 +2111,51 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 		break;
 	}
 
+	case IDC_OUTPUTINFO:
+	{
+		unsigned int g_maxParticles = rand();
+		printf("%s", "<?xml version=1.0?> \n");
+		printf("%s", "<Universe> \n");
+		printf("<MaxParticles>%d", g_maxParticles);
+		printf("</MaxParticles>\n");
+		for (unsigned int i = 0; i < g_maxParticles; i++)
+		{
+			unsigned int mass = rand();
+			unsigned int diameter = rand();
+			unsigned int brightness = rand();
+			unsigned int xcoord = rand();
+			unsigned int ycoord = rand();
+			unsigned int zcoord = rand();
+
+			printf("<object>\n");
+
+			printf("<name>Particle%d", i);
+			printf("</name>\n");
+
+			printf("<mass>%d", mass);
+			printf("</mass>\n");
+
+			printf("<diameter>%d", diameter);
+			printf("</diameter>\n");
+
+			printf("<brightness>%d", brightness);
+			printf("</brightness>\n");
+
+			printf("<xcoord>%d", xcoord);
+			printf("</xcoord>\n");
+
+			printf("<ycoord>%d", ycoord);
+			printf("</ycoord>\n");
+
+			printf("<zcoord>%d", zcoord);
+			printf("</zcoord>\n");
+
+			printf("</object>\n");
+		}
+
+		printf("%s", "</Universe> \n");
+		break;
+	}
 	}
 }
 
