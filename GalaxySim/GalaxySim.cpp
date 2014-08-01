@@ -210,7 +210,7 @@ double g_systemTime = 0; //sets the inital system time to 0
 LPWSTR g_timeString; //used later for the Jump Time In button user uses to input time to jump to.
 
 //testing constants
-bool g_isTest = true; //true means test mode is on
+bool g_isTest = false; //true means automated telemetry mode is on
 int g_step = 1; //determines which test from automated test suite is run
 double g_jumpSpeedTest; //collects speed of jumpTime for automated test
 double g_oneFrameTime; //collects time for one frame
@@ -918,6 +918,7 @@ void GetWCharFromInt(WCHAR *string, int inputInt){
 
 //takes an increment of time in system time. This time is later converted to real time
 //moves the objects by timeIncrement according to gravitational physical laws
+//in this solar system version, assumes that the 1st object in the xml, the sun is the only creator of gravity
 void GravityMotionIteration(float timeIncrement){
 	for (int i = 0; i < NUM_PARTICLES; i++)
 	{
@@ -925,17 +926,13 @@ void GravityMotionIteration(float timeIncrement){
 		//calculates acceleration for each object in particular
 		XMFLOAT4 acceleration = XMFLOAT4(0, 0, 0, 0);
 
-		for (int j = 0; j < NUM_PARTICLES; j++)
-		{
-			if (i != j)
-			{
-				XMFLOAT4 ijdist = VectorSubtraction(g_pParticleArray[i].pos, g_pParticleArray[j].pos);
-				float ijdist_magnitude = VectorMagnitude(ijdist);
+		if (g_pParticleArrayTWO[i].name != L"Sun"){
+			XMFLOAT4 ijdist = VectorSubtraction(g_pParticleArray[i].pos, g_pParticleArray[0].pos);
+			float ijdist_magnitude = VectorMagnitude(ijdist);
 
-				float g_accConstant = g_constant * g_pParticleArrayTWO[j].mass / pow(ijdist_magnitude, 3);
-				XMFLOAT4 g_acc = ConstantVectorMultiplication(g_accConstant, ijdist);
-				acceleration = VectorAddition(acceleration, g_acc);
-			}
+			float g_accConstant = g_constant * g_pParticleArrayTWO[0].mass / pow(ijdist_magnitude, 3);
+			XMFLOAT4 g_acc = ConstantVectorMultiplication(g_accConstant, ijdist);
+			acceleration = VectorAddition(acceleration, g_acc);
 		}
 
 		//update velocity and position using acceleration
