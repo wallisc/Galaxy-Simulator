@@ -88,6 +88,7 @@ const float                         g_fSpread = 400.0f;
 
 CDXUTEditBox						*g_JumpTimeInputBox = nullptr;
 CDXUTEditBox						*g_IterationsPerFrameInBox = nullptr;
+CDXUTEditBox						*g_DeleteObjInBox = nullptr;
 
 CDXUTTimer							g_timer;
 
@@ -261,6 +262,8 @@ float g_averageFPS = 0;
 #define IDC_ITERATEPERFRAMEIN   13
 #define	IDC_SUBMITITERATEIN     14
 #define IDC_OUTPUTINFO          15
+#define IDC_DELETEOBJIN			16
+#define IDC_SUBMITDELETEOBJ		17
 
 //--------------------------------------------------------------------------------------
 // Forward declarations 
@@ -375,6 +378,8 @@ void InitApp()
 	g_HUD.AddButton(IDC_SUBMITTIMEIN, L"Jump!", 0, iY += 40, 170, 23);
 	g_HUD.AddButton(IDC_PAUSE, L"Pause / Unpause", 0, iY += 26, 170, 22);
 	g_HUD.AddButton(IDC_OUTPUTINFO, L"Output Object Data", 0, iY += 26, 170, 22);
+	g_HUD.AddEditBox(IDC_DELETEOBJIN, L"", 0, iY += 26, 170, 40, false, &g_DeleteObjInBox);
+	g_HUD.AddButton(IDC_SUBMITDELETEOBJ, L"Delete Object", 0, iY += 40, 170, 22);
 	g_SampleUI.SetCallback(OnGUIEvent);
 }
 
@@ -1583,12 +1588,17 @@ int getObjectIndex(wstring name){
 			return i;
 		}
 	}
-	return NULL;
+	return -1;
 }
 
 void deleteObject(wstring name){
 	int index = getObjectIndex(name);
 
+	if (index == -1){
+		return;
+	}
+
+	//delete object from vector
 	vector<ObjectData>::const_iterator it;
 	it = g_objects.cbegin();
 	for (int i = 0; i < index; i++){
@@ -1597,8 +1607,13 @@ void deleteObject(wstring name){
 
 	g_objects.erase(it);
 
+	//delete object from arrays
 
-	fillParticles(g_pParticleArray, g_pParticleArrayTWO, g_objects);
+	for (int i = index; i < NUM_PARTICLES; i++){
+		g_pParticleArray[i] = g_pParticleArray[i + 1];
+		g_pParticleArrayTWO[i] = g_pParticleArrayTWO[i + 1];
+	}
+	NUM_PARTICLES--;
 
 }
 
@@ -2183,6 +2198,12 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 		}
 
 		else cout << "Unable to open output file";
+		break;
+	}
+	case IDC_SUBMITDELETEOBJ:
+	{
+		LPCWSTR object = g_DeleteObjInBox-> GetText();
+		deleteObject(object);
 		break;
 	}
 	}
