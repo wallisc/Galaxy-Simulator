@@ -260,6 +260,7 @@ float g_averageFPS = 0;
 #define IDC_RESETCAMERA			12
 #define IDC_ITERATEPERFRAMEIN   13
 #define	IDC_SUBMITITERATEIN     14
+#define IDC_OUTPUTINFO          15
 
 //--------------------------------------------------------------------------------------
 // Forward declarations 
@@ -373,6 +374,7 @@ void InitApp()
 	g_HUD.AddEditBox(IDC_JUMPTIMEIN, L"", 0, iY += 26, 170, 40, false, &g_JumpTimeInputBox);
 	g_HUD.AddButton(IDC_SUBMITTIMEIN, L"Jump!", 0, iY += 40, 170, 23);
 	g_HUD.AddButton(IDC_PAUSE, L"Pause / Unpause", 0, iY += 26, 170, 22);
+	g_HUD.AddButton(IDC_OUTPUTINFO, L"Output Object Data", 0, iY += 26, 170, 22);
 	g_SampleUI.SetCallback(OnGUIEvent);
 }
 
@@ -2141,6 +2143,48 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 		break;
 	}
 
+	case IDC_OUTPUTINFO:
+	{
+		ofstream myfile("OutputObjectData.xml");
+		if (myfile.is_open())
+		{
+			myfile << "<?xml version=1.0?> \n";
+			myfile << "<Universe> \n";
+			myfile << "<MaxParticles>" << MAX_PARTICLES;
+			myfile << "</MaxParticles>\n";
+			for (unsigned int i = 0; i < NUM_PARTICLES; i++)
+			{
+				myfile << "<object>\n";
+
+				myfile << "<name>Particle" << i;
+				myfile << "</name>\n";
+
+				myfile << "<mass>" << g_pParticleArrayTWO[i].mass;
+				myfile << "</mass>\n";
+
+				myfile << "<diameter>" << g_pParticleArrayTWO[i].diameter;
+				myfile << "</diameter>\n";
+
+				myfile << "<brightness>" << g_pParticleArrayTWO[i].brightness;
+				myfile << "</brightness>\n";
+
+				myfile << "<xcoord>" << g_pParticleArray[i].pos.x;
+				myfile << "</xcoord>\n";
+
+				myfile << "<ycoord>" << g_pParticleArray[i].pos.y;
+				myfile << "</ycoord>\n";
+
+				myfile << "<zcoord>" << g_pParticleArray[i].pos.z;
+				myfile << "</zcoord>\n";
+
+				myfile << "</object>\n";
+			}
+		myfile << "</Universe> \n";
+		}
+
+		else cout << "Unable to open output file";
+		break;
+	}
 	}
 }
 
@@ -2638,6 +2682,7 @@ void CALLBACK OnD3D11DestroyDevice(void* pUserContext)
 	SAFE_RELEASE(g_pBlendingStateParticle);
 	SAFE_RELEASE(g_pDepthStencilState);
 }
+
 
 
 
