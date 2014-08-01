@@ -2433,12 +2433,12 @@ void automatedTelemetry(){
 	}
 	case 13: {
 		double ResetParticlesTime = testResetParticles();
-		g_dataFile << "Time taken to reset particles: " << ResetParticlesTime << endl;
+		g_dataFile << "Time to reset particles: " << ResetParticlesTime << endl;
 		break;
 	}
 	case 14: {
 		double ResetCameraTime = testResetCamera();
-		g_dataFile << "Time taken to reset camera: " << ResetCameraTime << endl;
+		g_dataFile << "Time to reset camera: " << ResetCameraTime << endl;
 		break;
 	}
 	case 15: {
