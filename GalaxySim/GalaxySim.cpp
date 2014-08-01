@@ -44,6 +44,7 @@
 #include "atlbase.h"
 #include "atlstr.h"
 #include "comutil.h"
+#include <vector>
 
 #pragma warning( disable : 4100 )
 #pragma warning(disable : 4127)  // conditional expression is constant 
@@ -995,7 +996,7 @@ void jumpTime(float newTime){
 
 	//to test where the particle is when you jump to a time
 	//put a breakpoint at float acoord=1.0 and see values of x, y, and zcoord
-	for (int i = 0; i < NUM_PARTICLES; i++){
+	/*for (int i = 0; i < NUM_PARTICLES; i++){
 		wstring name = g_pParticleArrayTWO[i].name;
 		float xcoord = g_pParticleArray[i].pos.x;
 		float ycoord = g_pParticleArray[i].pos.y;
@@ -1004,7 +1005,7 @@ void jumpTime(float newTime){
 		float yvelo = g_pParticleArray[i].velo.y;
 		float zvelo = g_pParticleArray[i].velo.z;
 		float acoord = 1.0;
-	}
+	}*/
 
 	g_systemTime = newTime;
 
@@ -1569,6 +1570,38 @@ void copyFile() {
 //}
 
 //--------------------------------------------------------------------------------------
+// Functions for adding and deleting objects through the UI
+//--------------------------------------------------------------------------------------
+
+//returns the index of the object given the name
+//returns null if it can't find the object
+int getObjectIndex(wstring name){
+	for (int i = 0; i < NUM_PARTICLES; i++){
+		if (g_pParticleArrayTWO[i].name == name){
+			return i;
+		}
+	}
+	return NULL;
+}
+
+void deleteObject(wstring name){
+	int index = getObjectIndex(name);
+
+	vector<ObjectData>::const_iterator it;
+	it = g_objects.cbegin();
+	for (int i = 0; i < index; i++){
+		it++;
+	}
+
+	g_objects.erase(it);
+
+
+	fillParticles(g_pParticleArray, g_pParticleArrayTWO, g_objects);
+
+}
+
+
+//--------------------------------------------------------------------------------------
 HRESULT CreateParticlePosVeloBuffers(ID3D11Device* pd3dDevice)
 {
 	HRESULT hr = S_OK;
@@ -1609,21 +1642,6 @@ HRESULT CreateParticlePosVeloBuffers(ID3D11Device* pd3dDevice)
 	g_fSpread, NUM_PARTICLES );*/
 
 	fillParticles(g_pParticleArray, g_pParticleArrayTWO, g_objects);
-
-	//temp testing changing earth's inital velocity 
-	for (int i = 0; i < NUM_PARTICLES; i++){
-		if (g_pParticleArrayTWO[i].name.compare(L"Earth") == 0){
-			g_pParticleArray[i].velo = XMFLOAT4(97480.40753, 40178.74, .709178, 0);
-		}
-		if (g_pParticleArrayTWO[i].name.compare(L"Mars") == 0){
-			g_pParticleArray[i].velo = XMFLOAT4(83338.28, -27184.865, -2615.148, 0);
-		}
-		if (g_pParticleArrayTWO[i].name.compare(L"Venus") == 0){
-			g_pParticleArray[i].velo = XMFLOAT4(-91327.48, 86785.93, 6459.896, 0);
-		}
-	}
-
-
 
 
 	D3D11_SUBRESOURCE_DATA InitData;
