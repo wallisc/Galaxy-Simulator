@@ -2113,47 +2113,44 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 
 	case IDC_OUTPUTINFO:
 	{
-		unsigned int g_maxParticles = rand();
-		printf("%s", "<?xml version=1.0?> \n");
-		printf("%s", "<Universe> \n");
-		printf("<MaxParticles>%d", g_maxParticles);
-		printf("</MaxParticles>\n");
-		for (unsigned int i = 0; i < g_maxParticles; i++)
+		ofstream myfile("OutputObjectData.xml");
+		if (myfile.is_open())
 		{
-			unsigned int mass = rand();
-			unsigned int diameter = rand();
-			unsigned int brightness = rand();
-			unsigned int xcoord = rand();
-			unsigned int ycoord = rand();
-			unsigned int zcoord = rand();
+			myfile << "<?xml version=1.0?> \n";
+			myfile << "<Universe> \n";
+			myfile << "<MaxParticles>" << MAX_PARTICLES;
+			myfile << "</MaxParticles>\n";
+			for (unsigned int i = 0; i < NUM_PARTICLES; i++)
+			{
+				myfile << "<object>\n";
 
-			printf("<object>\n");
+				myfile << "<name>Particle" << i;
+				myfile << "</name>\n";
 
-			printf("<name>Particle%d", i);
-			printf("</name>\n");
+				myfile << "<mass>" << g_pParticleArrayTWO[i].mass;
+				myfile << "</mass>\n";
 
-			printf("<mass>%d", mass);
-			printf("</mass>\n");
+				myfile << "<diameter>" << g_pParticleArrayTWO[i].diameter;
+				myfile << "</diameter>\n";
 
-			printf("<diameter>%d", diameter);
-			printf("</diameter>\n");
+				myfile << "<brightness>" << g_pParticleArrayTWO[i].brightness;
+				myfile << "</brightness>\n";
 
-			printf("<brightness>%d", brightness);
-			printf("</brightness>\n");
+				myfile << "<xcoord>" << g_pParticleArray[i].pos.x;
+				myfile << "</xcoord>\n";
 
-			printf("<xcoord>%d", xcoord);
-			printf("</xcoord>\n");
+				myfile << "<ycoord>" << g_pParticleArray[i].pos.y;
+				myfile << "</ycoord>\n";
 
-			printf("<ycoord>%d", ycoord);
-			printf("</ycoord>\n");
+				myfile << "<zcoord>" << g_pParticleArray[i].pos.z;
+				myfile << "</zcoord>\n";
 
-			printf("<zcoord>%d", zcoord);
-			printf("</zcoord>\n");
-
-			printf("</object>\n");
+				myfile << "</object>\n";
+			}
+		myfile << "</Universe> \n";
 		}
 
-		printf("%s", "</Universe> \n");
+		else cout << "Unable to open output file";
 		break;
 	}
 	}
