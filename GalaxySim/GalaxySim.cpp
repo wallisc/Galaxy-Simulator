@@ -2033,6 +2033,40 @@ void addObject() {
 	
 }
 
+void toggleAddObjectMenuVisibility(bool change) { //true reveals menu; false hides menu
+	g_addingObject = change;
+	g_pNameBox->SetVisible(change);
+	g_pMassBox->SetVisible(change);
+	g_pDiameterBox->SetVisible(change);
+	g_pBrightnessBox->SetVisible(change);
+	g_pXPosBox->SetVisible(change);
+	g_pYPosBox->SetVisible(change);
+	g_pZPosBox->SetVisible(change);
+	g_pXVelBox->SetVisible(change);
+	g_pYVelBox->SetVisible(change);
+	g_pZVelBox->SetVisible(change);
+	g_pRedBox->SetVisible(change);
+	g_pGreenBox->SetVisible(change);
+	g_pBlueBox->SetVisible(change);
+	g_pSubmitObjectButton->SetVisible(change);
+}
+
+void clearAddObjectMenu() {
+	g_pNameBox->ClearText();
+	g_pMassBox->ClearText();
+	g_pDiameterBox->ClearText();
+	g_pBrightnessBox->ClearText();
+	g_pXPosBox->ClearText();
+	g_pYPosBox->ClearText();
+	g_pZPosBox->ClearText();
+	g_pXVelBox->ClearText();
+	g_pYVelBox->ClearText();
+	g_pZVelBox->ClearText();
+	g_pRedBox->ClearText();
+	g_pGreenBox->ClearText();
+	g_pBlueBox->ClearText();
+}
+
 void pauseControl() {
 	double pauseStart;
 	double unPauseStart;
@@ -2045,18 +2079,6 @@ void pauseControl() {
 	}
 
 
-	//if (!g_isPaused) {
-	//	DXUTPause(false, false);
-	//	g_isPaused = true;
-	//}
-	//else {
-	//	DXUTPause(true, false);
-	//	g_isPaused = false;
-	//}
-	//The above statement works whether or not the timer is commented, although it has the FPS freeze issue if timer isn't commented
-	//The below statement only works if the timer is commented, and does not have the FPS freeze issue (w/ timer, it doesn't render the edit box)
-	//This is likely because the edit box uses the global timer (DXUTgui.cpp 6116)
-	//Below statement's call logic makes more sense considering variable names; preferred use
 	if (!g_isPaused) {
 		DXUTPause(true, false);
 		g_isPaused = true;
@@ -2064,6 +2086,8 @@ void pauseControl() {
 	else {
 		DXUTPause(false, false);
 		g_isPaused = false;
+		toggleAddObjectMenuVisibility(false);
+		clearAddObjectMenu();
 	}
 
 	LPCWSTR welcomeMessage = L"Select an object\nto see information\ndisplayed\n";
@@ -2124,6 +2148,69 @@ bool processName(LPCWSTR emptyField) {
 	g_newName = name;
 	return true;
 }
+
+bool processMass(LPCWSTR emptyField) {
+
+	return true;
+}
+
+
+bool processDiameter(LPCWSTR emptyField) {
+
+	return true;
+}
+
+bool processBrightness(LPCWSTR emptyField) {
+
+	return true;
+}
+
+bool processXPos(LPCWSTR emptyField) {
+
+	return true;
+}
+
+bool processYPos(LPCWSTR emptyField) {
+
+	return true;
+}
+
+bool processZPos(LPCWSTR emptyField) {
+
+	return true;
+}
+
+bool processXVel(LPCWSTR emptyField) {
+
+	return true;
+}
+
+bool processYVel(LPCWSTR emptyField) {
+
+	return true;
+}
+
+bool processZVel(LPCWSTR emptyField) {
+
+	return true;
+}
+
+bool processRed(LPCWSTR emptyField) {
+
+	return true;
+}
+
+bool processGreen(LPCWSTR emptyField) {
+
+	return true;
+}
+
+bool processBlue(LPCWSTR emptyField) {
+
+	return true;
+}
+
+
 
 
 //--------------------------------------------------------------------------------------
@@ -2236,27 +2323,17 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 		break;
 	}
 	case IDC_ADDOBJECT: {
+		if (g_addingObject) {
+			clearAddObjectMenu();
+			toggleAddObjectMenuVisibility(false);
+		}
 		LPCWSTR warningMessage = L"Please pause to add an object.";
 		if (!g_isPaused) {
 			MessageBox(NULL, warningMessage, NULL, MB_OK | MB_ICONWARNING);
 		}
 		else {
-			g_addingObject = true;
 			g_pObjectDataDisplay->SetVisible(false);
-			g_pNameBox->SetVisible(true);
-			g_pMassBox->SetVisible(true);
-			g_pDiameterBox->SetVisible(true);
-			g_pBrightnessBox->SetVisible(true);
-			g_pXPosBox->SetVisible(true);
-			g_pYPosBox->SetVisible(true);
-			g_pZPosBox->SetVisible(true);
-			g_pXVelBox->SetVisible(true);
-			g_pYVelBox->SetVisible(true);
-			g_pZVelBox->SetVisible(true);
-			g_pRedBox->SetVisible(true);
-			g_pGreenBox->SetVisible(true);
-			g_pBlueBox->SetVisible(true);
-			g_pSubmitObjectButton->SetVisible(true);
+			toggleAddObjectMenuVisibility(true);
 		}
 		break;
 	}
@@ -2271,75 +2348,79 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 
 		//process mass
 		bool massProcessed = processMass(emptyFieldMessage);
-		if (!nameProcessed) {
+		if (!massProcessed) {
 			break;
 		}
 
 		//process diameter
 		bool diameterProcessed = processDiameter(emptyFieldMessage);
-		if (!nameProcessed) {
+		if (!diameterProcessed) {
 			break;
 		}
 
 		//process brightness
 		bool brightnessProcessed = processBrightness(emptyFieldMessage);
-		if (!nameProcessed) {
+		if (!brightnessProcessed) {
 			break;
 		}
 
 		//process x pos
 		bool xPosProcessed = processXPos(emptyFieldMessage);
-		if (!nameProcessed) {
+		if (!xPosProcessed) {
 			break;
 		}
 
 		//process y pos
 		bool yPosProcessed = processYPos(emptyFieldMessage);
-		if (!nameProcessed) {
+		if (!yPosProcessed) {
 			break;
 		}
 
 		//process z pos
 		bool zPosProcessed = processZPos(emptyFieldMessage);
-		if (!nameProcessed) {
+		if (!zPosProcessed) {
 			break;
 		}
 
 		//process x vel
 		bool xVelProcessed = processXVel(emptyFieldMessage);
-		if (!nameProcessed) {
+		if (!xVelProcessed) {
 			break;
 		}
 
 		//process y vel
 		bool yVelProcessed = processYVel(emptyFieldMessage);
-		if (!nameProcessed) {
+		if (!yVelProcessed) {
 			break;
 		}
 
 		//process z vel
 		bool zVelProcessed = processZVel(emptyFieldMessage);
-		if (!nameProcessed) {
+		if (!zVelProcessed) {
 			break;
 		}
 
 		//process red
 		bool redProcessed = processRed(emptyFieldMessage);
-		if (!nameProcessed) {
+		if (!redProcessed) {
 			break;
 		}
 
 		//process green
-		bool nameProcessed = processName(emptyFieldMessage);
-		if (!nameProcessed) {
+		bool greenProcessed = processGreen(emptyFieldMessage);
+		if (!greenProcessed) {
 			break;
 		}
 
 		//process blue
-		bool nameProcessed = processName(emptyFieldMessage);
-		if (!nameProcessed) {
+		bool blueProcessed = processBlue(emptyFieldMessage);
+		if (!blueProcessed) {
 			break;
 		}
+
+		addObject();
+
+		clearAddObjectMenu();
 
 		break;
 
