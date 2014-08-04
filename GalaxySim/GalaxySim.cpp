@@ -148,7 +148,7 @@ public:
 		m_zvelo(0.0f), m_red(0.0f), m_green(0.0f), m_blue(0.0f)
 	{}
 
-	ObjectData(const wstring & name, float mass, float diameter, int brightness, float x, float y, float z, float xv, float yv, float zv, float r, float g, float b) :
+	ObjectData(const wstring & name, float mass, float diameter, float brightness, float x, float y, float z, float xv, float yv, float zv, float r, float g, float b) :
 		m_name(name), m_mass(mass), m_diameter(diameter), m_brightness(brightness), m_xcoord(x), m_ycoord(y), m_zcoord(z),
 		m_xvelo(xv), m_yvelo(yv), m_zvelo(zv), m_red(r), m_green(g), m_blue(b)
 	{
@@ -221,7 +221,7 @@ CDXUTEditBox *g_pBlueBox = nullptr;
 CDXUTButton *g_pSubmitObjectButton = nullptr;
 bool g_firstObjectAddition = true;
 bool g_addingObject = false;
-wstring g_newName;
+
 
 bool g_loaded = false;
 
@@ -232,7 +232,7 @@ double g_systemTime = 0; //sets the inital system time to 0
 LPWSTR g_timeString; //used later for the Jump Time In button user uses to input time to jump to.
 
 //testing constants
-bool g_isTest = true; //true means test mode is on
+bool g_isTest = false; //true means test mode is on
 int g_step = 1; //determines which test from automated test suite is run
 double g_jumpSpeedTest; //collects speed of jumpTime for automated test
 double g_oneFrameTime; //collects time for one frame
@@ -2031,8 +2031,49 @@ LRESULT CALLBACK MsgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, boo
 	return 0;
 }
 
-void addObject() {
+void addPosVel(PARTICLE particles[], int i, std::vector<ObjectData> & object) {
+	particles[i].pos = createPositionFloat(object[i].m_xcoord, object[i].m_ycoord, object[i].m_zcoord);
+	particles[i].velo = createVelocityFloat(object[i].m_xvelo, object[i].m_yvelo, object[i].m_zvelo);
+}
 
+void addDetails(PARTICLE_DETAILS particles[], int i, std::vector<ObjectData> &object) {
+	particles[i].name = object[i].m_name;
+	particles[i].mass = object[i].m_mass;
+	particles[i].diameter = object[i].m_diameter;
+	particles[i].brightness = object[i].m_brightness;
+	particles[i].red = object[i].m_red;
+	particles[i].green = object[i].m_green;
+	particles[i].blue = object[i].m_blue;
+}
+
+void clearAddObjectMenu() {
+	g_pNameBox->ClearText();
+	g_pMassBox->ClearText();
+	g_pDiameterBox->ClearText();
+	g_pBrightnessBox->ClearText();
+	g_pXPosBox->ClearText();
+	g_pYPosBox->ClearText();
+	g_pZPosBox->ClearText();
+	g_pXVelBox->ClearText();
+	g_pYVelBox->ClearText();
+	g_pZVelBox->ClearText();
+	g_pRedBox->ClearText();
+	g_pGreenBox->ClearText();
+	g_pBlueBox->ClearText();
+}
+
+void addObject(wstring name, float mass, float diameter, float brightness, float x, float y, float z, float xv, float yv, float zv, float r, float g, float b) {
+	ObjectData newObject(name, mass, diameter, brightness, x, y, z, xv, yv, zv, r, g, b);
+
+	//add to vector
+	g_objects.push_back(newObject);
+
+	//add to arrays
+	NUM_PARTICLES++;
+	addPosVel(g_pParticleArray, NUM_PARTICLES - 1, g_objects);
+	addDetails(g_pParticleArrayTWO, NUM_PARTICLES - 1, g_objects);
+
+	clearAddObjectMenu();
 	
 }
 
@@ -2052,22 +2093,6 @@ void toggleAddObjectMenuVisibility(bool change) { //true reveals menu; false hid
 	g_pGreenBox->SetVisible(change);
 	g_pBlueBox->SetVisible(change);
 	g_pSubmitObjectButton->SetVisible(change);
-}
-
-void clearAddObjectMenu() {
-	g_pNameBox->ClearText();
-	g_pMassBox->ClearText();
-	g_pDiameterBox->ClearText();
-	g_pBrightnessBox->ClearText();
-	g_pXPosBox->ClearText();
-	g_pYPosBox->ClearText();
-	g_pZPosBox->ClearText();
-	g_pXVelBox->ClearText();
-	g_pYVelBox->ClearText();
-	g_pZVelBox->ClearText();
-	g_pRedBox->ClearText();
-	g_pGreenBox->ClearText();
-	g_pBlueBox->ClearText();
 }
 
 void pauseControl() {
@@ -2136,82 +2161,68 @@ void pauseControl() {
 }
 
 
+
 //Add object helper methods
-bool processName(LPCWSTR emptyField) {
-	LPCWSTR nameStr;
-	nameStr = g_pNameBox->GetText();
-	if (nameStr == NULL) {
+wstring processName(LPCWSTR tempStr) {
+
+	wstring name(tempStr);
+
+	return name;
+}
+
+//returns wether or not the field is empty
+bool canProcessInput(LPCWSTR tempStr) {
+	LPCWSTR emptyFieldMessage = L"Please enter a value in all fields";
+	if (tempStr == NULL || wcslen(tempStr) == 0) {
+		MessageBox(NULL, emptyFieldMessage, NULL, MB_OK | MB_ICONWARNING);
 		return false;
 	}
-	wstring name(nameStr);
-	if (name.empty()) {
-		MessageBox(NULL, emptyField, NULL, MB_OK | MB_ICONWARNING);
+	return true;
+}
+
+//returns whether or not input is numerical
+bool canConvertFloatInput(LPCWSTR tempStr) {
+	LPCWSTR invalidInputMessage = L"Please make sure valid input was entered in all fields";
+	bool generalProcess = canProcessInput(tempStr);
+	if (!generalProcess) {
 		return false;
 	}
-	g_newName = name;
+
+	
+	//check if alphanumeric
+	for (int i = 0; i < wcslen(tempStr); i++) {
+		bool hasDecimal = false;
+		int decimalCount = 0;
+		bool hasNegative = false;
+		int negativeCount = 0;
+
+		if (tempStr[i] == '.') {
+			hasDecimal = true;
+			decimalCount++;
+		}
+
+		if (tempStr[i] == '-') {
+			hasNegative = true;
+			negativeCount++;
+		}
+
+		if (!(isdigit(tempStr[i])) && !hasDecimal && !hasNegative || decimalCount > 1 || negativeCount > 1) {
+			MessageBox(NULL, invalidInputMessage, NULL, MB_OK | MB_ICONWARNING);
+			return false;
+		}
+
+	}
+	
 	return true;
 }
 
-bool processMass(LPCWSTR emptyField) {
+//converts numerical string to a float
+float convertFloatInput(LPCWSTR tempStr) {
+	float converted = wcstof(tempStr, NULL);
 
-	return true;
+	return converted;
 }
 
-
-bool processDiameter(LPCWSTR emptyField) {
-
-	return true;
-}
-
-bool processBrightness(LPCWSTR emptyField) {
-
-	return true;
-}
-
-bool processXPos(LPCWSTR emptyField) {
-
-	return true;
-}
-
-bool processYPos(LPCWSTR emptyField) {
-
-	return true;
-}
-
-bool processZPos(LPCWSTR emptyField) {
-
-	return true;
-}
-
-bool processXVel(LPCWSTR emptyField) {
-
-	return true;
-}
-
-bool processYVel(LPCWSTR emptyField) {
-
-	return true;
-}
-
-bool processZVel(LPCWSTR emptyField) {
-
-	return true;
-}
-
-bool processRed(LPCWSTR emptyField) {
-
-	return true;
-}
-
-bool processGreen(LPCWSTR emptyField) {
-
-	return true;
-}
-
-bool processBlue(LPCWSTR emptyField) {
-
-	return true;
-}
 
 
 
@@ -2341,89 +2352,109 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 		break;
 	}
 	case IDC_SUBMITOBJECT: {
-		LPCWSTR emptyFieldMessage = L"Please enter a value in all fields";
+		wstring newName = L"";
+		float newMass;
+		float newDiameter;
+		float newBrightness;
+		float newXPos;
+		float newYPos;
+		float newZPos;
+		float newXVel;
+		float newYVel;
+		float newZVel;
+		float newRed;
+		float newBlue;
+		float newGreen;
 
 		//process name
-		bool nameProcessed = processName(emptyFieldMessage);
-		if (!nameProcessed) {
-			break;
+		LPCWSTR nameStr = g_pNameBox->GetText();
+		bool canProcess = canProcessInput(nameStr);
+		if (canProcess) {
+			newName = processName(nameStr);
 		}
 
 		//process mass
-		bool massProcessed = processMass(emptyFieldMessage);
-		if (!massProcessed) {
-			break;
+		LPCWSTR massStr = g_pMassBox->GetText();
+		canProcess = canConvertFloatInput(massStr);
+		if (canProcess) {
+			newMass = convertFloatInput(massStr);
 		}
 
 		//process diameter
-		bool diameterProcessed = processDiameter(emptyFieldMessage);
-		if (!diameterProcessed) {
-			break;
+		LPCWSTR diameterStr = g_pDiameterBox->GetText();
+		canProcess = canConvertFloatInput(diameterStr);
+		if (canProcess) {
+			newDiameter = convertFloatInput(diameterStr);
 		}
 
 		//process brightness
-		bool brightnessProcessed = processBrightness(emptyFieldMessage);
-		if (!brightnessProcessed) {
-			break;
+		LPCWSTR brightnessStr = g_pBrightnessBox->GetText();
+		canProcess = canConvertFloatInput(brightnessStr);
+		if (canProcess) {
+			newBrightness = convertFloatInput(brightnessStr);
 		}
 
-		//process x pos
-		bool xPosProcessed = processXPos(emptyFieldMessage);
-		if (!xPosProcessed) {
-			break;
+		//process position
+		LPCWSTR xPosStr = g_pXPosBox->GetText();
+		canProcess = canConvertFloatInput(xPosStr);
+		if (canProcess) {
+			newXPos = convertFloatInput(xPosStr);
 		}
 
-		//process y pos
-		bool yPosProcessed = processYPos(emptyFieldMessage);
-		if (!yPosProcessed) {
-			break;
+		LPCWSTR yPosStr = g_pYPosBox->GetText();
+		canProcess = canConvertFloatInput(yPosStr);
+		if (canProcess) {
+			newYPos = convertFloatInput(yPosStr);
 		}
 
-		//process z pos
-		bool zPosProcessed = processZPos(emptyFieldMessage);
-		if (!zPosProcessed) {
-			break;
+		LPCWSTR zPosStr = g_pZPosBox->GetText();
+		canProcess = canConvertFloatInput(zPosStr);
+		if (canProcess) {
+			newZPos = convertFloatInput(zPosStr);
 		}
 
-		//process x vel
-		bool xVelProcessed = processXVel(emptyFieldMessage);
-		if (!xVelProcessed) {
-			break;
+		//process velocity
+		LPCWSTR xVelStr = g_pXVelBox->GetText();
+		canProcess = canConvertFloatInput(xVelStr);
+		if (canProcess) {
+			newXVel = convertFloatInput(xVelStr);
 		}
 
-		//process y vel
-		bool yVelProcessed = processYVel(emptyFieldMessage);
-		if (!yVelProcessed) {
-			break;
+		LPCWSTR yVelStr = g_pYVelBox->GetText();
+		canProcess = canConvertFloatInput(yVelStr);
+		if (canProcess) {
+			newYVel = convertFloatInput(yVelStr);
 		}
 
-		//process z vel
-		bool zVelProcessed = processZVel(emptyFieldMessage);
-		if (!zVelProcessed) {
-			break;
+		LPCWSTR zVelStr = g_pZVelBox->GetText();
+		canProcess = canConvertFloatInput(zVelStr);
+		if (canProcess) {
+			newZVel = convertFloatInput(zVelStr);
+		}
+		
+
+		//process colors
+
+		LPCWSTR redStr = g_pRedBox->GetText();
+		canProcess = canConvertFloatInput(redStr);
+		if (canProcess) {
+			newRed = convertFloatInput(redStr);
 		}
 
-		//process red
-		bool redProcessed = processRed(emptyFieldMessage);
-		if (!redProcessed) {
-			break;
+		LPCWSTR greenStr = g_pGreenBox->GetText();
+		canProcess = canConvertFloatInput(greenStr);
+		if (canProcess) {
+			newGreen = convertFloatInput(greenStr);
 		}
 
-		//process green
-		bool greenProcessed = processGreen(emptyFieldMessage);
-		if (!greenProcessed) {
-			break;
+		LPCWSTR blueStr = g_pBlueBox->GetText();
+		canProcess = canConvertFloatInput(blueStr);
+		if (canProcess) {
+			newBlue = convertFloatInput(blueStr);
 		}
 
-		//process blue
-		bool blueProcessed = processBlue(emptyFieldMessage);
-		if (!blueProcessed) {
-			break;
-		}
+		addObject(newName, newMass, newDiameter, newBrightness, newXPos, newYPos, newZPos, newXVel, newYVel, newZVel, newRed, newGreen, newBlue);
 
-		addObject();
-
-		clearAddObjectMenu();
 
 		break;
 
