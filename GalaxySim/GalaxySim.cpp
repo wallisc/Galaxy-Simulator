@@ -148,7 +148,7 @@ public:
 		m_zvelo(0.0f), m_red(0.0f), m_green(0.0f), m_blue(0.0f)
 	{}
 
-	ObjectData(const wstring & name, float mass, float diameter, int brightness, float x, float y, float z, float xv, float yv, float zv, float r, float g, float b) :
+	ObjectData(const wstring & name, float mass, float diameter, float brightness, float x, float y, float z, float xv, float yv, float zv, float r, float g, float b) :
 		m_name(name), m_mass(mass), m_diameter(diameter), m_brightness(brightness), m_xcoord(x), m_ycoord(y), m_zcoord(z),
 		m_xvelo(xv), m_yvelo(yv), m_zvelo(zv), m_red(r), m_green(g), m_blue(b)
 	{
@@ -177,17 +177,20 @@ std::vector<ObjectData> g_knownValues365; //vector that will contain known solar
 std::vector<ObjectData> g_knownValues730; //vector that will contain known solar system database values for time=730 
 
 //const float g_constant = -8.644 * pow(10, -13);
-const float g_constant = -8.644E-16;
+//const float g_constant = -8.644E-16;
+const float g_constant = -6.67E-16;
 const int g_cFloatStringLength = 20;
 const int g_cIntStringLength = 20;
 
 float g_red[MAX_PARTICLES];
 float g_green[MAX_PARTICLES];
 float g_blue[MAX_PARTICLES];
+
+//object data display variables
 bool g_isFirst = true;
 bool g_isPaused = false;
 bool g_hasDisplay = false;
-CDXUTEditBox *g_pTextBox;
+CDXUTEditBox *g_pObjectDataDisplay;
 bool g_firstTextBox = true;
 XMMATRIX g_mProj;
 XMMATRIX g_mView;
@@ -200,6 +203,25 @@ int g_width = 800;
 bool g_relevantMouse = false;
 float g_xMouse;
 float g_yMouse;
+
+//variables for object adding UI
+CDXUTEditBox *g_pNameBox = nullptr;
+CDXUTEditBox *g_pMassBox = nullptr;
+CDXUTEditBox *g_pDiameterBox = nullptr;
+CDXUTEditBox *g_pBrightnessBox = nullptr;
+CDXUTEditBox *g_pXPosBox = nullptr;
+CDXUTEditBox *g_pYPosBox = nullptr;
+CDXUTEditBox *g_pZPosBox = nullptr;
+CDXUTEditBox *g_pXVelBox = nullptr;
+CDXUTEditBox *g_pYVelBox = nullptr;
+CDXUTEditBox *g_pZVelBox = nullptr;
+CDXUTEditBox *g_pRedBox = nullptr;
+CDXUTEditBox *g_pGreenBox = nullptr;
+CDXUTEditBox *g_pBlueBox = nullptr;
+CDXUTButton *g_pSubmitObjectButton = nullptr;
+bool g_firstObjectAddition = true;
+bool g_addingObject = false;
+
 
 bool g_loaded = false;
 
@@ -260,6 +282,25 @@ float g_averageFPS = 0;
 #define IDC_ITERATEPERFRAMEIN   13
 #define	IDC_SUBMITITERATEIN     14
 #define IDC_OUTPUTINFO          15
+
+#define IDC_ADDOBJECT			15
+
+#define IDC_SUBMITOBJECT		16
+#define IDC_NAME				17
+#define IDC_MASS				18
+#define IDC_DIAMETER			19
+#define IDC_BRIGHTNESS			20
+#define IDC_XPOS				21
+#define IDC_YPOS				22
+#define IDC_ZPOS				23
+#define IDC_XVEL				24
+#define IDC_YVEL				25
+#define IDC_ZVEL				26
+#define IDC_RED					27
+#define IDC_GREEN				28
+#define IDC_BLUE				29
+
+
 
 //--------------------------------------------------------------------------------------
 // Forward declarations 
@@ -325,7 +366,6 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 
 	ParseFile();
 
-
 	InitApp();
 
 	DXUTInit(true, true);                 // Use this line instead to try to create a hardware device
@@ -373,6 +413,57 @@ void InitApp()
 	g_HUD.AddEditBox(IDC_JUMPTIMEIN, L"", 0, iY += 26, 170, 40, false, &g_JumpTimeInputBox);
 	g_HUD.AddButton(IDC_SUBMITTIMEIN, L"Jump!", 0, iY += 40, 170, 23);
 	g_HUD.AddButton(IDC_PAUSE, L"Pause / Unpause", 0, iY += 26, 170, 22);
+	g_HUD.AddButton(IDC_ADDOBJECT, L"Add Body", 0, iY += 26, 170, 22);
+
+	//left hand UI
+	int yPos = 100;
+	int xPos = -630;
+	int width = 170;
+	int height = 35;
+
+	g_HUD.AddEditBox(IDC_NAME, L"", xPos, yPos, width, height, false, &g_pNameBox);
+	g_pNameBox->SetVisible(false);
+
+	g_HUD.AddEditBox(IDC_MASS, L"", xPos, yPos += height, width, height, false, &g_pMassBox);
+	g_pMassBox->SetVisible(false);
+
+	g_HUD.AddEditBox(IDC_DIAMETER, L"", xPos, yPos += height, width, height, false, &g_pDiameterBox);
+	g_pDiameterBox->SetVisible(false);
+
+	g_HUD.AddEditBox(IDC_BRIGHTNESS, L"", xPos, yPos += height, width, height, false, &g_pBrightnessBox);
+	g_pBrightnessBox->SetVisible(false);
+
+	g_HUD.AddEditBox(IDC_XPOS, L"", xPos, yPos += height, width, height, false, &g_pXPosBox);
+	g_pXPosBox->SetVisible(false);
+
+	g_HUD.AddEditBox(IDC_YPOS, L"", xPos, yPos += height, width, height, false, &g_pYPosBox);
+	g_pYPosBox->SetVisible(false);
+
+	g_HUD.AddEditBox(IDC_ZPOS, L"", xPos, yPos += height, width, height, false, &g_pZPosBox);
+	g_pZPosBox->SetVisible(false);
+
+	g_HUD.AddEditBox(IDC_XVEL, L"", xPos, yPos += height, width, height, false, &g_pXVelBox);
+	g_pXVelBox->SetVisible(false);
+
+	g_HUD.AddEditBox(IDC_YVEL, L"", xPos, yPos += height, width, height, false, &g_pYVelBox);
+	g_pYVelBox->SetVisible(false);
+
+	g_HUD.AddEditBox(IDC_ZVEL, L"", xPos, yPos += height, width, height, false, &g_pZVelBox);
+	g_pZVelBox->SetVisible(false);
+
+	g_HUD.AddEditBox(IDC_RED, L"", xPos, yPos += height, width, height, false, &g_pRedBox);
+	g_pRedBox->SetVisible(false);
+
+	g_HUD.AddEditBox(IDC_GREEN, L"", xPos, yPos += height, width, height, false, &g_pGreenBox);
+	g_pGreenBox->SetVisible(false);
+
+	g_HUD.AddEditBox(IDC_BLUE, L"", xPos, yPos += height, width, height, false, &g_pBlueBox);
+	g_pBlueBox->SetVisible(false);
+
+	g_HUD.AddButton(IDC_SUBMITOBJECT, L"Create", xPos, yPos += height, width, height, NULL, true, &g_pSubmitObjectButton);
+	g_pSubmitObjectButton->SetVisible(false);
+	
+
 	g_HUD.AddButton(IDC_OUTPUTINFO, L"Output Object Data", 0, iY += 26, 170, 22);
 	g_SampleUI.SetCallback(OnGUIEvent);
 }
@@ -1007,7 +1098,7 @@ void jumpTime(float newTime){
 		float zvelo = g_pParticleArray[i].velo.z;
 		float acoord = 1.0;
 	}
-	
+
 	g_systemTime = newTime;
 
 	g_jumpSpeedTest = g_timer.GetAbsoluteTime() - jumpTimeStart;
@@ -1409,7 +1500,7 @@ void testJumpTimeAccuracy(){
 
 	sprintf_s(buffer, sizeof(buffer), "Avg Velocity Percent Difference %f\n", avgVeloDiff);
 	::OutputDebugStringA(buffer);
-	
+
 }
 
 //test the fast forward accuracy
@@ -1557,18 +1648,21 @@ void copyFile() {
 	}
 }
 
-//void getDxDiag() {
-//	wchar_t username[UNLEN + 1];
-//	DWORD username_len = UNLEN + 1;
-//	GetUserNameW(username, &username_len);
-//
-//	wostringstream wss;
-//	wss << L"C:\\Users\\" << username << L"\\testing.txt"; 
-//
-//	const wstring& wstr = wss.str();
-//	const LPCWSTR dxDiagLoc = wstr.c_str();
-//
-//}
+void getUsername() {
+	wchar_t username[UNLEN + 1];
+	DWORD username_len = UNLEN + 1;
+	GetUserNameW(username, &username_len);
+
+	wostringstream wss;
+	wss << username; 
+
+	const wstring& wstr = wss.str();
+	const LPCWSTR usernameCopy = wstr.c_str();
+
+	g_dataFile << usernameCopy << endl;
+
+}
+
 
 //--------------------------------------------------------------------------------------
 HRESULT CreateParticlePosVeloBuffers(ID3D11Device* pd3dDevice)
@@ -1718,7 +1812,7 @@ void CALLBACK OnMouseEvent(bool bLeftButtonDown, bool bRightButtonDown, bool bMi
 		g_xMouse = (float)xPos;
 		g_yMouse = (float)yPos;
 		g_relevantMouse = true;
-		g_pTextBox->SetEnabled(false); //prevents accidental alteration of editbox
+		g_pObjectDataDisplay->SetEnabled(false); //prevents accidental alteration of editbox
 		g_hitTestStart = g_Timer.GetAbsoluteTime();
 	}
 
@@ -1786,7 +1880,7 @@ void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 			pd3dImmediateContext->Map(g_pParticlePosVelo0, 0, D3D11_MAP_WRITE_DISCARD, 0, &ms);
 
 			g_systemTime = g_systemTime + g_timeValueToHoursConversion;
-			
+
 			GravityMotionIteration(g_timeValue);
 
 			//this section helps with the testRegularSpeed() function
@@ -1878,15 +1972,15 @@ void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 			}
 		}
 
-		if (foundIndex < 0 && g_pTextBox != nullptr && g_hasDisplay) {
-			g_pTextBox->ClearText();
-			g_pTextBox->SetText(L"No object selected");
+		if (foundIndex < 0 && g_pObjectDataDisplay != nullptr && g_hasDisplay) {
+			g_pObjectDataDisplay->ClearText();
+			g_pObjectDataDisplay->SetText(L"No object selected");
 		}
-		else if (g_pTextBox != nullptr && g_hasDisplay) {
+		else if (g_pObjectDataDisplay != nullptr && g_hasDisplay) {
 			//TODO: text wrapping
 			wstring objectInfo = concatenateObjInfo(foundIndex);
-			g_pTextBox->ClearText();
-			g_pTextBox->SetText(objectInfo.c_str());
+			g_pObjectDataDisplay->ClearText();
+			g_pObjectDataDisplay->SetText(objectInfo.c_str());
 		}
 		foundIndex = -1;
 		double hitTestEnd = g_Timer.GetAbsoluteTime();
@@ -1899,7 +1993,7 @@ void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 	g_relevantMouse = false;
 
 
-		g_oneFrameTime = g_timer.GetAbsoluteTime() - oneFrameTimeStart;
+	g_oneFrameTime = g_timer.GetAbsoluteTime() - oneFrameTimeStart;
 
 }
 
@@ -1939,6 +2033,70 @@ LRESULT CALLBACK MsgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, boo
 	return 0;
 }
 
+void addPosVel(PARTICLE particles[], int i, std::vector<ObjectData> & object) {
+	particles[i].pos = createPositionFloat(object[i].m_xcoord, object[i].m_ycoord, object[i].m_zcoord);
+	particles[i].velo = createVelocityFloat(object[i].m_xvelo, object[i].m_yvelo, object[i].m_zvelo);
+}
+
+void addDetails(PARTICLE_DETAILS particles[], int i, std::vector<ObjectData> &object) {
+	particles[i].name = object[i].m_name;
+	particles[i].mass = object[i].m_mass;
+	particles[i].diameter = object[i].m_diameter;
+	particles[i].brightness = object[i].m_brightness;
+	particles[i].red = object[i].m_red;
+	particles[i].green = object[i].m_green;
+	particles[i].blue = object[i].m_blue;
+}
+
+void clearAddObjectMenu() {
+	g_pNameBox->ClearText();
+	g_pMassBox->ClearText();
+	g_pDiameterBox->ClearText();
+	g_pBrightnessBox->ClearText();
+	g_pXPosBox->ClearText();
+	g_pYPosBox->ClearText();
+	g_pZPosBox->ClearText();
+	g_pXVelBox->ClearText();
+	g_pYVelBox->ClearText();
+	g_pZVelBox->ClearText();
+	g_pRedBox->ClearText();
+	g_pGreenBox->ClearText();
+	g_pBlueBox->ClearText();
+}
+
+void addObject(wstring name, float mass, float diameter, float brightness, float x, float y, float z, float xv, float yv, float zv, float r, float g, float b) {
+	ObjectData newObject(name, mass, diameter, brightness, x, y, z, xv, yv, zv, r, g, b);
+
+	//add to vector
+	g_objects.push_back(newObject);
+
+	//add to arrays
+	NUM_PARTICLES++;
+	addPosVel(g_pParticleArray, NUM_PARTICLES - 1, g_objects);
+	addDetails(g_pParticleArrayTWO, NUM_PARTICLES - 1, g_objects);
+
+	clearAddObjectMenu();
+	
+}
+
+void toggleAddObjectMenuVisibility(bool change) { //true reveals menu; false hides menu
+	g_addingObject = change;
+	g_pNameBox->SetVisible(change);
+	g_pMassBox->SetVisible(change);
+	g_pDiameterBox->SetVisible(change);
+	g_pBrightnessBox->SetVisible(change);
+	g_pXPosBox->SetVisible(change);
+	g_pYPosBox->SetVisible(change);
+	g_pZPosBox->SetVisible(change);
+	g_pXVelBox->SetVisible(change);
+	g_pYVelBox->SetVisible(change);
+	g_pZVelBox->SetVisible(change);
+	g_pRedBox->SetVisible(change);
+	g_pGreenBox->SetVisible(change);
+	g_pBlueBox->SetVisible(change);
+	g_pSubmitObjectButton->SetVisible(change);
+}
+
 void pauseControl() {
 	double pauseStart;
 	double unPauseStart;
@@ -1951,18 +2109,6 @@ void pauseControl() {
 	}
 
 
-	//if (!g_isPaused) {
-	//	DXUTPause(false, false);
-	//	g_isPaused = true;
-	//}
-	//else {
-	//	DXUTPause(true, false);
-	//	g_isPaused = false;
-	//}
-	//The above statement works whether or not the timer is commented, although it has the FPS freeze issue if timer isn't commented
-	//The below statement only works if the timer is commented, and does not have the FPS freeze issue (w/ timer, it doesn't render the edit box)
-	//This is likely because the edit box uses the global timer (DXUTgui.cpp 6116)
-	//Below statement's call logic makes more sense considering variable names; preferred use
 	if (!g_isPaused) {
 		DXUTPause(true, false);
 		g_isPaused = true;
@@ -1970,23 +2116,25 @@ void pauseControl() {
 	else {
 		DXUTPause(false, false);
 		g_isPaused = false;
+		toggleAddObjectMenuVisibility(false);
+		clearAddObjectMenu();
 	}
 
 	LPCWSTR welcomeMessage = L"Select an object\nto see information\ndisplayed\n";
 	if (g_isPaused && !g_hasDisplay && g_firstTextBox) { //always the first case; text box pointer gets assignment here
-		g_HUD.AddEditBox(11, welcomeMessage, 0, 295, 160, 300);
-		g_pTextBox = g_HUD.GetEditBox(11);
+		g_HUD.AddEditBox(11, welcomeMessage, 0, 325, 160, 270);
+		g_pObjectDataDisplay = g_HUD.GetEditBox(11);
 		g_hasDisplay = true;
 		g_firstTextBox = false;
 	}
 	else if (g_isPaused && !g_hasDisplay)
 	{
-		g_pTextBox->SetText(welcomeMessage);
-		g_pTextBox->SetVisible(true);
+		g_pObjectDataDisplay->SetText(welcomeMessage);
+		g_pObjectDataDisplay->SetVisible(true);
 		g_hasDisplay = true;
 	}
 	else if (g_hasDisplay) {
-		g_pTextBox->SetVisible(false);
+		g_pObjectDataDisplay->SetVisible(false);
 		g_hasDisplay = false;
 	}
 
@@ -2013,6 +2161,72 @@ void pauseControl() {
 
 
 }
+
+
+
+//Add object helper methods
+wstring processName(LPCWSTR tempStr) {
+
+	wstring name(tempStr);
+
+	return name;
+}
+
+//returns wether or not the field is empty
+bool canProcessInput(LPCWSTR tempStr) {
+	LPCWSTR emptyFieldMessage = L"Please enter a value in all fields";
+	if (tempStr == NULL || wcslen(tempStr) == 0) {
+		MessageBox(NULL, emptyFieldMessage, NULL, MB_OK | MB_ICONWARNING);
+		return false;
+	}
+	return true;
+}
+
+//returns whether or not input is numerical
+bool canConvertFloatInput(LPCWSTR tempStr) {
+	LPCWSTR invalidInputMessage = L"Please make sure valid input was entered in all fields";
+	bool generalProcess = canProcessInput(tempStr);
+	if (!generalProcess) {
+		return false;
+	}
+
+	
+	//check if alphanumeric
+	for (int i = 0; i < wcslen(tempStr); i++) {
+		bool hasDecimal = false;
+		int decimalCount = 0;
+		bool hasNegative = false;
+		int negativeCount = 0;
+
+		if (tempStr[i] == '.') {
+			hasDecimal = true;
+			decimalCount++;
+		}
+
+		if (tempStr[i] == '-') {
+			hasNegative = true;
+			negativeCount++;
+		}
+
+		if (!(isdigit(tempStr[i])) && !hasDecimal && !hasNegative || decimalCount > 1 || negativeCount > 1) {
+			MessageBox(NULL, invalidInputMessage, NULL, MB_OK | MB_ICONWARNING);
+			return false;
+		}
+
+	}
+
+	return true;
+}
+
+//converts numerical string to a float
+float convertFloatInput(LPCWSTR tempStr) {
+	float converted = wcstof(tempStr, NULL);
+
+	return converted;
+}
+
+
+
 
 
 //--------------------------------------------------------------------------------------
@@ -2095,10 +2309,10 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 		int iterateInt = (int)(iterateFloat + 0.5);
 		g_iterationsPerFrame = iterateInt; break;
 	}
-	//case IDC_DOUBLESPEED:
-	//	doubleSpeed(); break;
-	//case IDC_HALFSPEED:
-	//	halfSpeed(); break;
+		//case IDC_DOUBLESPEED:
+		//	doubleSpeed(); break;
+		//case IDC_HALFSPEED:
+		//	halfSpeed(); break;
 	case IDC_SUBMITTIMEIN:
 	{
 		LPCWSTR timeStr;
@@ -2108,7 +2322,7 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 			break;
 		}
 		timeFloat = wcstof(timeStr, NULL);
-		jumpTime(timeFloat); 
+		jumpTime(timeFloat);
 		break;
 	}
 	case IDC_RESETCAMERA:
@@ -2117,12 +2331,140 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 		g_Camera.Reset();
 		tend = g_timer.GetAbsoluteTime();
 		g_deltatResetCamera = tend - tstart;
-		
+
 		wchar_t buffer[256];
 		swprintf(buffer, sizeof(buffer), L"%f\n", g_deltatResetCamera);
 		::OutputDebugString(buffer);
 
 		break;
+	}
+	case IDC_ADDOBJECT: {
+		if (g_addingObject) {
+			clearAddObjectMenu();
+			toggleAddObjectMenuVisibility(false);
+			g_pObjectDataDisplay->SetVisible(true);
+			break;
+		}
+		LPCWSTR warningMessage = L"Please pause to add an object.";
+		if (!g_isPaused) {
+			MessageBox(NULL, warningMessage, NULL, MB_OK | MB_ICONWARNING);
+		}
+		else {
+			g_pObjectDataDisplay->SetVisible(false);
+			toggleAddObjectMenuVisibility(true);
+		}
+		break;
+	}
+	case IDC_SUBMITOBJECT: {
+		wstring newName = L"";
+		float newMass;
+		float newDiameter;
+		float newBrightness;
+		float newXPos;
+		float newYPos;
+		float newZPos;
+		float newXVel;
+		float newYVel;
+		float newZVel;
+		float newRed;
+		float newBlue;
+		float newGreen;
+
+		//process name
+		LPCWSTR nameStr = g_pNameBox->GetText();
+		bool canProcess = canProcessInput(nameStr);
+		if (canProcess) {
+			newName = processName(nameStr);
+		}
+
+		//process mass
+		LPCWSTR massStr = g_pMassBox->GetText();
+		canProcess = canConvertFloatInput(massStr);
+		if (canProcess) {
+			newMass = convertFloatInput(massStr);
+		}
+
+		//process diameter
+		LPCWSTR diameterStr = g_pDiameterBox->GetText();
+		canProcess = canConvertFloatInput(diameterStr);
+		if (canProcess) {
+			newDiameter = convertFloatInput(diameterStr);
+		}
+
+		//process brightness
+		LPCWSTR brightnessStr = g_pBrightnessBox->GetText();
+		canProcess = canConvertFloatInput(brightnessStr);
+		if (canProcess) {
+			newBrightness = convertFloatInput(brightnessStr);
+		}
+
+		//process position
+		LPCWSTR xPosStr = g_pXPosBox->GetText();
+		canProcess = canConvertFloatInput(xPosStr);
+		if (canProcess) {
+			newXPos = convertFloatInput(xPosStr);
+		}
+
+		LPCWSTR yPosStr = g_pYPosBox->GetText();
+		canProcess = canConvertFloatInput(yPosStr);
+		if (canProcess) {
+			newYPos = convertFloatInput(yPosStr);
+		}
+
+		LPCWSTR zPosStr = g_pZPosBox->GetText();
+		canProcess = canConvertFloatInput(zPosStr);
+		if (canProcess) {
+			newZPos = convertFloatInput(zPosStr);
+		}
+
+		//process velocity
+		LPCWSTR xVelStr = g_pXVelBox->GetText();
+		canProcess = canConvertFloatInput(xVelStr);
+		if (canProcess) {
+			newXVel = convertFloatInput(xVelStr);
+		}
+
+		LPCWSTR yVelStr = g_pYVelBox->GetText();
+		canProcess = canConvertFloatInput(yVelStr);
+		if (canProcess) {
+			newYVel = convertFloatInput(yVelStr);
+		}
+
+		LPCWSTR zVelStr = g_pZVelBox->GetText();
+		canProcess = canConvertFloatInput(zVelStr);
+		if (canProcess) {
+			newZVel = convertFloatInput(zVelStr);
+		}
+		
+
+		//process colors
+
+		LPCWSTR redStr = g_pRedBox->GetText();
+		canProcess = canConvertFloatInput(redStr);
+		if (canProcess) {
+			newRed = convertFloatInput(redStr);
+		}
+
+		LPCWSTR greenStr = g_pGreenBox->GetText();
+		canProcess = canConvertFloatInput(greenStr);
+		if (canProcess) {
+			newGreen = convertFloatInput(greenStr);
+		}
+
+		LPCWSTR blueStr = g_pBlueBox->GetText();
+		canProcess = canConvertFloatInput(blueStr);
+		if (canProcess) {
+			newBlue = convertFloatInput(blueStr);
+		}
+
+		addObject(newName, newMass, newDiameter, newBrightness, newXPos, newYPos, newZPos, newXVel, newYVel, newZVel, newRed, newGreen, newBlue);
+
+		//force pVertices to update
+		DXUTToggleREF();
+		DXUTToggleREF();
+
+		break;
+
 	}
 
 	case IDC_OUTPUTINFO:
@@ -2360,6 +2702,25 @@ void RenderText()
 	g_pTxtHelper->End();
 }
 
+void renderAddObjectText() {
+	g_pTxtHelper->Begin();
+	g_pTxtHelper->SetInsertionPos(172, 100);
+	g_pTxtHelper->SetForegroundColor(Colors::Yellow);
+	g_pTxtHelper->DrawTextLine(L"Name");
+	g_pTxtHelper->DrawTextLine(L"\nMass");
+	g_pTxtHelper->DrawTextLine(L"\n\nDiameter");
+	g_pTxtHelper->DrawTextLine(L"\n\n\nBrightness");
+	g_pTxtHelper->DrawTextLine(L"\n\n\n\nX Pos");
+	g_pTxtHelper->DrawTextLine(L"\n\n\n\n\nY Pos");
+	g_pTxtHelper->DrawTextLine(L"\n\n\n\n\n\nZ Pos");
+	g_pTxtHelper->DrawTextLine(L"\n\n\n\n\n\n\nX Vel");
+	g_pTxtHelper->DrawTextLine(L"\n\n\n\n\n\n\n\nY Vel");
+	g_pTxtHelper->DrawTextLine(L"\n\n\n\n\n\n\n\n\nZ Vel");
+	g_pTxtHelper->DrawTextLine(L"\n\n\n\n\n\n\n\n\n\nRed");
+	g_pTxtHelper->DrawTextLine(L"\n\n\n\n\n\n\n\n\n\n\nGreen");
+	g_pTxtHelper->DrawTextLine(L"\n\n\n\n\n\n\n\n\n\n\n\nBlue");
+	g_pTxtHelper->End();
+}
 
 //--------------------------------------------------------------------------------------
 bool RenderParticles(ID3D11DeviceContext* pd3dImmediateContext, CXMMATRIX mView, CXMMATRIX mProj)
@@ -2446,27 +2807,27 @@ void automatedTelemetry(){
 	}
 	case 3:{
 		double jumpSpeedTime;
-			//gets time to jump from time=0 to time=365 days
-			jumpSpeedTime = testJumpTimeSpeed();
+		//gets time to jump from time=0 to time=365 days
+		jumpSpeedTime = testJumpTimeSpeed();
 
 		g_dataFile << "Time to jump to 365 days:" << "," << jumpSpeedTime << endl;
 
-			break;
-		}
+		break;
+	}
 	case 4:{
 		double oneIterationPerFrame;
 		double hundredIterationPerFrame;
-			int initial = g_iterationsPerFrame;
-			//gets time for one frame at one iteration per frame
-			oneIterationPerFrame = testSpeed1IterationsPerFrame();
-			//gets time for one frame at 100 iterations per frame
-			hundredIterationPerFrame = testSpeed100IterationsPerFrame();
-			g_iterationsPerFrame = initial;
+		int initial = g_iterationsPerFrame;
+		//gets time for one frame at one iteration per frame
+		oneIterationPerFrame = testSpeed1IterationsPerFrame();
+		//gets time for one frame at 100 iterations per frame
+		hundredIterationPerFrame = testSpeed100IterationsPerFrame();
+		g_iterationsPerFrame = initial;
 
 		g_dataFile << "1 Frame @ 1 iteration/frame" << "," << oneIterationPerFrame << endl;
 		g_dataFile << "1 Frame @ 100 iteration/frame" << "," << hundredIterationPerFrame << endl;
 		break;
-		}
+	}
 	case 5: {
 		double winToFullTime;
 		winToFullTime = getWinToFullTime();
@@ -2558,6 +2919,8 @@ void automatedTelemetry(){
 		g_dataFile << "Average FPS" << "," << averageFPS << endl;
 		g_dataFile << wss.str().c_str() << endl;
 
+		getUsername();
+
 		g_dataFile.close();
 
 		system("dxdiag.exe/t dxdiag.txt");
@@ -2566,15 +2929,15 @@ void automatedTelemetry(){
 
 		exit(0);
 
-		}
-		default:{
+	}
+	default:{
 
-		}
+	}
 	}
 
 	g_step++;
-
-
+	
+		
 }
 
 
@@ -2605,6 +2968,11 @@ void CALLBACK OnD3D11FrameRender(ID3D11Device* pd3dDevice, ID3D11DeviceContext* 
 	g_HUD.OnRender(fElapsedTime);
 	g_SampleUI.OnRender(fElapsedTime);
 	RenderText();
+
+	if (g_addingObject) {
+		renderAddObjectText();
+	}
+
 	DXUT_EndPerfEvent();
 
 	// The following could be used to output fps stats into debug output window,
