@@ -210,7 +210,7 @@ double g_systemTime = 0; //sets the inital system time to 0
 LPWSTR g_timeString; //used later for the Jump Time In button user uses to input time to jump to.
 
 //testing constants
-bool g_isTest = false; //true means test mode is on
+bool g_isTest = true; //true means test mode is on
 int g_step = 1; //determines which test from automated test suite is run
 double g_jumpSpeedTest; //collects speed of jumpTime for automated test
 double g_oneFrameTime; //collects time for one frame
@@ -2558,10 +2558,9 @@ void automatedTelemetry(){
 		g_dataFile << "Average FPS" << "," << averageFPS << endl;
 		g_dataFile << wss.str().c_str() << endl;
 
-		//getDxDiag();
-
 		g_dataFile.close();
 
+		system("dxdiag.exe/t dxdiag.txt");
 
 		copyFile();
 
