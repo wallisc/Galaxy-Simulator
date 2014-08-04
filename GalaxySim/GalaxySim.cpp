@@ -364,7 +364,7 @@ void InitApp()
 	g_HUD.Init(&g_DialogResourceManager);
 	g_SampleUI.Init(&g_DialogResourceManager);
 
-	g_HUD.SetCallback(OnGUIEvent); int iY = 10;
+	g_HUD.SetCallback(OnGUIEvent); int iY = 10; int iYEnd = 575;
 	g_HUD.AddButton(IDC_TOGGLEFULLSCREEN, L"Full screen (F6)", 0, iY, 170, 23, VK_F6);
 	g_HUD.AddButton(IDC_TOGGLEREF, L"Toggle REF (F3)", 0, iY += 26, 170, 23, VK_F3);
 	g_HUD.AddButton(IDC_CHANGEDEVICE, L"Change device (F2)", 0, iY += 26, 170, 23, VK_F2);
@@ -377,9 +377,9 @@ void InitApp()
 	g_HUD.AddEditBox(IDC_JUMPTIMEIN, L"", 0, iY += 26, 170, 40, false, &g_JumpTimeInputBox);
 	g_HUD.AddButton(IDC_SUBMITTIMEIN, L"Jump!", 0, iY += 40, 170, 23);
 	g_HUD.AddButton(IDC_PAUSE, L"Pause / Unpause", 0, iY += 26, 170, 22);
-	g_HUD.AddButton(IDC_OUTPUTINFO, L"Output Object Data", 0, iY += 26, 170, 22);
-	g_HUD.AddEditBox(IDC_DELETEOBJIN, L"", 0, iY += 26, 170, 40, false, &g_DeleteObjInBox);
-	g_HUD.AddButton(IDC_SUBMITDELETEOBJ, L"Delete Object", 0, iY += 40, 170, 22);
+	g_HUD.AddButton(IDC_SUBMITDELETEOBJ, L"Delete Object", -630, iYEnd, 170, 22);
+	g_HUD.AddEditBox(IDC_DELETEOBJIN, L"", -630, iYEnd -= 40, 170, 40, false, &g_DeleteObjInBox);
+	g_HUD.AddButton(IDC_OUTPUTINFO, L"Output Object Data", -630, iYEnd -= 26, 170, 22);
 	g_SampleUI.SetCallback(OnGUIEvent);
 }
 
