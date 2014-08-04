@@ -2206,6 +2206,8 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 	{
 		LPCWSTR object = g_DeleteObjInBox-> GetText();
 		deleteObject(object);
+		DXUTToggleREF();
+		DXUTToggleREF();
 		break;
 	}
 	}

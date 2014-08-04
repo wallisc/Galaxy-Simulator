@@ -828,7 +828,7 @@ m_bLimitPitch(false),
 m_bDragSinceLastUpdate(true),
 m_fRadius(5.0f),
 m_fDefaultRadius(5.0f),
-m_fMinRadius(1.0f),
+m_fMinRadius(0.5f),
 m_fMaxRadius(FLT_MAX)
 {
 	XMMATRIX id = XMMatrixIdentity();
