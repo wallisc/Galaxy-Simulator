@@ -2455,6 +2455,9 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 
 		addObject(newName, newMass, newDiameter, newBrightness, newXPos, newYPos, newZPos, newXVel, newYVel, newZVel, newRed, newGreen, newBlue);
 
+		//force pVertices to update
+		DXUTToggleREF();
+		DXUTToggleREF();
 
 		break;
 
