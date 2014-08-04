@@ -2120,7 +2120,7 @@ void pauseControl() {
 
 	LPCWSTR welcomeMessage = L"Select an object\nto see information\ndisplayed\n";
 	if (g_isPaused && !g_hasDisplay && g_firstTextBox) { //always the first case; text box pointer gets assignment here
-		g_HUD.AddEditBox(11, welcomeMessage, -630, 100, 160, 300);
+		g_HUD.AddEditBox(11, welcomeMessage, 0, 325, 160, 270);
 		g_pObjectDataDisplay = g_HUD.GetEditBox(11);
 		g_hasDisplay = true;
 		g_firstTextBox = false;
@@ -2340,6 +2340,8 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 		if (g_addingObject) {
 			clearAddObjectMenu();
 			toggleAddObjectMenuVisibility(false);
+			g_pObjectDataDisplay->SetVisible(true);
+			break;
 		}
 		LPCWSTR warningMessage = L"Please pause to add an object.";
 		if (!g_isPaused) {
