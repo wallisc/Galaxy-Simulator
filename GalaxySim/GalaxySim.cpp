@@ -2171,7 +2171,9 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 			{
 				myfile << "<object>\n";
 
-				myfile << "<name>Particle" << i;
+				wstring wname=g_pParticleArrayTWO[i].name;
+				string name(wname.begin(), wname.end());
+				myfile << "<name>" << name;
 				myfile << "</name>\n";
 
 				myfile << "<mass>" << g_pParticleArrayTWO[i].mass;
