@@ -2163,11 +2163,11 @@ void pauseControl() {
 	else if (g_isPaused && !g_hasDisplay)
 	{
 		g_pObjectDataDisplay->SetText(welcomeMessage);
-		g_pObjectDataDisplay->SetVisible(true);
+		//g_pObjectDataDisplay->SetVisible(true);
 		g_hasDisplay = true;
 	}
 	else if (g_hasDisplay) {
-		g_pObjectDataDisplay->SetVisible(false);
+		//g_pObjectDataDisplay->SetVisible(false);
 		g_hasDisplay = false;
 	}
 
@@ -2375,7 +2375,7 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 		if (g_addingObject) {
 			clearAddObjectMenu();
 			toggleAddObjectMenuVisibility(false);
-			g_pObjectDataDisplay->SetVisible(true);
+			//g_pObjectDataDisplay->SetVisible(true);
 			break;
 		}
 		LPCWSTR warningMessage = L"Please pause to add an object.";
@@ -2383,7 +2383,7 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 			MessageBox(NULL, warningMessage, NULL, MB_OK | MB_ICONWARNING);
 		}
 		else {
-			g_pObjectDataDisplay->SetVisible(false);
+			//g_pObjectDataDisplay->SetVisible(false);
 			toggleAddObjectMenuVisibility(true);
 		}
 		break;
