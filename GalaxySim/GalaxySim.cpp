@@ -234,7 +234,7 @@ double g_systemTime = 0; //sets the inital system time to 0
 LPWSTR g_timeString; //used later for the Jump Time In button user uses to input time to jump to.
 
 //testing constants
-bool g_isTest = true; //true means test mode is on
+bool g_isTest = false; //true means test mode is on
 int g_step = 1; //determines which test from automated test suite is run
 double g_jumpSpeedTest; //collects speed of jumpTime for automated test
 double g_oneFrameTime; //collects time for one frame
@@ -301,6 +301,9 @@ float g_averageFPS = 0;
 #define IDC_GREEN				28
 #define IDC_BLUE				29
 #define IDC_OUTPUTINFO          30
+#define IDC_DELETEOBJIN			31
+#define IDC_SUBMITDELETEOBJ		32
+
 
 
 //--------------------------------------------------------------------------------------
@@ -415,6 +418,9 @@ void InitApp()
 	g_HUD.AddButton(IDC_SUBMITTIMEIN, L"Jump!", 0, iY += 40, 170, 23);
 	g_HUD.AddButton(IDC_PAUSE, L"Pause / Unpause", 0, iY += 26, 170, 22);
 	g_HUD.AddButton(IDC_ADDOBJECT, L"Add Body", 0, iY += 26, 170, 22);
+	g_HUD.AddButton(IDC_SUBMITDELETEOBJ, L"Delete Object", -180, iYEnd, 170, 22);
+	g_HUD.AddEditBox(IDC_DELETEOBJIN, L"", -180, iYEnd -= 40, 170, 40, false, &g_DeleteObjInBox);
+	g_HUD.AddButton(IDC_OUTPUTINFO, L"Output Object Data", -180, iYEnd -= 26, 170, 22);
 
 	//left hand UI
 	int yPos = 100;
@@ -465,10 +471,6 @@ void InitApp()
 	g_pSubmitObjectButton->SetVisible(false);
 	
 
-	g_HUD.AddButton(IDC_OUTPUTINFO, L"Output Object Data", 0, iY += 26, 170, 22);
-	g_HUD.AddButton(IDC_SUBMITDELETEOBJ, L"Delete Object", -630, iYEnd, 170, 22);
-	g_HUD.AddEditBox(IDC_DELETEOBJIN, L"", -630, iYEnd -= 40, 170, 40, false, &g_DeleteObjInBox);
-	g_HUD.AddButton(IDC_OUTPUTINFO, L"Output Object Data", -630, iYEnd -= 26, 170, 22);
 	g_SampleUI.SetCallback(OnGUIEvent);
 }
 
