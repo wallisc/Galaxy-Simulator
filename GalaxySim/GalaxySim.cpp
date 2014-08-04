@@ -232,7 +232,7 @@ double g_systemTime = 0; //sets the inital system time to 0
 LPWSTR g_timeString; //used later for the Jump Time In button user uses to input time to jump to.
 
 //testing constants
-bool g_isTest = false; //true means test mode is on
+bool g_isTest = true; //true means test mode is on
 int g_step = 1; //determines which test from automated test suite is run
 double g_jumpSpeedTest; //collects speed of jumpTime for automated test
 double g_oneFrameTime; //collects time for one frame
@@ -1646,18 +1646,21 @@ void copyFile() {
 	}
 }
 
-//void getDxDiag() {
-//	wchar_t username[UNLEN + 1];
-//	DWORD username_len = UNLEN + 1;
-//	GetUserNameW(username, &username_len);
-//
-//	wostringstream wss;
-//	wss << L"C:\\Users\\" << username << L"\\testing.txt"; 
-//
-//	const wstring& wstr = wss.str();
-//	const LPCWSTR dxDiagLoc = wstr.c_str();
-//
-//}
+void getUsername() {
+	wchar_t username[UNLEN + 1];
+	DWORD username_len = UNLEN + 1;
+	GetUserNameW(username, &username_len);
+
+	wostringstream wss;
+	wss << username; 
+
+	const wstring& wstr = wss.str();
+	const LPCWSTR usernameCopy = wstr.c_str();
+
+	g_dataFile << usernameCopy << endl;
+
+}
+
 
 //--------------------------------------------------------------------------------------
 HRESULT CreateParticlePosVeloBuffers(ID3D11Device* pd3dDevice)
@@ -2836,7 +2839,7 @@ void automatedTelemetry(){
 		g_dataFile << "Average FPS" << "," << averageFPS << endl;
 		g_dataFile << wss.str().c_str() << endl;
 
-		//getDxDiag();
+		getUsername();
 
 		g_dataFile.close();
 
