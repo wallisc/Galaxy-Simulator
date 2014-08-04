@@ -283,14 +283,11 @@ float g_averageFPS = 0;
 #define IDC_RESETCAMERA			12
 #define IDC_ITERATEPERFRAMEIN   13
 #define	IDC_SUBMITITERATEIN     14
-#define IDC_OUTPUTINFO          15
-#define IDC_DELETEOBJIN			16
-#define IDC_SUBMITDELETEOBJ		17
 
-#define IDC_ADDOBJECT			30
+#define IDC_ADDOBJECT			15
 
-#define IDC_SUBMITOBJECT		31
-#define IDC_NAME				32
+#define IDC_SUBMITOBJECT		16
+#define IDC_NAME				17
 #define IDC_MASS				18
 #define IDC_DIAMETER			19
 #define IDC_BRIGHTNESS			20
@@ -303,7 +300,7 @@ float g_averageFPS = 0;
 #define IDC_RED					27
 #define IDC_GREEN				28
 #define IDC_BLUE				29
-
+#define IDC_OUTPUTINFO          30
 
 
 //--------------------------------------------------------------------------------------
@@ -1105,7 +1102,7 @@ void jumpTime(float newTime){
 		float zvelo = g_pParticleArray[i].velo.z;
 		float acoord = 1.0;
 	}*/
-	
+
 	g_systemTime = newTime;
 
 	g_jumpSpeedTest = g_timer.GetAbsoluteTime() - jumpTimeStart;
@@ -1507,7 +1504,7 @@ void testJumpTimeAccuracy(){
 
 	sprintf_s(buffer, sizeof(buffer), "Avg Velocity Percent Difference %f\n", avgVeloDiff);
 	::OutputDebugStringA(buffer);
-	
+
 }
 
 //test the fast forward accuracy
@@ -1914,7 +1911,7 @@ void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 			pd3dImmediateContext->Map(g_pParticlePosVelo0, 0, D3D11_MAP_WRITE_DISCARD, 0, &ms);
 
 			g_systemTime = g_systemTime + g_timeValueToHoursConversion;
-			
+
 			GravityMotionIteration(g_timeValue);
 
 			//this section helps with the testRegularSpeed() function
@@ -2027,7 +2024,7 @@ void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 	g_relevantMouse = false;
 
 
-		g_oneFrameTime = g_timer.GetAbsoluteTime() - oneFrameTimeStart;
+	g_oneFrameTime = g_timer.GetAbsoluteTime() - oneFrameTimeStart;
 
 }
 
@@ -2343,10 +2340,10 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 		int iterateInt = (int)(iterateFloat + 0.5);
 		g_iterationsPerFrame = iterateInt; break;
 	}
-	//case IDC_DOUBLESPEED:
-	//	doubleSpeed(); break;
-	//case IDC_HALFSPEED:
-	//	halfSpeed(); break;
+		//case IDC_DOUBLESPEED:
+		//	doubleSpeed(); break;
+		//case IDC_HALFSPEED:
+		//	halfSpeed(); break;
 	case IDC_SUBMITTIMEIN:
 	{
 		LPCWSTR timeStr;
@@ -2356,7 +2353,7 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 			break;
 		}
 		timeFloat = wcstof(timeStr, NULL);
-		jumpTime(timeFloat); 
+		jumpTime(timeFloat);
 		break;
 	}
 	case IDC_RESETCAMERA:
@@ -2365,7 +2362,7 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 		g_Camera.Reset();
 		tend = g_timer.GetAbsoluteTime();
 		g_deltatResetCamera = tend - tstart;
-		
+
 		wchar_t buffer[256];
 		swprintf(buffer, sizeof(buffer), L"%f\n", g_deltatResetCamera);
 		::OutputDebugString(buffer);
@@ -2851,27 +2848,27 @@ void automatedTelemetry(){
 	}
 	case 3:{
 		double jumpSpeedTime;
-			//gets time to jump from time=0 to time=365 days
-			jumpSpeedTime = testJumpTimeSpeed();
+		//gets time to jump from time=0 to time=365 days
+		jumpSpeedTime = testJumpTimeSpeed();
 
 		g_dataFile << "Time to jump to 365 days:" << "," << jumpSpeedTime << endl;
 
-			break;
-		}
+		break;
+	}
 	case 4:{
 		double oneIterationPerFrame;
 		double hundredIterationPerFrame;
-			int initial = g_iterationsPerFrame;
-			//gets time for one frame at one iteration per frame
-			oneIterationPerFrame = testSpeed1IterationsPerFrame();
-			//gets time for one frame at 100 iterations per frame
-			hundredIterationPerFrame = testSpeed100IterationsPerFrame();
-			g_iterationsPerFrame = initial;
+		int initial = g_iterationsPerFrame;
+		//gets time for one frame at one iteration per frame
+		oneIterationPerFrame = testSpeed1IterationsPerFrame();
+		//gets time for one frame at 100 iterations per frame
+		hundredIterationPerFrame = testSpeed100IterationsPerFrame();
+		g_iterationsPerFrame = initial;
 
 		g_dataFile << "1 Frame @ 1 iteration/frame" << "," << oneIterationPerFrame << endl;
 		g_dataFile << "1 Frame @ 100 iteration/frame" << "," << hundredIterationPerFrame << endl;
 		break;
-		}
+	}
 	case 5: {
 		double winToFullTime;
 		winToFullTime = getWinToFullTime();
@@ -2973,15 +2970,15 @@ void automatedTelemetry(){
 
 		exit(0);
 
-		}
-		default:{
+	}
+	default:{
 
-		}
+	}
 	}
 
 	g_step++;
-
-
+	
+		
 }
 
 
