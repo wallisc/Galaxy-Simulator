@@ -281,7 +281,6 @@ float g_averageFPS = 0;
 #define IDC_RESETCAMERA			12
 #define IDC_ITERATEPERFRAMEIN   13
 #define	IDC_SUBMITITERATEIN     14
-#define IDC_OUTPUTINFO          15
 
 #define IDC_ADDOBJECT			15
 
@@ -299,7 +298,7 @@ float g_averageFPS = 0;
 #define IDC_RED					27
 #define IDC_GREEN				28
 #define IDC_BLUE				29
-
+#define IDC_OUTPUTINFO          30
 
 
 //--------------------------------------------------------------------------------------
