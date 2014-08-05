@@ -303,6 +303,7 @@ float g_averageFPS = 0;
 #define IDC_OUTPUTINFO          30
 #define IDC_DELETEOBJIN			31
 #define IDC_SUBMITDELETEOBJ		32
+#define IDC_DISPLAYINFOBOX      33
 
 
 
@@ -421,6 +422,8 @@ void InitApp()
 	g_HUD.AddButton(IDC_SUBMITDELETEOBJ, L"Delete Object", -180, iYEnd, 170, 22);
 	g_HUD.AddEditBox(IDC_DELETEOBJIN, L"", -180, iYEnd -= 40, 170, 40, false, &g_DeleteObjInBox);
 	g_HUD.AddButton(IDC_OUTPUTINFO, L"Output Object Data", -180, iYEnd -= 26, 170, 22);
+	g_HUD.AddEditBox(IDC_DISPLAYINFOBOX, L"", 0, 325, 160, 270, false, &g_pObjectDataDisplay);
+	//g_pObjectDataDisplay->SetVisible(false);
 
 	//left hand UI
 	int yPos = 100;
@@ -2155,8 +2158,8 @@ void pauseControl() {
 
 	LPCWSTR welcomeMessage = L"Select an object\nto see information\ndisplayed\n";
 	if (g_isPaused && !g_hasDisplay && g_firstTextBox) { //always the first case; text box pointer gets assignment here
-		g_HUD.AddEditBox(11, welcomeMessage, 0, 325, 160, 270);
-		g_pObjectDataDisplay = g_HUD.GetEditBox(11);
+		g_pObjectDataDisplay->SetVisible(true);
+		g_pObjectDataDisplay->SetText(welcomeMessage);
 		g_hasDisplay = true;
 		g_firstTextBox = false;
 	}
@@ -2168,6 +2171,7 @@ void pauseControl() {
 	}
 	else if (g_hasDisplay) {
 		//g_pObjectDataDisplay->SetVisible(false);
+		g_pObjectDataDisplay->SetText(L"");
 		g_hasDisplay = false;
 	}
 
