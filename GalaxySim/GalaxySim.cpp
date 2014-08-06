@@ -2418,12 +2418,18 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 		if (canProcess) {
 			newName = processName(nameStr);
 		}
+		else {
+			break;
+		}
 
 		//process mass
 		LPCWSTR massStr = g_pMassBox->GetText();
 		canProcess = canConvertFloatInput(massStr);
 		if (canProcess) {
 			newMass = convertFloatInput(massStr);
+		}
+		else {
+			break;
 		}
 
 		//process diameter
@@ -2432,12 +2438,18 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 		if (canProcess) {
 			newDiameter = convertFloatInput(diameterStr);
 		}
+		else {
+			break;
+		}
 
 		//process brightness
 		LPCWSTR brightnessStr = g_pBrightnessBox->GetText();
 		canProcess = canConvertFloatInput(brightnessStr);
 		if (canProcess) {
 			newBrightness = convertFloatInput(brightnessStr);
+		}
+		else {
+			break;
 		}
 
 		//process position
@@ -2446,17 +2458,26 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 		if (canProcess) {
 			newXPos = convertFloatInput(xPosStr);
 		}
+		else {
+			break;
+		}
 
 		LPCWSTR yPosStr = g_pYPosBox->GetText();
 		canProcess = canConvertFloatInput(yPosStr);
 		if (canProcess) {
 			newYPos = convertFloatInput(yPosStr);
 		}
+		else {
+			break;
+		}
 
 		LPCWSTR zPosStr = g_pZPosBox->GetText();
 		canProcess = canConvertFloatInput(zPosStr);
 		if (canProcess) {
 			newZPos = convertFloatInput(zPosStr);
+		}
+		else {
+			break;
 		}
 
 		//process velocity
@@ -2465,17 +2486,26 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 		if (canProcess) {
 			newXVel = convertFloatInput(xVelStr);
 		}
+		else {
+			break;
+		}
 
 		LPCWSTR yVelStr = g_pYVelBox->GetText();
 		canProcess = canConvertFloatInput(yVelStr);
 		if (canProcess) {
 			newYVel = convertFloatInput(yVelStr);
 		}
+		else {
+			break;
+		}
 
 		LPCWSTR zVelStr = g_pZVelBox->GetText();
 		canProcess = canConvertFloatInput(zVelStr);
 		if (canProcess) {
 			newZVel = convertFloatInput(zVelStr);
+		}
+		else {
+			break;
 		}
 		
 
@@ -2486,17 +2516,26 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 		if (canProcess) {
 			newRed = convertFloatInput(redStr);
 		}
+		else {
+			break;
+		}
 
 		LPCWSTR greenStr = g_pGreenBox->GetText();
 		canProcess = canConvertFloatInput(greenStr);
 		if (canProcess) {
 			newGreen = convertFloatInput(greenStr);
 		}
+		else {
+			break;
+		}
 
 		LPCWSTR blueStr = g_pBlueBox->GetText();
 		canProcess = canConvertFloatInput(blueStr);
 		if (canProcess) {
 			newBlue = convertFloatInput(blueStr);
+		}
+		else {
+			break;
 		}
 
 		addObject(newName, newMass, newDiameter, newBrightness, newXPos, newYPos, newZPos, newXVel, newYVel, newZVel, newRed, newGreen, newBlue);
