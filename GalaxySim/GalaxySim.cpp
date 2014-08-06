@@ -759,31 +759,9 @@ HRESULT WriteAttributes(IXmlReader* pReader)
 	return hr;
 }
 
-
-
-
-//--------------------------------------------------------------------------------------
-HRESULT CreateParticleBuffer(ID3D11Device* pd3dDevice)
-{
-	HRESULT hr = S_OK;
-
-	D3D11_BUFFER_DESC vbdesc =
-	{
-		MAX_PARTICLES * sizeof(PARTICLE_VERTEX),
-		D3D11_USAGE_DEFAULT,
-		D3D11_BIND_VERTEX_BUFFER,
-		0,
-		0
-	};
-	D3D11_SUBRESOURCE_DATA vbInitData;
-	ZeroMemory(&vbInitData, sizeof(D3D11_SUBRESOURCE_DATA));
-
-	auto pVertices = new PARTICLE_VERTEX[MAX_PARTICLES];
-	if (!pVertices)
-		return E_OUTOFMEMORY;
-
-
-
+PARTICLE_VERTEX* updateVertices() {
+	
+	auto pTempVertices = new PARTICLE_VERTEX[MAX_PARTICLES];
 	//random number generator for color values
 	srand(static_cast <unsigned> (time(NULL)));
 
@@ -803,15 +781,42 @@ HRESULT CreateParticleBuffer(ID3D11Device* pd3dDevice)
 				g_objects[i].m_brightness = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
 			}
 
-			pVertices[i].Color = XMFLOAT4(g_objects[i].m_red, g_objects[i].m_green, g_objects[i].m_blue, g_objects[i].m_brightness);
+			pTempVertices[i].Color = XMFLOAT4(g_objects[i].m_red, g_objects[i].m_green, g_objects[i].m_blue, g_objects[i].m_brightness);
 		}
 		g_isFirst = false;
 	}
 	else {
 		for (UINT i = 0; i < g_objects.size(); i++) {
-			pVertices[i].Color = XMFLOAT4(g_objects[i].m_red, g_objects[i].m_green, g_objects[i].m_blue, g_objects[i].m_brightness);
+			pTempVertices[i].Color = XMFLOAT4(g_objects[i].m_red, g_objects[i].m_green, g_objects[i].m_blue, g_objects[i].m_brightness);
 		}
 	}
+
+	return pTempVertices;
+}
+
+
+//--------------------------------------------------------------------------------------
+HRESULT CreateParticleBuffer(ID3D11Device* pd3dDevice)
+{
+	HRESULT hr = S_OK;
+
+	D3D11_BUFFER_DESC vbdesc =
+	{
+		MAX_PARTICLES * sizeof(PARTICLE_VERTEX),
+		D3D11_USAGE_DEFAULT,
+		D3D11_BIND_VERTEX_BUFFER,
+		0,
+		0
+	};
+	D3D11_SUBRESOURCE_DATA vbInitData;
+	ZeroMemory(&vbInitData, sizeof(D3D11_SUBRESOURCE_DATA));
+
+	auto pVertices = updateVertices();
+	if (!pVertices)
+		return E_OUTOFMEMORY;
+
+
+
 
 
 
@@ -2497,8 +2502,13 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 		addObject(newName, newMass, newDiameter, newBrightness, newXPos, newYPos, newZPos, newXVel, newYVel, newZVel, newRed, newGreen, newBlue);
 
 		//force pVertices to update
-		DXUTToggleREF();
-		DXUTToggleREF();
+		/*DXUTToggleREF();
+		DXUTToggleREF();*/
+
+		auto pd3dImmediateContext = DXUTGetD3D11DeviceContext();
+		auto pVertices = updateVertices();
+		pd3dImmediateContext->UpdateSubresource(g_pParticleBuffer, 0, 0, pVertices, 0, 0);
+		SAFE_DELETE_ARRAY(pVertices);
 
 		break;
 
@@ -2552,8 +2562,13 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 	{
 		LPCWSTR object = g_DeleteObjInBox-> GetText();
 		deleteObject(object);
-		DXUTToggleREF();
-		DXUTToggleREF();
+		/*DXUTToggleREF();
+		DXUTToggleREF();*/
+		auto pd3dImmediateContext = DXUTGetD3D11DeviceContext();
+		auto pVertices = updateVertices();
+		pd3dImmediateContext->UpdateSubresource(g_pParticleBuffer, 0, 0, pVertices, 0, 0);
+		SAFE_DELETE_ARRAY(pVertices);
+
 		break;
 	}
 	}
@@ -2823,6 +2838,8 @@ bool RenderParticles(ID3D11DeviceContext* pd3dImmediateContext, CXMMATRIX mView,
 	pd3dImmediateContext->GSSetShader(nullptr, nullptr, 0);
 	pd3dImmediateContext->OMSetBlendState(pBlendState0, &BlendFactor0.x, SampleMask0); SAFE_RELEASE(pBlendState0);
 	pd3dImmediateContext->OMSetDepthStencilState(pDepthStencilState0, StencilRef0); SAFE_RELEASE(pDepthStencilState0);
+
+	
 
 	return true;
 }
