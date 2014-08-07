@@ -177,6 +177,7 @@ std::vector<ObjectData> g_objects;
 std::vector<ObjectData> g_knownValues50; //vector that will contain known solar system database values for time=50 
 std::vector<ObjectData> g_knownValues365; //vector that will contain known solar system database values for time=365
 std::vector<ObjectData> g_knownValues730; //vector that will contain known solar system database values for time=730 
+std::vector<double> g_timeTestResults; //stores individual time test results so they can be totalled later
 
 //const float g_constant = -8.644 * pow(10, -13);
 //const float g_constant = -8.644E-16;
@@ -1729,7 +1730,7 @@ LPCWSTR totalGrade(double fps) {
 
 
 //--------------------------------------------------------------------------------------
-// Functions for adding and deleting objects through the UI
+// Functions for deleting objects through the UI
 //--------------------------------------------------------------------------------------
 
 //returns the index of the object given the name
@@ -1769,6 +1770,24 @@ void deleteObject(wstring name){
 
 }
 
+//--------------------------------------------------------------------------------------
+// Functions for grade calculation in test mode
+//--------------------------------------------------------------------------------------
+int gradeTest(){
+	double totalTime = 0;
+	for (int i = 0; i < g_timeTestResults.size(); i++){
+		totalTime = totalTime + g_timeTestResults[i];
+	}
+	if (totalTime > 2775066){
+		return -1;
+	}
+	if (totalTime < 569396.3){
+		return 1;
+	}
+	else{
+		return 0;
+	}
+}
 
 //--------------------------------------------------------------------------------------
 HRESULT CreateParticlePosVeloBuffers(ID3D11Device* pd3dDevice)
@@ -2953,13 +2972,15 @@ void automatedTelemetry(){
 
 		initializeFile();
 		g_dataFile << "Start Time" << "," << startUpTime << endl;
+		g_timeTestResults.push_back(startUpTime);
 		break;
 	}
 	case 2:{
-		double timeAt100;
+		double timeAt1000;
 		//gets time for regular simulation run from time=0 to time=100
-		timeAt100 = testRegularSpeed() - getStartTime();
-		g_dataFile << "Time to run normally to 100 days " << "," << timeAt100 << endl;
+		timeAt1000 = testRegularSpeed() - getStartTime();
+		g_dataFile << "Time to run normally to 1000 days " << "," << timeAt1000 << endl;
+		g_timeTestResults.push_back(timeAt1000);
 		break;
 	}
 	case 3:{
@@ -2968,7 +2989,7 @@ void automatedTelemetry(){
 		jumpSpeedTime = testJumpTimeSpeed();
 
 		g_dataFile << "Time to jump to 365 days:" << "," << jumpSpeedTime << endl;
-
+		g_timeTestResults.push_back(jumpSpeedTime);
 		break;
 	}
 	case 4:{
@@ -2983,36 +3004,43 @@ void automatedTelemetry(){
 
 		g_dataFile << "1 Frame @ 1 iteration/frame" << "," << oneIterationPerFrame << endl;
 		g_dataFile << "1 Frame @ 100 iteration/frame" << "," << hundredIterationPerFrame << endl;
+		g_timeTestResults.push_back(oneIterationPerFrame);
+		g_timeTestResults.push_back(hundredIterationPerFrame);
 		break;
 	}
 	case 5: {
 		double winToFullTime;
 		winToFullTime = getWinToFullTime();
 		g_dataFile << "Win to FullScreen" << "," << winToFullTime << endl;
+		g_timeTestResults.push_back(winToFullTime);
 		break;
 	}
 	case 6: {
 		double pauseFullScreenTime;
 		pauseFullScreenTime = getPauseFullScreenTime();
 		g_dataFile << "Pause Fullscreen" << "," << pauseFullScreenTime << endl;
+		g_timeTestResults.push_back(pauseFullScreenTime);
 		break;
 	}
 	case 7: {
 		double unPauseFullScreenTime;
 		unPauseFullScreenTime = getUnPauseFullScreenTime();
 		g_dataFile << "Unpause Fullscreen" << "," << unPauseFullScreenTime << endl;
+		g_timeTestResults.push_back(unPauseFullScreenTime);
 		break;
 	}
 	case 8: {
 		double fullToWinTime;
 		fullToWinTime = getFullToWinTime();
 		g_dataFile << "Full to Windowed" << "," << fullToWinTime << endl;
+		g_timeTestResults.push_back(fullToWinTime);
 		break;
 	}
 	case 9: {
 		double pauseTime;
 		pauseTime = getPauseTime();
 		g_dataFile << "Pause" << "," << pauseTime << endl;
+		g_timeTestResults.push_back(pauseTime);
 		break;
 	}
 	case 10: {
@@ -3045,22 +3073,26 @@ void automatedTelemetry(){
 		double hitTestTime;
 		hitTestTime = getHitTestTime();
 		g_dataFile << "Mouse Click Hit Test Average" << "," << hitTestTime << endl;
+		g_timeTestResults.push_back(hitTestTime);
 		break;
 	}
 	case 18: {
 		double unPauseTime;
 		unPauseTime = getUnPauseTime();
 		g_dataFile << "Unpause" << "," << unPauseTime << endl;
+		g_timeTestResults.push_back(unPauseTime);
 		break;
 	}
 	case 19: {
 		double ResetParticlesTime = testResetParticles();
 		g_dataFile << "Time to reset particles: " << "," << ResetParticlesTime << endl;
+		g_timeTestResults.push_back(ResetParticlesTime);
 		break;
 	}
 	case 20: {
 		double ResetCameraTime = testResetCamera();
 		g_dataFile << "Time to reset camera: " << "," << ResetCameraTime << endl;
+		g_timeTestResults.push_back(ResetCameraTime);
 		break;
 	}
 	case 21: {
