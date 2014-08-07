@@ -234,7 +234,7 @@ double g_systemTime = 0; //sets the inital system time to 0
 LPWSTR g_timeString; //used later for the Jump Time In button user uses to input time to jump to.
 
 //testing constants
-bool g_isTest = false; //true means test mode is on
+bool g_isTest = true; //true means test mode is on
 int g_step = 1; //determines which test from automated test suite is run
 double g_jumpSpeedTest; //collects speed of jumpTime for automated test
 double g_oneFrameTime; //collects time for one frame
@@ -1625,7 +1625,7 @@ void initializeFile() {
 }
 
 
-void copyFile() {
+void copyFile(LPCWSTR grade) {
 	//copy data csv
 	srand(time(NULL));
 	int num = rand();
@@ -1642,23 +1642,34 @@ void copyFile() {
 	const LPCWSTR copyDiagName = wstrDiag.c_str();
 	bool copiedDxDiag = CopyFileW(g_currentDxDiagName, copyDiagName, true);
 
+	wostringstream wss3;
+	wss3 << L"Computer assessment: " << grade << "\n\n";
+
 
 	if (!copiedCSV && !copiedDxDiag) {
-		LPCTSTR failureMessageBoth = L"The telemetry data and DXDiag files were not successfully copied to the share. \nPlease email the files called SkyXTelemetryData.csv and dxdiag.txt\n(in the same folder as the executable) to t-mellop@microsoft.com\nThank you so much for your help!";
-		MessageBox(NULL, failureMessageBoth, NULL, MB_OK);
+		wss3 << L"The telemetry data and DXDiag files were not successfully copied to the share. \nPlease email the files called SkyXTelemetryData.csv and dxdiag.txt\n(in the same folder as the executable) to t-mellop@microsoft.com\nThank you so much for your help!";
+		const wstring& wstrMessage = wss3.str();
+		const LPCWSTR failureMessageBoth = wstr.c_str();
+		MessageBoxW(NULL, failureMessageBoth, NULL, MB_OK);
 	}
 	else if (!copiedCSV && copiedDxDiag) {
-		LPCTSTR failureMessageCSV = L"The telemetry data file was not successfully copied to the share. \nPlease email the file called SkyXTelemetryData.csv\n(in the same folder as the executable) to t-mellop@microsoft.com\nThank you so much for your help!";
-		MessageBox(NULL, failureMessageCSV, NULL, MB_OK);
+		wss3 << L"The telemetry data file was not successfully copied to the share. \nPlease email the file called SkyXTelemetryData.csv\n(in the same folder as the executable) to t-mellop@microsoft.com\nThank you so much for your help!";
+		const wstring& wstrMessage = wss3.str();
+		LPCWSTR failureMessageCSV = wstr.c_str();
+		MessageBoxW(NULL, failureMessageCSV, NULL, MB_OK);
 }
 	else if (copiedCSV && !copiedDxDiag) {
-		LPCTSTR failureMessageDiag = L"The DXDiag file was not successfully copied to the share. \nPlease email the file called dxdiag.txt\n(in the same folder as the executable) to t-mellop@microsoft.com\nThank you so much for your help!";
-		MessageBox(NULL, failureMessageDiag, NULL, MB_OK);
+		wss3 << L"The DXDiag file was not successfully copied to the share. \nPlease email the file called dxdiag.txt\n(in the same folder as the executable) to t-mellop@microsoft.com\nThank you so much for your help!";
+		const wstring& wstrMessage = wss3.str();
+		LPCWSTR failureMessageDiag = wstr.c_str();
+		MessageBoxW(NULL, failureMessageDiag, NULL, MB_OK);
 	}
 	else {
-		LPCTSTR successMessage = L"The telemetry data and DXDiag files were successfully copied to the share! \nThank you so much for your help!";
-		LPCTSTR boxTitle = L"Upload Complete";
-		MessageBox(NULL, successMessage, boxTitle, MB_OK);
+		wss3 << L"The telemetry data and DXDiag files were successfully copied to the share! \nThank you so much for your help!";
+		const wstring& wstrMessage = wss3.str();
+		LPCWSTR successMessage = wstr.c_str();
+		LPCWSTR boxTitle = L"Upload Complete";
+		MessageBoxW(NULL, successMessage, boxTitle, MB_OK);
 	}
 }
 
@@ -1675,6 +1686,45 @@ void getUsername() {
 
 	g_dataFile << usernameCopy << endl;
 
+}
+
+int timeGrade() {
+	
+}
+
+int fpsGrade(double fps) {
+	if (fps > 85) {
+		return 1;
+	}
+	else if (fps < 58) {
+		return -1;
+	}
+	else {
+		return 0;
+	}
+}
+
+LPCWSTR totalGrade(double fps) {
+	int fpsAssessment = fpsGrade(fps);
+	int timeAssessment = timeGrade();
+	LPCWSTR grade;
+
+	if (fpsAssessment == 1 && timeAssessment == 1) {
+		grade = L"Excellent";
+		return grade;
+	}
+	else if ((fpsAssessment == 0 && timeAssessment == 1) || (fpsAssessment == 1 && timeAssessment == 0)) {
+		grade = L"Good";
+		return grade;
+	}
+	else if (fpsAssessment == 0 && timeAssessment == 0) {
+		grade = L"Adequate";
+		return grade;
+	}
+	else {
+		grade = L"Fail";
+		return grade;
+	}
 }
 
 
@@ -1957,7 +2007,9 @@ void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 		}
 
 	}
-	else if (g_isPaused && g_hasDisplay && g_relevantMouse) {
+	if (g_isPaused && g_hasDisplay && g_relevantMouse) {
+
+	
 
 		float xScreenMouse;
 		float yScreenMouse;
@@ -2027,6 +2079,7 @@ void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 		double hitTestEnd = g_Timer.GetAbsoluteTime();
 		g_hitTestTime += hitTestEnd - g_hitTestStart;
 		g_numHitTests++;
+		
 
 	}
 
@@ -2151,11 +2204,11 @@ void pauseControl() {
 
 
 	if (!g_isPaused) {
-		DXUTPause(true, false);
+		//DXUTPause(true, false);
 		g_isPaused = true;
 	}
 	else {
-		DXUTPause(false, false);
+		//DXUTPause(false, false);
 		g_isPaused = false;
 		toggleAddObjectMenuVisibility(false);
 		clearAddObjectMenu();
@@ -2874,6 +2927,7 @@ bool RenderParticles(ID3D11DeviceContext* pd3dImmediateContext, CXMMATRIX mView,
 	/*ID3D11Buffer* ppBufNULL[1] = { nullptr };
 	pd3dImmediateContext->GSSetConstantBuffers( 0, 1, ppBufNULL );*/
 
+
 	pd3dImmediateContext->GSSetShader(nullptr, nullptr, 0);
 	pd3dImmediateContext->OMSetBlendState(pBlendState0, &BlendFactor0.x, SampleMask0); SAFE_RELEASE(pBlendState0);
 	pd3dImmediateContext->OMSetDepthStencilState(pDepthStencilState0, StencilRef0); SAFE_RELEASE(pDepthStencilState0);
@@ -3028,7 +3082,9 @@ void automatedTelemetry(){
 
 		system("dxdiag.exe/t dxdiag.txt");
 
-		copyFile();
+		LPCWSTR grade = totalGrade(averageFPS);
+
+		copyFile(grade);
 
 		exit(0);
 
