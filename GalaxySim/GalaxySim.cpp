@@ -62,7 +62,7 @@ CD3DSettingsDlg                     g_D3DSettingsDlg;           // Device settin
 CDXUTDialog                         g_HUD;                      // dialog for standard controls
 CDXUTDialog                         g_SampleUI;                 // dialog for sample specific controls
 CDXUTTextHelper*                    g_pTxtHelper = nullptr;
-CDXUTTimer							g_Timer;
+
 
 ID3D11VertexShader*                 g_pRenderParticlesVS = nullptr;
 ID3D11GeometryShader*               g_pRenderParticlesGS = nullptr;
@@ -239,7 +239,7 @@ bool g_isTest; //true means test mode is on
 int g_step = 1; //determines which test from automated test suite is run
 double g_jumpSpeedTest; //collects speed of jumpTime for automated test
 double g_oneFrameTime; //collects time for one frame
-double g_elapsedTimeAt100Days;
+double g_elapsedTimeAt1000Days;
 wofstream g_dataFile;
 const LPCWSTR g_localFileName = L"SkyXTelemetryData.csv";
 const LPCWSTR g_currentDxDiagName = L"dxdiag.txt";
@@ -353,7 +353,7 @@ void pauseControl();
 //--------------------------------------------------------------------------------------
 int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR lpCmdLine, _In_ int nCmdShow)
 {
-	g_beginStartTime = g_Timer.GetAbsoluteTime();
+	g_beginStartTime = g_timer.GetAbsoluteTime();
 	// Enable run-time memory check for debug builds.
 #if defined(DEBUG) | defined(_DEBUG)
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
@@ -382,7 +382,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 	DXUTCreateDevice(D3D_FEATURE_LEVEL_10_0, true, g_width, g_height);
 
 
-	g_endStartTime = g_Timer.GetAbsoluteTime();
+	g_endStartTime = g_timer.GetAbsoluteTime();
 	g_startUpTime = g_endStartTime - g_beginStartTime;
 
 	int selection = MessageBox(NULL, L"Would you like to run SkyX in telemetry mode?", L"Start Up Options", MB_YESNOCANCEL);
@@ -1570,12 +1570,13 @@ double testSpeed100IterationsPerFrame(){
 }
 
 //see how long it takes to get to 100 days while running the simulation at 10 iterations/frame
-double testRegularSpeed(){
-
-	double timeElapsed = g_elapsedTimeAt100Days;
-	return timeElapsed;
-
-}
+//NOTE: Currently this test is not being taken into account. This is due to a flaw (now corrected) in its design that caused reporting of incorrect data.
+//double testRegularSpeed(){
+//
+//	double timeElapsed = g_elapsedTimeAt1000Days;
+//	return timeElapsed;
+//
+//}
 
 double getStartTime() {
 	return g_startUpTime;
@@ -1635,6 +1636,17 @@ void initializeFile() {
 	g_dataFile.open(g_localFileName);
 }
 
+wstring getTelemetryResults(LPCWSTR grade, double fps) {
+	wostringstream wss;
+	wss << L"The program is running this well on your computer: " << grade << "\n";
+	wss << L"     Average FPS: " << fps << "\n";
+	wss << L"     Test time (s): " << g_totalTime << "\n";
+	wss << L"If you would like to see how your results compare to our data, please see the README.txt\n\n";
+
+	wstring telemetryResults = wss.str().c_str();
+
+	return telemetryResults;
+}
 
 void copyFile(LPCWSTR grade, double fps) {
 	//copy data csv
@@ -1653,34 +1665,36 @@ void copyFile(LPCWSTR grade, double fps) {
 	const LPCWSTR copyDiagName = wstrDiag.c_str();
 	bool copiedDxDiag = CopyFileW(g_currentDxDiagName, copyDiagName, true);
 
-	wostringstream wss3;
-	wss3 << L"The program is running this well on your computer: " << grade << "\n";
-	wss3 << L"Average FPS: " << fps << "\n";
-	wss3 << L"Test time: " << g_totalTime << "\n";
-	wss3 << L"If you would like to see how your results compare to our data, please see the README.txt\n\n";
 	
-	//LPCWSTR telemetryResults = getTelemetryResults(fps);
+	
+	wstring telemetryResults = getTelemetryResults(grade, fps);
+
+	wostringstream wss3;
 
 	if (!copiedCSV && !copiedDxDiag) {
-		wss3 << L"The telemetry data and DXDiag files were not successfully copied to the share. \nPlease email the files called SkyXTelemetryData.csv and dxdiag.txt\n(in the same folder as the executable) to t-mellop@microsoft.com\nThank you so much for your help!";
+		wss3 << L"The telemetry data and DXDiag files were not successfully copied to the share. \nPlease email the files called SkyXTelemetryData.csv and dxdiag.txt\n(in the same folder as the executable) to t-mellop@microsoft.com\nThank you so much for your help!\n\n";
+		wss3 << telemetryResults;
 		const wstring& wstrMessage = wss3.str();
 		const LPCWSTR failureMessageBoth = wstrMessage.c_str();
 		MessageBoxW(NULL, failureMessageBoth, NULL, MB_OK);
 	}
 	else if (!copiedCSV && copiedDxDiag) {
-		wss3 << L"The telemetry data file was not successfully copied to the share. \nPlease email the file called SkyXTelemetryData.csv\n(in the same folder as the executable) to t-mellop@microsoft.com\nThank you so much for your help!";
+		wss3 << L"The telemetry data file was not successfully copied to the share. \nPlease email the file called SkyXTelemetryData.csv\n(in the same folder as the executable) to t-mellop@microsoft.com\nThank you so much for your help!\n\n";
+		wss3 << telemetryResults;
 		const wstring& wstrMessage = wss3.str();
 		LPCWSTR failureMessageCSV = wstrMessage.c_str();
 		MessageBoxW(NULL, failureMessageCSV, NULL, MB_OK);
 }
 	else if (copiedCSV && !copiedDxDiag) {
-		wss3 << L"The DXDiag file was not successfully copied to the share. \nPlease email the file called dxdiag.txt\n(in the same folder as the executable) to t-mellop@microsoft.com\nThank you so much for your help!";
+		wss3 << L"The DXDiag file was not successfully copied to the share. \nPlease email the file called dxdiag.txt\n(in the same folder as the executable) to t-mellop@microsoft.com\nThank you so much for your help!\n\n";
+		wss3 << telemetryResults;
 		const wstring& wstrMessage = wss3.str();
 		LPCWSTR failureMessageDiag = wstrMessage.c_str();
 		MessageBoxW(NULL, failureMessageDiag, NULL, MB_OK);
 	}
 	else {
-		wss3 << L"The telemetry data and DXDiag files were successfully copied to the share! \nThank you so much for your help!";
+		wss3 << L"The telemetry data and DXDiag files were successfully copied to the share! \nThank you so much for your help!\n\n";
+		wss3 << telemetryResults;
 		const wstring& wstrMessage = wss3.str();
 		LPCWSTR successMessage = wstrMessage.c_str();
 		LPCWSTR boxTitle = L"Upload Complete";
@@ -1937,7 +1951,7 @@ void CALLBACK OnMouseEvent(bool bLeftButtonDown, bool bRightButtonDown, bool bMi
 		g_yMouse = (float)yPos;
 		g_relevantMouse = true;
 		g_pObjectDataDisplay->SetEnabled(false); //prevents accidental alteration of editbox
-		g_hitTestStart = g_Timer.GetAbsoluteTime();
+		g_hitTestStart = g_timer.GetAbsoluteTime();
 	}
 
 }
@@ -2008,10 +2022,10 @@ void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 			GravityMotionIteration(g_timeValue);
 
 			//this section helps with the testRegularSpeed() function
-			int systemTimeAt100 = round(1000 * 24);
+			int systemTimeAt1000 = round(1000 * 24);
 
-			if (g_systemTime > systemTimeAt100 + 1 || g_systemTime > systemTimeAt100 - 1){
-				g_elapsedTimeAt100Days = g_timer.GetAbsoluteTime();
+			if (g_systemTime < systemTimeAt1000 + 1 && g_systemTime > systemTimeAt1000 - 1){
+				g_elapsedTimeAt1000Days = g_timer.GetAbsoluteTime();
 			}
 
 			////temporary counter iteration
@@ -2109,7 +2123,7 @@ void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 			g_pObjectDataDisplay->SetText(objectInfo.c_str());
 		}
 		foundIndex = -1;
-		double hitTestEnd = g_Timer.GetAbsoluteTime();
+		double hitTestEnd = g_timer.GetAbsoluteTime();
 		g_hitTestTime += hitTestEnd - g_hitTestStart;
 		g_numHitTests++;
 		
@@ -2229,10 +2243,10 @@ void pauseControl() {
 	double unPauseStart;
 
 	if (!g_isPaused) {
-		pauseStart = g_Timer.GetAbsoluteTime();
+		pauseStart = g_timer.GetAbsoluteTime();
 	}
 	else {
-		unPauseStart = g_Timer.GetAbsoluteTime();
+		unPauseStart = g_timer.GetAbsoluteTime();
 	}
 
 
@@ -2267,7 +2281,7 @@ void pauseControl() {
 	}
 
 	if (g_isPaused) {
-		double pauseEnd = g_Timer.GetAbsoluteTime();
+		double pauseEnd = g_timer.GetAbsoluteTime();
 		if (DXUTIsWindowed()) {
 			g_pauseTime = pauseEnd - pauseStart;
 		}
@@ -2277,7 +2291,7 @@ void pauseControl() {
 
 	}
 	else {
-		double unPauseEnd = g_Timer.GetAbsoluteTime();
+		double unPauseEnd = g_timer.GetAbsoluteTime();
 		if (DXUTIsWindowed()) {
 			g_unPauseTime = unPauseEnd - unPauseStart;
 		}
@@ -2373,20 +2387,20 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 		double fullToWinStart;
 		double fullToWinEnd;
 		if (DXUTIsWindowed()) {
-			winToFullStart = g_Timer.GetAbsoluteTime();
+			winToFullStart = g_timer.GetAbsoluteTime();
 		}
 		else {
-			fullToWinStart = g_Timer.GetAbsoluteTime();
+			fullToWinStart = g_timer.GetAbsoluteTime();
 		}
 
 		DXUTToggleFullScreen();
 
 		if (!DXUTIsWindowed()) {
-			winToFullEnd = g_Timer.GetAbsoluteTime();
+			winToFullEnd = g_timer.GetAbsoluteTime();
 			g_winToFullTime = winToFullEnd - winToFullStart;
 		}
 		else {
-			fullToWinEnd = g_Timer.GetAbsoluteTime();
+			fullToWinEnd = g_timer.GetAbsoluteTime();
 			g_fullToWinTime = fullToWinEnd - fullToWinStart;
 
 		}
@@ -2990,11 +3004,12 @@ void automatedTelemetry(){
 		break;
 	}
 	case 2:{
-		double timeAt1000;
-		//gets time for regular simulation run from time=0 to time=100
-		timeAt1000 = testRegularSpeed() - getStartTime();
-		g_dataFile << "Time to run normally to 1000 days " << "," << timeAt1000 << endl;
-		g_timeTestResults.push_back(timeAt1000);
+		//NOTE: Currently this test is not being taken into account. A flaw (now corrected) caused incorrect data to be taken into account.
+		//double timeAt1000;
+		////gets time for regular simulation run from time=0 to time=100
+		//timeAt1000 = testRegularSpeed() - g_endStartTime;
+		//g_dataFile << "Time to run normally to 1000 days " << "," << timeAt1000 << endl;
+		//g_timeTestResults.push_back(timeAt1000);
 		break;
 	}
 	case 3:{
@@ -3193,7 +3208,9 @@ void CALLBACK OnD3D11FrameRender(ID3D11Device* pd3dDevice, ID3D11DeviceContext* 
 
 	//runs during telemetry collection versions of application
 	//method is called after the time interval test is completed
-	if (g_isTest && g_elapsedTimeAt100Days != NULL) {
+	//Elapsed time to 1000 days is not being recorded right now, but the value is being collected so the test runs long enough to 
+	//collect an accurate FPS
+	if (g_isTest && g_elapsedTimeAt1000Days != NULL) {
 		automatedTelemetry();
 	}
 
