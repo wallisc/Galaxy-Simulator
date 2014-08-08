@@ -1638,10 +1638,10 @@ void initializeFile() {
 
 wstring getTelemetryResults(LPCWSTR grade, double fps) {
 	wostringstream wss;
-	wss << L"The program is running this well on your computer: " << grade << "\n";
+	wss << L"Computer Grade: " << grade << "\n";
 	wss << L"     Average FPS: " << fps << "\n";
-	wss << L"     Test time (s): " << g_totalTime << "\n";
-	wss << L"If you would like to see how your results compare to our data, please see the README.txt\n\n";
+	wss << L"     Test Sum (sec): " << g_totalTime << "\n";
+	wss << L"If you would like to see what the grade means and how your results \ncompare to our telemetry data, please see the README.txt\n\n";
 
 	wstring telemetryResults = wss.str().c_str();
 
@@ -1769,10 +1769,10 @@ int timeGrade(){
 		totalTime = totalTime + g_timeTestResults[i];
 	}
 	g_totalTime = totalTime;
-	if (totalTime > 2775066){
+	if (totalTime > 14.60263){
 		return -1;
 	}
-	if (totalTime < 569396.3){
+	if (totalTime < 6.251098989){
 		return 1;
 	}
 	else{
@@ -1782,10 +1782,10 @@ int timeGrade(){
 
 
 int fpsGrade(double fps) {
-	if (fps > 85) {
+	if (fps > 88.67604) {
 		return 1;
 	}
-	else if (fps < 58) {
+	else if (fps < 58.79577) {
 		return -1;
 	}
 	else {
