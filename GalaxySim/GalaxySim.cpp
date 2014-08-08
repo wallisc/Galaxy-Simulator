@@ -235,7 +235,7 @@ double g_systemTime = 0; //sets the inital system time to 0
 LPWSTR g_timeString; //used later for the Jump Time In button user uses to input time to jump to.
 
 //testing constants
-bool g_isTest = true; //true means test mode is on
+bool g_isTest; //true means test mode is on
 int g_step = 1; //determines which test from automated test suite is run
 double g_jumpSpeedTest; //collects speed of jumpTime for automated test
 double g_oneFrameTime; //collects time for one frame
@@ -246,6 +246,7 @@ const LPCWSTR g_currentDxDiagName = L"dxdiag.txt";
 double g_elapsedTimeAt365Days;
 double g_deltatResetParticles;
 double g_deltatResetCamera;
+double g_totalTime;
 
 //testing variable helpers
 double g_beginStartTime;
@@ -384,7 +385,16 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 	g_endStartTime = g_Timer.GetAbsoluteTime();
 	g_startUpTime = g_endStartTime - g_beginStartTime;
 
-
+	int selection = MessageBox(NULL, L"Would you like to run SkyX in telemetry mode?", L"Start Up Options", MB_YESNOCANCEL);
+	if (selection == IDYES) {
+		g_isTest = true;
+	}
+	else if (selection == IDNO) {
+		g_isTest = false;
+	}
+	else {
+		exit(0);
+	}
 
 	DXUTMainLoop(); // Enter into the DXUT render loop
 
@@ -1626,7 +1636,7 @@ void initializeFile() {
 }
 
 
-void copyFile(LPCWSTR grade) {
+void copyFile(LPCWSTR grade, double fps) {
 	//copy data csv
 	srand(time(NULL));
 	int num = rand();
@@ -1644,31 +1654,35 @@ void copyFile(LPCWSTR grade) {
 	bool copiedDxDiag = CopyFileW(g_currentDxDiagName, copyDiagName, true);
 
 	wostringstream wss3;
-	wss3 << L"Computer assessment: " << grade << "\n\n";
-
+	wss3 << L"The program is running this well on your computer: " << grade << "\n";
+	wss3 << L"Average FPS: " << fps << "\n";
+	wss3 << L"Test time: " << g_totalTime << "\n";
+	wss3 << L"If you would like to see how your results compare to our data, please see the README.txt\n\n";
+	
+	//LPCWSTR telemetryResults = getTelemetryResults(fps);
 
 	if (!copiedCSV && !copiedDxDiag) {
 		wss3 << L"The telemetry data and DXDiag files were not successfully copied to the share. \nPlease email the files called SkyXTelemetryData.csv and dxdiag.txt\n(in the same folder as the executable) to t-mellop@microsoft.com\nThank you so much for your help!";
 		const wstring& wstrMessage = wss3.str();
-		const LPCWSTR failureMessageBoth = wstr.c_str();
+		const LPCWSTR failureMessageBoth = wstrMessage.c_str();
 		MessageBoxW(NULL, failureMessageBoth, NULL, MB_OK);
 	}
 	else if (!copiedCSV && copiedDxDiag) {
 		wss3 << L"The telemetry data file was not successfully copied to the share. \nPlease email the file called SkyXTelemetryData.csv\n(in the same folder as the executable) to t-mellop@microsoft.com\nThank you so much for your help!";
 		const wstring& wstrMessage = wss3.str();
-		LPCWSTR failureMessageCSV = wstr.c_str();
+		LPCWSTR failureMessageCSV = wstrMessage.c_str();
 		MessageBoxW(NULL, failureMessageCSV, NULL, MB_OK);
 }
 	else if (copiedCSV && !copiedDxDiag) {
 		wss3 << L"The DXDiag file was not successfully copied to the share. \nPlease email the file called dxdiag.txt\n(in the same folder as the executable) to t-mellop@microsoft.com\nThank you so much for your help!";
 		const wstring& wstrMessage = wss3.str();
-		LPCWSTR failureMessageDiag = wstr.c_str();
+		LPCWSTR failureMessageDiag = wstrMessage.c_str();
 		MessageBoxW(NULL, failureMessageDiag, NULL, MB_OK);
 	}
 	else {
 		wss3 << L"The telemetry data and DXDiag files were successfully copied to the share! \nThank you so much for your help!";
 		const wstring& wstrMessage = wss3.str();
-		LPCWSTR successMessage = wstr.c_str();
+		LPCWSTR successMessage = wstrMessage.c_str();
 		LPCWSTR boxTitle = L"Upload Complete";
 		MessageBoxW(NULL, successMessage, boxTitle, MB_OK);
 	}
@@ -1689,44 +1703,6 @@ void getUsername() {
 
 }
 
-int timeGrade() {
-	
-}
-
-int fpsGrade(double fps) {
-	if (fps > 85) {
-		return 1;
-	}
-	else if (fps < 58) {
-		return -1;
-	}
-	else {
-		return 0;
-	}
-}
-
-LPCWSTR totalGrade(double fps) {
-	int fpsAssessment = fpsGrade(fps);
-	int timeAssessment = timeGrade();
-	LPCWSTR grade;
-
-	if (fpsAssessment == 1 && timeAssessment == 1) {
-		grade = L"Excellent";
-		return grade;
-	}
-	else if ((fpsAssessment == 0 && timeAssessment == 1) || (fpsAssessment == 1 && timeAssessment == 0)) {
-		grade = L"Good";
-		return grade;
-	}
-	else if (fpsAssessment == 0 && timeAssessment == 0) {
-		grade = L"Adequate";
-		return grade;
-	}
-	else {
-		grade = L"Fail";
-		return grade;
-	}
-}
 
 
 //--------------------------------------------------------------------------------------
@@ -1773,11 +1749,12 @@ void deleteObject(wstring name){
 //--------------------------------------------------------------------------------------
 // Functions for grade calculation in test mode
 //--------------------------------------------------------------------------------------
-int gradeTest(){
+int timeGrade(){
 	double totalTime = 0;
 	for (int i = 0; i < g_timeTestResults.size(); i++){
 		totalTime = totalTime + g_timeTestResults[i];
 	}
+	g_totalTime = totalTime;
 	if (totalTime > 2775066){
 		return -1;
 	}
@@ -1788,6 +1765,43 @@ int gradeTest(){
 		return 0;
 	}
 }
+
+
+int fpsGrade(double fps) {
+	if (fps > 85) {
+		return 1;
+	}
+	else if (fps < 58) {
+		return -1;
+	}
+	else {
+		return 0;
+	}
+}
+
+LPCWSTR totalGrade(double fps) {
+	int fpsAssessment = fpsGrade(fps);
+	int timeAssessment = timeGrade();
+	LPCWSTR grade;
+
+	if (fpsAssessment == 1 && timeAssessment == 1) {
+		grade = L"Excellent (4/4)";
+		return grade;
+	}
+	else if ((fpsAssessment == 0 && timeAssessment == 1) || (fpsAssessment == 1 && timeAssessment == 0)) {
+		grade = L"Good (3/4)";
+		return grade;
+	}
+	else if (fpsAssessment == 0 && timeAssessment == 0) {
+		grade = L"Adequate (2/4)";
+		return grade;
+	}
+	else {
+		grade = L"Fail (1/4)";
+		return grade;
+	}
+}
+
 
 //--------------------------------------------------------------------------------------
 HRESULT CreateParticlePosVeloBuffers(ID3D11Device* pd3dDevice)
@@ -3116,7 +3130,7 @@ void automatedTelemetry(){
 
 		LPCWSTR grade = totalGrade(averageFPS);
 
-		copyFile(grade);
+		copyFile(grade, averageFPS);
 
 		exit(0);
 
