@@ -1723,6 +1723,11 @@ void deleteObject(wstring name){
 //--------------------------------------------------------------------------------------
 // Functions for grade calculation in test mode
 //--------------------------------------------------------------------------------------
+
+//evaluates how well the computer did based on externally decided thresholds
+//return -1 means it failed in this category
+//return 0 means it was adequate in this category
+//return 1 means it was excellent in this category
 int gradeTest(){
 	double totalTime = 0;
 	for (int i = 0; i < g_timeTestResults.size(); i++){
