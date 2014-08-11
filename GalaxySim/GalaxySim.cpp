@@ -180,8 +180,8 @@ std::vector<ObjectData> g_knownValues730; //vector that will contain known solar
 std::vector<double> g_timeTestResults; //stores individual time test results so they can be totalled later
 
 //const float g_constant = -8.644 * pow(10, -13);
-//const float g_constant = -8.644E-16;
-const float g_constant = -6.67E-16;
+const float g_constant = -8.644E-16;
+//const float g_constant = -6.67E-16;
 const int g_cFloatStringLength = 20;
 const int g_cIntStringLength = 20;
 
@@ -224,6 +224,7 @@ CDXUTEditBox *g_pBlueBox = nullptr;
 CDXUTButton *g_pSubmitObjectButton = nullptr;
 bool g_firstObjectAddition = true;
 bool g_addingObject = false;
+
 
 
 bool g_loaded = false;
@@ -385,7 +386,10 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 	g_endStartTime = g_timer.GetAbsoluteTime();
 	g_startUpTime = g_endStartTime - g_beginStartTime;
 
-	int selection = MessageBox(NULL, L"Would you like to run SkyX in telemetry mode?", L"Start Up Options", MB_YESNOCANCEL);
+	
+	HWND hwnd = FindWindow(NULL, TEXT("SkyX"));
+
+	int selection = MessageBox(hwnd, L"Would you like to run SkyX in telemetry mode?", L"Start Up Options", MB_YESNOCANCEL);
 	if (selection == IDYES) {
 		g_isTest = true;
 	}
@@ -1640,7 +1644,7 @@ wstring getTelemetryResults(LPCWSTR grade, double fps) {
 	wostringstream wss;
 	wss << L"Computer Grade: " << grade << "\n";
 	wss << L"     Average FPS: " << fps << "\n";
-	wss << L"     Test Sum (sec): " << g_totalTime << "\n";
+	wss << L"     Time Sum (sec): " << g_totalTime << "\n";
 	wss << L"If you would like to see what the grade means and how your results \ncompare to our telemetry data, please see the README.txt\n\n";
 
 	wstring telemetryResults = wss.str().c_str();
@@ -1665,7 +1669,7 @@ void copyFile(LPCWSTR grade, double fps) {
 	const LPCWSTR copyDiagName = wstrDiag.c_str();
 	bool copiedDxDiag = CopyFileW(g_currentDxDiagName, copyDiagName, true);
 
-	
+	HWND hwnd = FindWindow(NULL, TEXT("SkyX"));
 	
 	wstring telemetryResults = getTelemetryResults(grade, fps);
 
@@ -1676,21 +1680,21 @@ void copyFile(LPCWSTR grade, double fps) {
 		wss3 << telemetryResults;
 		const wstring& wstrMessage = wss3.str();
 		const LPCWSTR failureMessageBoth = wstrMessage.c_str();
-		MessageBoxW(NULL, failureMessageBoth, NULL, MB_OK);
+		MessageBoxW(hwnd, failureMessageBoth, NULL, MB_OK);
 	}
 	else if (!copiedCSV && copiedDxDiag) {
 		wss3 << L"The telemetry data file was not successfully copied to the share. \nPlease email the file called SkyXTelemetryData.csv\n(in the same folder as the executable) to t-mellop@microsoft.com\nThank you so much for your help!\n\n";
 		wss3 << telemetryResults;
 		const wstring& wstrMessage = wss3.str();
 		LPCWSTR failureMessageCSV = wstrMessage.c_str();
-		MessageBoxW(NULL, failureMessageCSV, NULL, MB_OK);
+		MessageBoxW(hwnd, failureMessageCSV, NULL, MB_OK);
 }
 	else if (copiedCSV && !copiedDxDiag) {
 		wss3 << L"The DXDiag file was not successfully copied to the share. \nPlease email the file called dxdiag.txt\n(in the same folder as the executable) to t-mellop@microsoft.com\nThank you so much for your help!\n\n";
 		wss3 << telemetryResults;
 		const wstring& wstrMessage = wss3.str();
 		LPCWSTR failureMessageDiag = wstrMessage.c_str();
-		MessageBoxW(NULL, failureMessageDiag, NULL, MB_OK);
+		MessageBoxW(hwnd, failureMessageDiag, NULL, MB_OK);
 	}
 	else {
 		wss3 << L"The telemetry data and DXDiag files were successfully copied to the share! \nThank you so much for your help!\n\n";
@@ -1698,7 +1702,7 @@ void copyFile(LPCWSTR grade, double fps) {
 		const wstring& wstrMessage = wss3.str();
 		LPCWSTR successMessage = wstrMessage.c_str();
 		LPCWSTR boxTitle = L"Upload Complete";
-		MessageBoxW(NULL, successMessage, boxTitle, MB_OK);
+		MessageBoxW(hwnd, successMessage, boxTitle, MB_OK);
 	}
 }
 
@@ -1736,8 +1740,11 @@ int getObjectIndex(wstring name){
 
 void deleteObject(wstring name){
 	int index = getObjectIndex(name);
+	HWND hwnd = FindWindow(NULL, TEXT("SkyX"));
+	LPCWSTR message = L"No objects were deleted. Please enter a valid object name.";
 
 	if (index == -1){
+		MessageBox(hwnd, message, NULL, MB_OK | MB_ICONWARNING);
 		return;
 	}
 
@@ -2152,6 +2159,7 @@ void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 LRESULT CALLBACK MsgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, bool* pbNoFurtherProcessing,
 	void* pUserContext)
 {
+	
 	// Pass messages to dialog resource manager calls so GUI state is updated correctly
 	*pbNoFurtherProcessing = g_DialogResourceManager.MsgProc(hWnd, uMsg, wParam, lParam);
 	if (*pbNoFurtherProcessing)
@@ -2319,30 +2327,44 @@ wstring processName(LPCWSTR tempStr) {
 }
 
 //returns wether or not the field is empty
-bool canProcessInput(LPCWSTR tempStr) {
+bool canProcessInput(LPCWSTR tempStr, bool time) {
+	HWND hwnd = FindWindow(NULL, TEXT("SkyX"));
 	LPCWSTR emptyFieldMessage = L"Please enter a value in all fields";
-	if (tempStr == NULL || wcslen(tempStr) == 0) {
-		MessageBox(NULL, emptyFieldMessage, NULL, MB_OK | MB_ICONWARNING);
-		return false;
+	LPCWSTR emptyFieldMessageTime = L"Please enter a value";
+	if (!time) {
+		if (tempStr == NULL || wcslen(tempStr) == 0) {
+			MessageBox(hwnd, emptyFieldMessage, NULL, MB_OK | MB_ICONWARNING);
+			return false;
+		}
 	}
+	else {
+		if (tempStr == NULL || wcslen(tempStr) == 0) {
+			MessageBox(hwnd, emptyFieldMessageTime, NULL, MB_OK | MB_ICONWARNING);
+			return false;
+		}
+	}
+	
 	return true;
 }
 
 //returns whether or not input is numerical
-bool canConvertFloatInput(LPCWSTR tempStr) {
+bool canConvertFloatInput(LPCWSTR tempStr, bool time) {
 	LPCWSTR invalidInputMessage = L"Please make sure valid input was entered in all fields";
-	bool generalProcess = canProcessInput(tempStr);
+	LPCWSTR invalidInputMessageTime = L"Please make sure valid input was entered";
+	bool generalProcess = canProcessInput(tempStr, time);
 	if (!generalProcess) {
 		return false;
 	}
 
-	
+	bool hasDecimal = false;
+	int decimalCount = 0;
+	bool hasNegative = false;
+	int negativeCount = 0;
+	HWND hwnd = FindWindow(NULL, TEXT("SkyX"));
+
 	//check if alphanumeric
 	for (int i = 0; i < wcslen(tempStr); i++) {
-		bool hasDecimal = false;
-		int decimalCount = 0;
-		bool hasNegative = false;
-		int negativeCount = 0;
+		
 
 		if (tempStr[i] == '.') {
 			hasDecimal = true;
@@ -2354,10 +2376,21 @@ bool canConvertFloatInput(LPCWSTR tempStr) {
 			negativeCount++;
 		}
 
-		if (!(isdigit(tempStr[i])) && !hasDecimal && !hasNegative || decimalCount > 1 || negativeCount > 1) {
-			MessageBox(NULL, invalidInputMessage, NULL, MB_OK | MB_ICONWARNING);
-			return false;
+		
+		
+		if (!time) {
+			if (!(isdigit(tempStr[i])) || !hasDecimal && decimalCount > 1 || !hasNegative && negativeCount > 1) {
+				MessageBox(hwnd, invalidInputMessage, NULL, MB_OK | MB_ICONWARNING);
+				return false;
+			}
 		}
+		else {
+			if (!(isdigit(tempStr[i])) || !hasDecimal && decimalCount > 1 || hasNegative) {
+				MessageBox(hwnd, invalidInputMessageTime, NULL, MB_OK | MB_ICONWARNING);
+				return false;
+			}
+		}
+		
 
 	}
 
@@ -2451,9 +2484,13 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 		if (iterateStr == NULL){
 			break;
 		}
-		iterateFloat = wcstof(iterateStr, NULL);
-		int iterateInt = (int)(iterateFloat + 0.5);
-		g_iterationsPerFrame = iterateInt; break;
+		bool canProcess = canConvertFloatInput(iterateStr, true);
+		if (canProcess) {
+			iterateFloat = wcstof(iterateStr, NULL);
+			int iterateInt = (int)(iterateFloat + 0.5);
+			g_iterationsPerFrame = iterateInt;
+		}
+		 break;
 	}
 		//case IDC_DOUBLESPEED:
 		//	doubleSpeed(); break;
@@ -2467,8 +2504,11 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 		if (timeStr == NULL){
 			break;
 		}
-		timeFloat = wcstof(timeStr, NULL);
-		jumpTime(timeFloat);
+		bool canProcess = canConvertFloatInput(timeStr, true);
+		if (canProcess) {
+			timeFloat = convertFloatInput(timeStr);
+			jumpTime(timeFloat);
+		}
 		break;
 	}
 	case IDC_RESETCAMERA:
@@ -2491,9 +2531,10 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 			//g_pObjectDataDisplay->SetVisible(true);
 			break;
 		}
+		HWND hwnd = FindWindow(NULL, TEXT("SkyX"));
 		LPCWSTR warningMessage = L"Please pause to add an object.";
 		if (!g_isPaused) {
-			MessageBox(NULL, warningMessage, NULL, MB_OK | MB_ICONWARNING);
+			MessageBox(hwnd, warningMessage, NULL, MB_OK | MB_ICONWARNING);
 		}
 		else {
 			//g_pObjectDataDisplay->SetVisible(false);
@@ -2518,7 +2559,7 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 
 		//process name
 		LPCWSTR nameStr = g_pNameBox->GetText();
-		bool canProcess = canProcessInput(nameStr);
+		bool canProcess = canProcessInput(nameStr, false);
 		if (canProcess) {
 			newName = processName(nameStr);
 		}
@@ -2528,7 +2569,7 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 
 		//process mass
 		LPCWSTR massStr = g_pMassBox->GetText();
-		canProcess = canConvertFloatInput(massStr);
+		canProcess = canConvertFloatInput(massStr, false);
 		if (canProcess) {
 			newMass = convertFloatInput(massStr);
 		}
@@ -2538,7 +2579,7 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 
 		//process diameter
 		LPCWSTR diameterStr = g_pDiameterBox->GetText();
-		canProcess = canConvertFloatInput(diameterStr);
+		canProcess = canConvertFloatInput(diameterStr, false);
 		if (canProcess) {
 			newDiameter = convertFloatInput(diameterStr);
 		}
@@ -2548,7 +2589,7 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 
 		//process brightness
 		LPCWSTR brightnessStr = g_pBrightnessBox->GetText();
-		canProcess = canConvertFloatInput(brightnessStr);
+		canProcess = canConvertFloatInput(brightnessStr, false);
 		if (canProcess) {
 			newBrightness = convertFloatInput(brightnessStr);
 		}
@@ -2558,7 +2599,7 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 
 		//process position
 		LPCWSTR xPosStr = g_pXPosBox->GetText();
-		canProcess = canConvertFloatInput(xPosStr);
+		canProcess = canConvertFloatInput(xPosStr, false);
 		if (canProcess) {
 			newXPos = convertFloatInput(xPosStr);
 		}
@@ -2567,7 +2608,7 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 		}
 
 		LPCWSTR yPosStr = g_pYPosBox->GetText();
-		canProcess = canConvertFloatInput(yPosStr);
+		canProcess = canConvertFloatInput(yPosStr, false);
 		if (canProcess) {
 			newYPos = convertFloatInput(yPosStr);
 		}
@@ -2576,7 +2617,7 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 		}
 
 		LPCWSTR zPosStr = g_pZPosBox->GetText();
-		canProcess = canConvertFloatInput(zPosStr);
+		canProcess = canConvertFloatInput(zPosStr, false);
 		if (canProcess) {
 			newZPos = convertFloatInput(zPosStr);
 		}
@@ -2586,7 +2627,7 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 
 		//process velocity
 		LPCWSTR xVelStr = g_pXVelBox->GetText();
-		canProcess = canConvertFloatInput(xVelStr);
+		canProcess = canConvertFloatInput(xVelStr, false);
 		if (canProcess) {
 			newXVel = convertFloatInput(xVelStr);
 		}
@@ -2595,7 +2636,7 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 		}
 
 		LPCWSTR yVelStr = g_pYVelBox->GetText();
-		canProcess = canConvertFloatInput(yVelStr);
+		canProcess = canConvertFloatInput(yVelStr, false);
 		if (canProcess) {
 			newYVel = convertFloatInput(yVelStr);
 		}
@@ -2604,7 +2645,7 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 		}
 
 		LPCWSTR zVelStr = g_pZVelBox->GetText();
-		canProcess = canConvertFloatInput(zVelStr);
+		canProcess = canConvertFloatInput(zVelStr, false);
 		if (canProcess) {
 			newZVel = convertFloatInput(zVelStr);
 		}
@@ -2616,7 +2657,7 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 		//process colors
 
 		LPCWSTR redStr = g_pRedBox->GetText();
-		canProcess = canConvertFloatInput(redStr);
+		canProcess = canConvertFloatInput(redStr, false);
 		if (canProcess) {
 			newRed = convertFloatInput(redStr);
 		}
@@ -2625,7 +2666,7 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 		}
 
 		LPCWSTR greenStr = g_pGreenBox->GetText();
-		canProcess = canConvertFloatInput(greenStr);
+		canProcess = canConvertFloatInput(greenStr, false);
 		if (canProcess) {
 			newGreen = convertFloatInput(greenStr);
 		}
@@ -2634,7 +2675,7 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 		}
 
 		LPCWSTR blueStr = g_pBlueBox->GetText();
-		canProcess = canConvertFloatInput(blueStr);
+		canProcess = canConvertFloatInput(blueStr, false);
 		if (canProcess) {
 			newBlue = convertFloatInput(blueStr);
 		}
