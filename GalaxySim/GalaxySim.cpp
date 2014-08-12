@@ -225,6 +225,29 @@ CDXUTButton *g_pSubmitObjectButton = nullptr;
 bool g_firstObjectAddition = true;
 bool g_addingObject = false;
 
+//variables for fullscreen UI
+CDXUTButton *pDeleteButton = nullptr;
+CDXUTButton *pOutputButton = nullptr;
+
+CDXUTButton *pOutputButtonFS = nullptr;
+CDXUTButton *pDeleteButtonFS = nullptr;
+CDXUTEditBox *pDeleteBoxFS = nullptr;
+CDXUTEditBox *pOutputBoxFS = nullptr;
+CDXUTEditBox *g_pNameBoxFS = nullptr;
+CDXUTEditBox *g_pMassBoxFS = nullptr;
+CDXUTEditBox *g_pDiameterBoxFS = nullptr;
+CDXUTEditBox *g_pBrightnessBoxFS = nullptr;
+CDXUTEditBox *g_pXPosBoxFS = nullptr;
+CDXUTEditBox *g_pYPosBoxFS = nullptr;
+CDXUTEditBox *g_pZPosBoxFS = nullptr;
+CDXUTEditBox *g_pXVelBoxFS = nullptr;
+CDXUTEditBox *g_pYVelBoxFS = nullptr;
+CDXUTEditBox *g_pZVelBoxFS = nullptr;
+CDXUTEditBox *g_pRedBoxFS = nullptr;
+CDXUTEditBox *g_pGreenBoxFS = nullptr;
+CDXUTEditBox *g_pBlueBoxFS = nullptr;
+CDXUTButton *g_pSubmitObjectButtonFS = nullptr;
+CDXUTEditBox *g_DeleteObjInBoxFS = nullptr;
 
 
 bool g_loaded = false;
@@ -411,6 +434,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 
 
 
+
 //--------------------------------------------------------------------------------------
 // Initialize the app 
 //--------------------------------------------------------------------------------------
@@ -434,17 +458,28 @@ void InitApp()
 	g_HUD.AddButton(IDC_SUBMITTIMEIN, L"Jump!", 0, iY += 40, 170, 23);
 	g_HUD.AddButton(IDC_PAUSE, L"Pause / Unpause", 0, iY += 26, 170, 22);
 	g_HUD.AddButton(IDC_ADDOBJECT, L"Add Body", 0, iY += 26, 170, 22);
-	g_HUD.AddButton(IDC_SUBMITDELETEOBJ, L"Delete Object", -180, iYEnd, 170, 22);
-	g_HUD.AddEditBox(IDC_DELETEOBJIN, L"", -180, iYEnd -= 40, 170, 40, false, &g_DeleteObjInBox);
-	g_HUD.AddButton(IDC_OUTPUTINFO, L"Output Object Data", -180, iYEnd -= 26, 170, 22);
-	g_HUD.AddEditBox(IDC_DISPLAYINFOBOX, L"", 0, 325, 160, 270, false, &g_pObjectDataDisplay);
 	//g_pObjectDataDisplay->SetVisible(false);
+
+	//out of column buttons
+	g_HUD.AddButton(IDC_SUBMITDELETEOBJ, L"Delete Object", -180, iYEnd, 170, 22, NULL, true, &pDeleteButton);
+	g_HUD.AddEditBox(IDC_DELETEOBJIN, L"", -180, iYEnd -= 40, 170, 40, false, &g_DeleteObjInBox);
+	g_HUD.AddButton(IDC_OUTPUTINFO, L"Output Object Data", -180, iYEnd -= 26, 170, 22, NULL, true, &pOutputButton);
+	g_HUD.AddEditBox(IDC_DISPLAYINFOBOX, L"", 0, 325, 160, 270, false, &g_pObjectDataDisplay);
+
+	//fullscreen UI
+	/*g_HUD.AddButton(IDC_SUBMITDELETEOBJ, L"Delete Object", -180, iYEnd, 170, 22, NULL, true, &pDeleteButtonFS);
+	g_HUD.AddEditBox(IDC_DELETEOBJIN, L"", -180, iYEnd -= 40, 170, 40, false, &g_DeleteObjInBoxFS);
+	g_HUD.AddButton(IDC_OUTPUTINFO, L"Output Object Data", -180, iYEnd -= 26, 170, 22, NULL, true, &pOutputButtonFS);
+	g_HUD.AddEditBox(IDC_DISPLAYINFOBOX, L"", 0, 325, 160, 270, false, &g_pObjectDataDisplay);*/
+	
 
 	//left hand UI
 	int yPos = 100;
 	int xPos = -630;
 	int width = 170;
 	int height = 35;
+
+	//left hand fullscreen UI
 
 	g_HUD.AddEditBox(IDC_NAME, L"", xPos, yPos, width, height, false, &g_pNameBox);
 	g_pNameBox->SetVisible(false);
