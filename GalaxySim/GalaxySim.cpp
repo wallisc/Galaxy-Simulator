@@ -1096,6 +1096,10 @@ void jumpTime(float newTime){
 
 	//iterate through time by increments of time Value
 
+
+	/*by having it go forward from the current time for moving forward instead of resetting to 0 first like it
+	does with moving backward, we save time in some cases. This could also work with everything resetting to zero and then building 
+	from there like it does inside the else if (newTime< g_systemTime) block. */
 	//move forward to a time
 	if (newTime > g_systemTime){
 		for (float k = g_systemTime; k < newTime; k = k + g_timeValueToHoursConversion){
@@ -1115,12 +1119,6 @@ void jumpTime(float newTime){
 			GravityMotionIteration(g_timeValue);
 
 		}
-
-		/*for (float k = g_systemTime; k > newTime; k = k - g_timeValueToHoursConversion){
-
-			GravityMotionIteration(-g_timeValue);
-
-		}*/
 
 	}
 
