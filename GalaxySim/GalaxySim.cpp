@@ -181,7 +181,7 @@ std::vector<double> g_timeTestResults; //stores individual time test results so 
 
 //const float g_constant = -8.644 * pow(10, -13);
 //const float g_constant = -8.644E-16;
-const float g_constant = -6.67E-16;
+const float g_constant = -8.644E-16;
 const int g_cFloatStringLength = 20;
 const int g_cIntStringLength = 20;
 
@@ -1103,11 +1103,20 @@ void jumpTime(float newTime){
 	}
 	//move backward to a time
 	else if (newTime < g_systemTime){
-		for (float k = g_systemTime; k > newTime; k = k - g_timeValueToHoursConversion){
+
+		OnGUIEvent(0, IDC_RESETPARTICLES, NULL, NULL);
+
+		for (float k = g_systemTime; k < newTime; k = k + g_timeValueToHoursConversion){
+
+			GravityMotionIteration(g_timeValue);
+
+		}
+
+		/*for (float k = g_systemTime; k > newTime; k = k - g_timeValueToHoursConversion){
 
 			GravityMotionIteration(-g_timeValue);
 
-		}
+		}*/
 
 	}
 
