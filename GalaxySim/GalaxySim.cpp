@@ -180,8 +180,8 @@ std::vector<ObjectData> g_knownValues730; //vector that will contain known solar
 std::vector<double> g_timeTestResults; //stores individual time test results so they can be totalled later
 
 //const float g_constant = -8.644 * pow(10, -13);
+//const float g_constant = -8.644E-16;
 const float g_constant = -8.644E-16;
-//const float g_constant = -6.67E-16;
 const int g_cFloatStringLength = 20;
 const int g_cIntStringLength = 20;
 
@@ -1131,6 +1131,10 @@ void jumpTime(float newTime){
 
 	//iterate through time by increments of time Value
 
+
+	/*by having it go forward from the current time for moving forward instead of resetting to 0 first like it
+	does with moving backward, we save time in some cases. This could also work with everything resetting to zero and then building 
+	from there like it does inside the else if (newTime< g_systemTime) block. */
 	//move forward to a time
 	if (newTime > g_systemTime){
 		for (float k = g_systemTime; k < newTime; k = k + g_timeValueToHoursConversion){
@@ -1142,9 +1146,12 @@ void jumpTime(float newTime){
 	}
 	//move backward to a time
 	else if (newTime < g_systemTime){
-		for (float k = g_systemTime; k > newTime; k = k - g_timeValueToHoursConversion){
 
-			GravityMotionIteration(-g_timeValue);
+		OnGUIEvent(0, IDC_RESETPARTICLES, NULL, NULL);
+
+		for (float k = g_systemTime; k < newTime; k = k + g_timeValueToHoursConversion){
+
+			GravityMotionIteration(g_timeValue);
 
 		}
 
@@ -1552,11 +1559,8 @@ void testJumpTimeAccuracy(){
 	pauseControl();
 
 	//average the different tests
-	//avgPosDiff = (posDiff50 + posDiff365 + posDiff730) / 3; //add in other tests as they get added
-	//avgVeloDiff = (veloDiff50 + veloDiff365 + veloDiff730) / 3; //add in other tests as they get added
-
-	avgPosDiff = (posDiff50 + posDiff730) / 2; //add in other tests as they get added
-	avgVeloDiff = (veloDiff50 + veloDiff730) / 2; //add in other tests as they get added
+	avgPosDiff = (posDiff50 + posDiff365 + posDiff730) / 3; //add in other tests as they get added
+	avgVeloDiff = (veloDiff50 + veloDiff365 + veloDiff730) / 3; //add in other tests as they get added
 
 	char buffer[256];
 	sprintf_s(buffer, sizeof(buffer), "Avg Position Percent Difference %f\n", avgPosDiff);
@@ -2373,10 +2377,10 @@ bool canProcessInput(LPCWSTR tempStr, bool time) {
 		}
 	}
 	else {
-		if (tempStr == NULL || wcslen(tempStr) == 0) {
+	if (tempStr == NULL || wcslen(tempStr) == 0) {
 			MessageBox(hwnd, emptyFieldMessageTime, NULL, MB_OK | MB_ICONWARNING);
-			return false;
-		}
+		return false;
+	}
 	}
 	
 	return true;
@@ -2391,10 +2395,10 @@ bool canConvertFloatInput(LPCWSTR tempStr, bool time) {
 		return false;
 	}
 
-	bool hasDecimal = false;
-	int decimalCount = 0;
-	bool hasNegative = false;
-	int negativeCount = 0;
+		bool hasDecimal = false;
+		int decimalCount = 0;
+		bool hasNegative = false;
+		int negativeCount = 0;
 	HWND hwnd = FindWindow(NULL, TEXT("SkyX"));
 
 	//check if alphanumeric
@@ -2416,8 +2420,8 @@ bool canConvertFloatInput(LPCWSTR tempStr, bool time) {
 		if (!time) {
 			if (!(isdigit(tempStr[i])) || !hasDecimal && decimalCount > 1 || !hasNegative && negativeCount > 1) {
 				MessageBox(hwnd, invalidInputMessage, NULL, MB_OK | MB_ICONWARNING);
-				return false;
-			}
+			return false;
+		}
 		}
 		else {
 			if (!(isdigit(tempStr[i])) || !hasDecimal && decimalCount > 1 || hasNegative) {
@@ -2425,7 +2429,7 @@ bool canConvertFloatInput(LPCWSTR tempStr, bool time) {
 				return false;
 			}
 		}
-		
+
 
 	}
 
@@ -2521,10 +2525,10 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 		}
 		bool canProcess = canConvertFloatInput(iterateStr, true);
 		if (canProcess) {
-			iterateFloat = wcstof(iterateStr, NULL);
-			int iterateInt = (int)(iterateFloat + 0.5);
+		iterateFloat = wcstof(iterateStr, NULL);
+		int iterateInt = (int)(iterateFloat + 0.5);
 			g_iterationsPerFrame = iterateInt;
-		}
+	}
 		 break;
 	}
 		//case IDC_DOUBLESPEED:
@@ -2542,7 +2546,7 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 		bool canProcess = canConvertFloatInput(timeStr, true);
 		if (canProcess) {
 			timeFloat = convertFloatInput(timeStr);
-			jumpTime(timeFloat);
+		jumpTime(timeFloat);
 		}
 		break;
 	}
