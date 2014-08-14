@@ -1524,11 +1524,8 @@ void testJumpTimeAccuracy(){
 	pauseControl();
 
 	//average the different tests
-	//avgPosDiff = (posDiff50 + posDiff365 + posDiff730) / 3; //add in other tests as they get added
-	//avgVeloDiff = (veloDiff50 + veloDiff365 + veloDiff730) / 3; //add in other tests as they get added
-
-	avgPosDiff = (posDiff50 + posDiff730) / 2; //add in other tests as they get added
-	avgVeloDiff = (veloDiff50 + veloDiff730) / 2; //add in other tests as they get added
+	avgPosDiff = (posDiff50 + posDiff365 + posDiff730) / 3; //add in other tests as they get added
+	avgVeloDiff = (veloDiff50 + veloDiff365 + veloDiff730) / 3; //add in other tests as they get added
 
 	char buffer[256];
 	sprintf_s(buffer, sizeof(buffer), "Avg Position Percent Difference %f\n", avgPosDiff);
