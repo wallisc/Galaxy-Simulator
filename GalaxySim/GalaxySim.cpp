@@ -279,8 +279,6 @@ float g_averageFPS = 0;
 #define IDC_RESETPARTICLES      5
 #define IDC_DISPLAYINFO			6
 #define IDC_PAUSE               7
-#define IDC_DOUBLESPEED			8
-#define IDC_HALFSPEED			9
 #define IDC_JUMPTIMEIN			10
 #define IDC_SUBMITTIMEIN		11
 #define IDC_RESETCAMERA			12
@@ -340,8 +338,6 @@ HRESULT WriteAttributes(IXmlReader* pReader);
 int ParseFile();
 //functions associated with various buttons
 void displayObjectInfo();
-void doubleSpeed();
-void halfSpeed();
 LPWSTR GetSimTime();
 void jumpTime(float newTime);
 void GravityMotionIteration(float timeIncrement);
@@ -426,14 +422,12 @@ void InitApp()
 	g_HUD.AddButton(IDC_CHANGEDEVICE, L"Change device (F2)", 0, iY += 26, 170, 23, VK_F2);
 	g_HUD.AddButton(IDC_RESETPARTICLES, L"Reset particles (F4)", 0, iY += 26, 170, 22, VK_F4);
 	g_HUD.AddButton(IDC_RESETCAMERA, L"Reset Camera Position", 0, iY += 26, 170, 23);
-	//g_HUD.AddButton(IDC_DOUBLESPEED, L"Speed 2x", 0, iY += 26, 170, 23);
-	//g_HUD.AddButton(IDC_HALFSPEED, L"Speed 0.5x", 0, iY += 26, 170, 23);
 	g_HUD.AddEditBox(IDC_ITERATEPERFRAMEIN, L"", 0, iY += 26, 170, 40, false, &g_IterationsPerFrameInBox);
 	g_HUD.AddButton(IDC_SUBMITITERATEIN, L"Enter Iterations/Frame", 0, iY += 40, 170, 23);
 	g_HUD.AddEditBox(IDC_JUMPTIMEIN, L"", 0, iY += 26, 170, 40, false, &g_JumpTimeInputBox);
 	g_HUD.AddButton(IDC_SUBMITTIMEIN, L"Jump!", 0, iY += 40, 170, 23);
 	g_HUD.AddButton(IDC_PAUSE, L"Pause / Unpause", 0, iY += 26, 170, 22);
-	g_HUD.AddButton(IDC_ADDOBJECT, L"Add Body", 0, iY += 26, 170, 22);
+	g_HUD.AddButton(IDC_ADDOBJECT, L"Add Object", 0, iY += 26, 170, 22);
 	g_HUD.AddButton(IDC_SUBMITDELETEOBJ, L"Delete Object", -180, iYEnd, 170, 22);
 	g_HUD.AddEditBox(IDC_DELETEOBJIN, L"", -180, iYEnd -= 40, 170, 40, false, &g_DeleteObjInBox);
 	g_HUD.AddButton(IDC_OUTPUTINFO, L"Output Object Data", -180, iYEnd -= 26, 170, 22);
@@ -856,28 +850,7 @@ float RPercent()
 //--------------------------------------------------------------------------------------
 // This helper function loads a group of particles
 //--------------------------------------------------------------------------------------
-/*void LoadParticles( PARTICLE* pParticles,
-XMFLOAT3 Center, XMFLOAT4 Velocity, float Spread, UINT NumParticles )
-{
-XMVECTOR vCenter = XMLoadFloat3( &Center );
 
-for( UINT i = 0; i < NumParticles; i++ )
-{
-XMVECTOR vDelta = XMVectorReplicate( Spread );
-
-while( XMVectorGetX( XMVector3LengthSq( vDelta ) ) > Spread * Spread )
-{
-vDelta = XMVectorSet( RPercent() * Spread, RPercent() * Spread, RPercent() * Spread, 0.f );
-}
-
-XMVECTOR vPos = XMVectorAdd( vCenter, vDelta );
-
-XMStoreFloat3( reinterpret_cast<XMFLOAT3*>( &pParticles[i].pos ), vPos );
-pParticles[i].pos.w = 10000.0f * 10000.0f;
-
-pParticles[i].velo = Velocity;
-}
-}*/
 
 //method for establishing the position of a celestial body
 //definition for XMFLOAT4 is in the sample, line 570
@@ -1067,21 +1040,6 @@ void GravityMotionIteration(float timeIncrement){
 }
 
 //--------------------------------------------------------------------------------------
-// Functions that allow user to change the speed of the simulation
-//--------------------------------------------------------------------------------------
-
-//doubles the value of g_timeValue so the simul speed goes 2x; called when user presses 2x button
-void doubleSpeed(){
-	g_timeValue = g_timeValue * 2;
-}
-
-//divides in half the value of g_timeValue so that simul speed slows down by half
-//called when user presses 0.5x button
-void halfSpeed(){
-	g_timeValue = g_timeValue / 2;
-}
-
-//--------------------------------------------------------------------------------------
 // Functions that allow user to jump in time in the simulation
 //--------------------------------------------------------------------------------------
 
@@ -1122,8 +1080,8 @@ void jumpTime(float newTime){
 
 	}
 
-	//to test where the particle is when you jump to a time
-	//put a breakpoint at float acoord=1.0 and see values of x, y, and zcoord
+	//uncomment to test where the particle is when you jump to a time
+	//put a breakpoint at float acoord=1.0 and see values of x, y, and zcoord as you iterate through all of the objects in the debugger
 	/*for (int i = 0; i < NUM_PARTICLES; i++){
 		wstring name = g_pParticleArrayTWO[i].name;
 		float xcoord = g_pParticleArray[i].pos.x;
@@ -1577,14 +1535,13 @@ double testSpeed100IterationsPerFrame(){
 	return hundredIterationsTime;
 }
 
-//see how long it takes to get to 100 days while running the simulation at 10 iterations/frame
-//NOTE: Currently this test is not being taken into account. This is due to a flaw (now corrected) in its design that caused reporting of incorrect data.
-//double testRegularSpeed(){
-//
-//	double timeElapsed = g_elapsedTimeAt1000Days;
-//	return timeElapsed;
-//
-//}
+//see how long it takes to get to 1000 days while running the simulation at 10 iterations/frame
+double testRegularSpeed(){
+
+	double timeElapsed = g_elapsedTimeAt1000Days;
+	return timeElapsed;
+
+}
 
 double getStartTime() {
 	return g_startUpTime;
@@ -1932,17 +1889,6 @@ float distanceCalc(float cx, float cy, float sx, float sy) {
 	return distance;
 }
 
-//float distanceCalc(float cx, float cy, float sx, float sy, float cz) {
-//	float distance = 0;
-//
-//	float xSquared = powf((sx - cx), 2);
-//	float ySquared = powf((sy - cy), 2);
-//	float zSquared = powf(cz, 2);
-//
-//	distance = sqrtf(xSquared + ySquared + zSquared);
-//
-//	return distance;
-//}
 
 void convertTo3x3(XMFLOAT4X4 matrix4x4) {
 	g_pCBGS->m_InvView._43 = 0;
@@ -2003,9 +1949,7 @@ void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 	if (g_frameCounter % 100 == 0) {
 		g_averageFPS += DXUTGetFPS();
 		g_averageFPSCounter++;
-		/*wchar_t buffer[256];
-		swprintf(buffer, sizeof(buffer), L"FPS: %f\n", DXUTGetFPS());
-		::OutputDebugString(buffer);*/
+
 	}
 
 	g_frameCounter++;
@@ -2043,22 +1987,6 @@ void CALLBACK OnFrameMove(double fTime, float fElapsedTime, void* pUserContext)
 				g_elapsedTimeAt1000Days = g_timer.GetAbsoluteTime();
 			}
 
-			////temporary counter iteration
-			//g_counter++;
-
-			////just for getting values at a particlular time for test purposes
-			//if (g_counter==322){
-			//	for (int i = 0; i < NUM_PARTICLES; i++){
-			//		wstring name = g_pParticleArrayTWO[i].name;
-			//		float xcoord = g_pParticleArray[i].pos.x;
-			//		float ycoord = g_pParticleArray[i].pos.y;
-			//		float zcoord = g_pParticleArray[i].pos.z;
-			//		float xvelo = g_pParticleArray[i].velo.x;
-			//		float yvelo = g_pParticleArray[i].velo.y;
-			//		float zvelo = g_pParticleArray[i].velo.z;
-			//		float acoord = 1.0;
-			//	}
-			//}
 
 			memcpy(ms.pData, g_pParticleArray, sizeof(PARTICLE) * NUM_PARTICLES);
 
@@ -2496,10 +2424,7 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 	}
 		 break;
 	}
-		//case IDC_DOUBLESPEED:
-		//	doubleSpeed(); break;
-		//case IDC_HALFSPEED:
-		//	halfSpeed(); break;
+
 	case IDC_SUBMITTIMEIN:
 	{
 		LPCWSTR timeStr;
@@ -2689,9 +2614,6 @@ void CALLBACK OnGUIEvent(UINT nEvent, int nControlID, CDXUTControl* pControl, vo
 
 		addObject(newName, newMass, newDiameter, newBrightness, newXPos, newYPos, newZPos, newXVel, newYVel, newZVel, newRed, newGreen, newBlue);
 
-		//force pVertices to update
-		/*DXUTToggleREF();
-		DXUTToggleREF();*/
 
 		auto pd3dImmediateContext = DXUTGetD3D11DeviceContext();
 		auto pVertices = updateVertices();
@@ -3053,12 +2975,11 @@ void automatedTelemetry(){
 		break;
 	}
 	case 2:{
-		//NOTE: Currently this test is not being taken into account. A flaw (now corrected) caused incorrect data to be taken into account.
-		//double timeAt1000;
-		////gets time for regular simulation run from time=0 to time=100
-		//timeAt1000 = testRegularSpeed() - g_endStartTime;
-		//g_dataFile << "Time to run normally to 1000 days " << "," << timeAt1000 << endl;
-		//g_timeTestResults.push_back(timeAt1000);
+		double timeAt1000;
+		//gets time for regular simulation run from time=0 to time=100
+		timeAt1000 = testRegularSpeed() - g_endStartTime;
+		g_dataFile << "Time to run normally to 1000 days " << "," << timeAt1000 << endl;
+		g_timeTestResults.push_back(timeAt1000);
 		break;
 	}
 	case 3:{
